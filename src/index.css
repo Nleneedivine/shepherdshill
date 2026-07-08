@@ -1,0 +1,2 @@
+/* Re-exports the main design system entry. Import ./styles.css directly in the app shell. */
+@import "./styles.css";
