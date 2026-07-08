@@ -1,4 +1,4 @@
-import { useToastContext } from "@/components/ui/Toast";
+import { useToastContext } from "@/components/ds/Toast";
 
 export function useToast() {
   return useToastContext();
