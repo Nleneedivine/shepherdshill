@@ -84,7 +84,7 @@ function RegisterPage() {
     try {
       const { photoFile: _pf, photoPreview: _pp, ...personal } = state.data.personal;
       void _pf; void _pp;
-      const { data, error } = await supabase.from("member_registrations").insert({
+      const payload = {
         personal,
         contact: state.data.contact,
         family: state.data.family,
@@ -94,7 +94,8 @@ function RegisterPage() {
         cell_group_id: state.data.churchLife.cellGroupId,
         status: "pending",
         completeness_score: completenessScore(state.data),
-      }).select("id").single();
+      } as never;
+      const { data, error } = await supabase.from("member_registrations").insert(payload).select("id").single();
       if (error) throw error;
       dispatch({ type: "SET_SUBMITTED", id: (data as { id: string }).id });
       showToast("Registration submitted!", "success");
