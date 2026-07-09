@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Users, UserPlus, Building2, HeartHandshake, LogOut } from "lucide-react";
+import { Users, UserPlus, Building2, HeartHandshake, LogOut, LayoutDashboard } from "lucide-react";
 import { AppLayout, Card, StatCard, PageWrapper, Button } from "@/components/ds";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,25 +41,31 @@ function DashboardPage() {
       title="Dashboard"
       breadcrumb={[{ label: "Home", href: "/dashboard" }, { label: "Dashboard" }]}
       navItems={[
-        { label: "Dashboard", href: "/dashboard", icon: "LayoutDashboard" },
-        { label: "Members", href: "/members", icon: "Users" },
+        { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+        { label: "Members", href: "/members", icon: Users },
       ]}
-      userProfile={{ name: user?.profile?.full_name ?? user?.email ?? "User", email: user?.email ?? "", role: user?.roles[0] ?? "member" }}
+      userProfile={{
+        name: user?.profile?.full_name ?? user?.email ?? "User",
+        email: user?.email ?? "",
+        onLogout: handleLogout,
+      }}
     >
       <PageWrapper>
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Welcome{user?.profile?.full_name ? `, ${user.profile.full_name}` : ""}</h1>
+            <h1 className="text-2xl font-bold text-white">
+              Welcome{user?.profile?.full_name ? `, ${user.profile.full_name}` : ""}
+            </h1>
             <p className="text-sm text-slate-400 mt-1">Here's a snapshot of your church community.</p>
           </div>
           <Button variant="secondary" onClick={handleLogout}><LogOut size={16} /> Sign out</Button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Total Members" value={stats.members} icon="Users" trend="up" trendValue="+12%" />
-          <StatCard label="Pending Registrations" value={stats.pending} icon="UserPlus" trend="neutral" trendValue="review" />
-          <StatCard label="Cell Groups" value={stats.cellGroups} icon="HeartHandshake" trend="up" trendValue="active" />
-          <StatCard label="Branches" value={stats.branches} icon="Building2" trend="neutral" trendValue="all" />
+          <StatCard label="Total Members" value={stats.members} icon={<Users size={20} />} />
+          <StatCard label="Pending Registrations" value={stats.pending} icon={<UserPlus size={20} />} glowColor="amber" />
+          <StatCard label="Cell Groups" value={stats.cellGroups} icon={<HeartHandshake size={20} />} glowColor="green" />
+          <StatCard label="Branches" value={stats.branches} icon={<Building2 size={20} />} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
@@ -74,7 +80,9 @@ function DashboardPage() {
           </Card>
           <Card title="Quick Actions" subtitle="Common tasks">
             <div className="flex flex-col gap-2">
-              <Button variant="secondary" onClick={() => navigate({ to: "/members" })}><Users size={16} /> View members</Button>
+              <Button variant="secondary" onClick={() => navigate({ to: "/members" })}>
+                <Users size={16} /> View members
+              </Button>
             </div>
           </Card>
         </div>

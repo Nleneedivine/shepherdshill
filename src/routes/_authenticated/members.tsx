@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Users, LayoutDashboard } from "lucide-react";
 import { AppLayout, PageWrapper, DataTable, EmptyState } from "@/components/ds";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,7 +11,8 @@ export const Route = createFileRoute("/_authenticated/members")({
 });
 
 function MembersPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,30 +29,35 @@ function MembersPage() {
       title="Members"
       breadcrumb={[{ label: "Home", href: "/dashboard" }, { label: "Members" }]}
       navItems={[
-        { label: "Dashboard", href: "/dashboard", icon: "LayoutDashboard" },
-        { label: "Members", href: "/members", icon: "Users" },
+        { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+        { label: "Members", href: "/members", icon: Users },
       ]}
-      userProfile={{ name: user?.profile?.full_name ?? user?.email ?? "User", email: user?.email ?? "", role: user?.roles[0] ?? "member" }}
+      userProfile={{
+        name: user?.profile?.full_name ?? user?.email ?? "User",
+        email: user?.email ?? "",
+        onLogout: async () => { await logout(); navigate({ to: "/auth" }); },
+      }}
     >
       <PageWrapper>
         <h1 className="text-2xl font-bold text-white mb-4">Members</h1>
         {!loading && members.length === 0 ? (
           <EmptyState
-            icon="Users"
+            icon={<Users size={40} className="text-slate-400" />}
             title="No members yet"
-            description="Members added to your church will appear here."
+            description="Approved registrations will appear here."
           />
         ) : (
           <DataTable
             loading={loading}
             columns={[
-              { key: "first_name", label: "First name" },
-              { key: "last_name", label: "Last name" },
-              { key: "phone_primary", label: "Phone" },
-              { key: "email", label: "Email" },
-              { key: "membership_status", label: "Status" },
+              { key: "first_name", header: "First name" },
+              { key: "last_name", header: "Last name" },
+              { key: "phone_primary", header: "Phone" },
+              { key: "email", header: "Email" },
+              { key: "membership_status", header: "Status" },
             ]}
             data={members}
+            rowKey={(row) => row.id}
           />
         )}
       </PageWrapper>
