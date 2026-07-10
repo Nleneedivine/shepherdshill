@@ -6,6 +6,8 @@ export interface MemberListItem extends Member {
   cell_group_name: string | null;
   department_names: string[];
   has_biometrics: boolean;
+  membership_stage: string | null;
+  created_at: string;
 }
 
 export interface MemberFilterState {
