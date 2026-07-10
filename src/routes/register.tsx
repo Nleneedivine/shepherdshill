@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Church, Send } from "lucide-react";
 import { Button } from "@/components/ds";
 import { useToastContext } from "@/components/ds/Toast";
-import { supabase } from "@/integrations/supabase/client";
 import { submitRegistration } from "@/lib/submitRegistration";
 import { initialRegistrationData } from "@/lib/registration";
 import { isValidNigerianPhone } from "@/lib/nigeria";
