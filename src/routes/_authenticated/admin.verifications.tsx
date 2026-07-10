@@ -40,6 +40,7 @@ function VerificationsPage() {
   const [rejecting, setRejecting] = useState<Submission | null>(null);
   const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [live, setLive] = useState<"connecting" | "live" | "reconnecting">("connecting");
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search), 300);
