@@ -170,9 +170,15 @@ function VerificationsPage() {
       }}
     >
       <PageWrapper>
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Member Verification Queue</h1>
-          <p className="text-sm text-slate-400 mt-1">{new Date().toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+        <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Member Verification Queue</h1>
+            <p className="text-sm text-slate-400 mt-1">{new Date().toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+          </div>
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs">
+            <span className={`h-2 w-2 rounded-full ${live === "live" ? "bg-emerald-400 animate-pulse" : live === "reconnecting" ? "bg-amber-400 animate-pulse" : "bg-slate-500"}`} />
+            <span className="text-slate-300">{live === "live" ? "Live" : live === "reconnecting" ? "Reconnecting…" : "Connecting…"}</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
