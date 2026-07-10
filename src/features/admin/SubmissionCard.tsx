@@ -65,14 +65,14 @@ export function SubmissionCard({ submission, selected, onSelect, onReview, onApp
       <div className="flex flex-wrap items-center gap-2 md:flex-1">
         <span className="text-xs text-slate-400">{relativeTime(submission.submitted_at)}</span>
         {submission.membership_stage && (
-          <Badge tone="violet">{submission.membership_stage.replace(/_/g, " ")}</Badge>
+          <Badge variant="purple">{submission.membership_stage.replace(/_/g, " ")}</Badge>
         )}
-        <Badge tone={score >= 80 ? "green" : score >= 50 ? "amber" : "rose"}>{score}% complete</Badge>
-        {submission.ai_duplicate_flag && <Badge tone="amber">Possible duplicate</Badge>}
+        <Badge variant={score >= 80 ? "green" : score >= 50 ? "amber" : "rose"}>{score}% complete</Badge>
+        {submission.ai_duplicate_flag && <Badge variant="warning">Possible duplicate</Badge>}
       </div>
 
       <div className="flex items-center gap-2 md:justify-end">
-        <Badge tone={statusColor[status] ?? "violet"}>{status.replace(/_/g, " ")}</Badge>
+        <Badge variant={(statusColor[status] ?? "purple")}>{status.replace(/_/g, " ")}</Badge>
         <Button size="sm" variant="secondary" onClick={onReview}>
           <Eye size={14} /> Review
         </Button>

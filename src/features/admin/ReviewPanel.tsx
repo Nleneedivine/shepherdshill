@@ -153,12 +153,12 @@ export function ReviewPanel({ submission, onClose, onApprove, onReject, onReques
               <section>
                 <h3 className="text-xs uppercase text-slate-400 mb-1">AI Flags</h3>
                 <div className="flex flex-wrap gap-2">
-                  <Badge tone={submission.ai_duplicate_flag ? "amber" : "green"}>
+                  <Badge variant={submission.ai_duplicate_flag ? "amber" : "green"}>
                     Duplicate: {submission.ai_duplicate_flag ? "yes" : "no"}
                   </Badge>
-                  <Badge tone="blue">Score: {submission.ai_completeness_score ?? 0}%</Badge>
+                  <Badge variant="info">Score: {submission.ai_completeness_score ?? 0}%</Badge>
                   {submission.ai_cell_group_suggestion_id && (
-                    <Badge tone="violet">Cell group suggestion</Badge>
+                    <Badge variant="purple">Cell group suggestion</Badge>
                   )}
                 </div>
                 {submission.ai_processing_notes && (
