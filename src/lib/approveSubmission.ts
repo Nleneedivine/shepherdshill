@@ -63,8 +63,8 @@ export async function approveSubmission(input: ApprovalInput): Promise<ApprovalR
     const { data, error } = await supabase.rpc("approve_member_submission", {
       p_submission_id: input.submissionId,
       p_edited: (input.editedData as never) ?? {},
-      p_confirmed_cell_group_id: input.confirmedCellGroupId ?? null,
-    });
+      ...(input.confirmedCellGroupId ? { p_confirmed_cell_group_id: input.confirmedCellGroupId } : {}),
+    } as never);
 
     if (error) return { success: false, error: error.message };
     const row = Array.isArray(data) ? data[0] : data;
