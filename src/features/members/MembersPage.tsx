@@ -189,7 +189,8 @@ export function MembersPage() {
             icon={<Users size={40} className="text-slate-400" />}
             title="No members found"
             description="Adjust your filters or add a new member"
-            action={<Button variant="primary" onClick={() => navigate({ to: "/register" })}><UserPlus size={16} /> Add Member</Button>}
+            actionLabel="Add Member"
+            action={() => navigate({ to: "/register" })}
           />
         ) : filters.view === "grid" ? (
           <MembersGrid items={items} selected={selected} onToggle={toggle} />
