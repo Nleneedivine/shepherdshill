@@ -132,7 +132,6 @@ function KioskPage() {
                   placeholder="Search by name or member ID"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  icon={<Search size={16} />}
                 />
                 <button className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-violet-400">
                   <Mic size={18} />
