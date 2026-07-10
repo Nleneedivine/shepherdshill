@@ -40,6 +40,7 @@ function VerificationsPage() {
   const [rejecting, setRejecting] = useState<Submission | null>(null);
   const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [live, setLive] = useState<"connecting" | "live" | "reconnecting">("connecting");
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search), 300);
@@ -93,17 +94,27 @@ function VerificationsPage() {
   useEffect(() => { void fetchStats(); }, [fetchStats]);
   useEffect(() => { void fetchList(); }, [fetchList]);
 
-  // Realtime: prepend new submissions
+  // Realtime: prepend new submissions, patch updates, track connection state
   useEffect(() => {
+    setLive("connecting");
     const channel = supabase
-      .channel("member_registrations_admin")
+      .channel("verification-queue")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "member_registrations" }, (payload) => {
-        setItems((prev) => [payload.new as unknown as Submission, ...prev]);
-        void fetchStats();
+        const row = payload.new as unknown as Submission;
+        setItems((prev) => [row, ...prev]);
+        setStats((prev) => ({ ...prev, pending: prev.pending + 1 }));
+        showToast(`New registration: ${row.first_name ?? ""} ${row.last_name ?? ""}`.trim(), "info");
       })
-      .subscribe();
-    return () => { void supabase.removeChannel(channel); };
-  }, [fetchStats]);
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "member_registrations" }, (payload) => {
+        const row = payload.new as unknown as Submission;
+        setItems((prev) => prev.map((s) => (s.id === row.id ? row : s)));
+      })
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") setLive("live");
+        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") setLive("reconnecting");
+      });
+    return () => { void supabase.removeChannel(channel); setLive("connecting"); };
+  }, [showToast]);
 
   const handleApprove = async (s: Submission, edited?: Record<string, unknown>) => {
     setApprovingIds((prev) => new Set(prev).add(s.id));
@@ -159,9 +170,15 @@ function VerificationsPage() {
       }}
     >
       <PageWrapper>
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Member Verification Queue</h1>
-          <p className="text-sm text-slate-400 mt-1">{new Date().toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+        <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Member Verification Queue</h1>
+            <p className="text-sm text-slate-400 mt-1">{new Date().toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+          </div>
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs">
+            <span className={`h-2 w-2 rounded-full ${live === "live" ? "bg-emerald-400 animate-pulse" : live === "reconnecting" ? "bg-amber-400 animate-pulse" : "bg-slate-500"}`} />
+            <span className="text-slate-300">{live === "live" ? "Live" : live === "reconnecting" ? "Reconnecting…" : "Connecting…"}</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

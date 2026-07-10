@@ -182,6 +182,8 @@ export type Database = {
           created_at: string
           face_template: string | null
           fingerprint_template: string | null
+          has_face: boolean
+          has_fingerprint: boolean
           has_qr: boolean
           id: string
           member_id: string
@@ -192,6 +194,8 @@ export type Database = {
           created_at?: string
           face_template?: string | null
           fingerprint_template?: string | null
+          has_face?: boolean
+          has_fingerprint?: boolean
           has_qr?: boolean
           id?: string
           member_id: string
@@ -202,6 +206,8 @@ export type Database = {
           created_at?: string
           face_template?: string | null
           fingerprint_template?: string | null
+          has_face?: boolean
+          has_fingerprint?: boolean
           has_qr?: boolean
           id?: string
           member_id?: string
@@ -437,7 +443,9 @@ export type Database = {
           id: string
           is_super_admin: boolean
           member_id: string | null
+          notification_opt_out: boolean
           phone: string | null
+          preferred_notification_channel: string
           updated_at: string
         }
         Insert: {
@@ -448,7 +456,9 @@ export type Database = {
           id: string
           is_super_admin?: boolean
           member_id?: string | null
+          notification_opt_out?: boolean
           phone?: string | null
+          preferred_notification_channel?: string
           updated_at?: string
         }
         Update: {
@@ -459,7 +469,9 @@ export type Database = {
           id?: string
           is_super_admin?: boolean
           member_id?: string | null
+          notification_opt_out?: boolean
           phone?: string | null
+          preferred_notification_channel?: string
           updated_at?: string
         }
         Relationships: [
@@ -543,24 +555,41 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          assigned_at: string
+          assigned_by: string | null
+          branch_id: string | null
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          branch_id?: string | null
           created_at?: string
           id?: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          branch_id?: string | null
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -578,6 +607,15 @@ export type Database = {
           member_id: string
         }[]
       }
+      assign_user_role: {
+        Args: {
+          p_branch_id?: string
+          p_new_role: Database["public"]["Enums"]["app_role"]
+          p_target_user_id: string
+        }
+        Returns: undefined
+      }
+      grant_super_admin_by_email: { Args: { p_email: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
