@@ -79,6 +79,45 @@ export type Database = {
           },
         ]
       }
+      department_members: {
+        Row: {
+          department_id: string
+          id: string
+          joined_at: string
+          member_id: string
+          role_title: string | null
+        }
+        Insert: {
+          department_id: string
+          id?: string
+          joined_at?: string
+          member_id: string
+          role_title?: string | null
+        }
+        Update: {
+          department_id?: string
+          id?: string
+          joined_at?: string
+          member_id?: string
+          role_title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_members_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_members_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           created_at: string
@@ -103,45 +142,178 @@ export type Database = {
         }
         Relationships: []
       }
+      incomplete_profiles: {
+        Row: {
+          completeness_score: number
+          created_at: string
+          id: string
+          member_id: string
+          missing_fields: Json
+          updated_at: string
+        }
+        Insert: {
+          completeness_score?: number
+          created_at?: string
+          id?: string
+          member_id: string
+          missing_fields?: Json
+          updated_at?: string
+        }
+        Update: {
+          completeness_score?: number
+          created_at?: string
+          id?: string
+          member_id?: string
+          missing_fields?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incomplete_profiles_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_biometrics: {
+        Row: {
+          created_at: string
+          face_template: string | null
+          fingerprint_template: string | null
+          has_qr: boolean
+          id: string
+          member_id: string
+          qr_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          face_template?: string | null
+          fingerprint_template?: string | null
+          has_qr?: boolean
+          id?: string
+          member_id: string
+          qr_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          face_template?: string | null
+          fingerprint_template?: string | null
+          has_qr?: boolean
+          id?: string
+          member_id?: string
+          qr_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_biometrics_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_registrations: {
         Row: {
+          ai_cell_group_suggestion_id: string | null
+          ai_completeness_score: number | null
+          ai_duplicate_flag: boolean
+          ai_family_match_suggestions: Json
+          ai_processing_notes: string | null
+          branch_id: string | null
           cell_group_id: string | null
           church_life: Json
           completeness_score: number | null
           consent: Json
           contact: Json
           created_at: string
+          created_member_id: string | null
           family: Json
+          first_name: string | null
           id: string
+          last_name: string | null
+          membership_stage: string | null
           personal: Json
+          phone_primary: string | null
+          profile_photo_url: string | null
+          rejection_reason: string | null
           spiritual: Json
           status: string
+          submission_method: string
+          submitted_at: string
+          updated_at: string
+          verification_status: string
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
+          ai_cell_group_suggestion_id?: string | null
+          ai_completeness_score?: number | null
+          ai_duplicate_flag?: boolean
+          ai_family_match_suggestions?: Json
+          ai_processing_notes?: string | null
+          branch_id?: string | null
           cell_group_id?: string | null
           church_life: Json
           completeness_score?: number | null
           consent: Json
           contact: Json
           created_at?: string
+          created_member_id?: string | null
           family: Json
+          first_name?: string | null
           id?: string
+          last_name?: string | null
+          membership_stage?: string | null
           personal: Json
+          phone_primary?: string | null
+          profile_photo_url?: string | null
+          rejection_reason?: string | null
           spiritual: Json
           status?: string
+          submission_method?: string
+          submitted_at?: string
+          updated_at?: string
+          verification_status?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
+          ai_cell_group_suggestion_id?: string | null
+          ai_completeness_score?: number | null
+          ai_duplicate_flag?: boolean
+          ai_family_match_suggestions?: Json
+          ai_processing_notes?: string | null
+          branch_id?: string | null
           cell_group_id?: string | null
           church_life?: Json
           completeness_score?: number | null
           consent?: Json
           contact?: Json
           created_at?: string
+          created_member_id?: string | null
           family?: Json
+          first_name?: string | null
           id?: string
+          last_name?: string | null
+          membership_stage?: string | null
           personal?: Json
+          phone_primary?: string | null
+          profile_photo_url?: string | null
+          rejection_reason?: string | null
           spiritual?: Json
           status?: string
+          submission_method?: string
+          submitted_at?: string
+          updated_at?: string
+          verification_status?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: [
           {
@@ -169,12 +341,14 @@ export type Database = {
           last_name: string
           marital_status: string | null
           member_code: string | null
+          membership_stage: string | null
           membership_status: string | null
           middle_name: string | null
           phone_primary: string | null
           phone_secondary: string | null
           preferred_name: string | null
           profile_photo_url: string | null
+          registration_id: string | null
           state: string | null
           updated_at: string
         }
@@ -193,12 +367,14 @@ export type Database = {
           last_name: string
           marital_status?: string | null
           member_code?: string | null
+          membership_stage?: string | null
           membership_status?: string | null
           middle_name?: string | null
           phone_primary?: string | null
           phone_secondary?: string | null
           preferred_name?: string | null
           profile_photo_url?: string | null
+          registration_id?: string | null
           state?: string | null
           updated_at?: string
         }
@@ -217,12 +393,14 @@ export type Database = {
           last_name?: string
           marital_status?: string | null
           member_code?: string | null
+          membership_stage?: string | null
           membership_status?: string | null
           middle_name?: string | null
           phone_primary?: string | null
           phone_secondary?: string | null
           preferred_name?: string | null
           profile_photo_url?: string | null
+          registration_id?: string | null
           state?: string | null
           updated_at?: string
         }
@@ -239,6 +417,13 @@ export type Database = {
             columns: ["cell_group_id"]
             isOneToOne: false
             referencedRelation: "cell_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "members_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "member_registrations"
             referencedColumns: ["id"]
           },
         ]
@@ -294,6 +479,68 @@ export type Database = {
           },
         ]
       }
+      spiritual_journey: {
+        Row: {
+          id: string
+          member_id: string
+          milestone: string
+          notes: string | null
+          recorded_at: string
+          status: string
+        }
+        Insert: {
+          id?: string
+          member_id: string
+          milestone: string
+          notes?: string | null
+          recorded_at?: string
+          status: string
+        }
+        Update: {
+          id?: string
+          member_id?: string
+          milestone?: string
+          notes?: string | null
+          recorded_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spiritual_journey_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json
+          id: string
+          performed_by: string | null
+          performed_by_name: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json
+          id?: string
+          performed_by?: string | null
+          performed_by_name?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          performed_by?: string | null
+          performed_by_name?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -320,6 +567,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_member_submission: {
+        Args: {
+          p_confirmed_cell_group_id?: string
+          p_edited?: Json
+          p_submission_id: string
+        }
+        Returns: {
+          member_code: string
+          member_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
