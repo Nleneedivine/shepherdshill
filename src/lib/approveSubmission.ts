@@ -51,7 +51,7 @@ export async function approveSubmission(input: ApprovalInput): Promise<ApprovalR
       return {
         success: true,
         memberId: existingId,
-        memberCode: (mem as { member_code?: string } | null)?.member_code,
+        memberCode: (mem as { member_code?: string | null } | null)?.member_code ?? undefined,
       };
     }
 

@@ -24,7 +24,7 @@ export function RejectModal({ open, onClose, onConfirm }: Props) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Reject Submission">
+    <Modal isOpen={open} onClose={onClose} title="Reject Submission">
       <div className="space-y-4">
         <Textarea
           label="Rejection reason"
