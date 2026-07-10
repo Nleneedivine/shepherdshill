@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Camera, Fingerprint, Mic, QrCode, Search } from "lucide-react";
+import { Camera, Fingerprint, Mic, QrCode } from "lucide-react";
 import { Input, Button } from "@/components/ds";
 
 export const Route = createFileRoute("/kiosk")({

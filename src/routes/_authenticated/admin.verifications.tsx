@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { CheckCircle2, Filter, LayoutDashboard, Search, ShieldCheck, Users, XCircle } from "lucide-react";
+import { CheckCircle2, Filter, LayoutDashboard, ShieldCheck, Users, XCircle } from "lucide-react";
 import { AppLayout, PageWrapper, StatCard, Card, Input, Select, EmptyState, Button, Spinner } from "@/components/ds";
 import { useToastContext } from "@/components/ds/Toast";
 import { supabase } from "@/integrations/supabase/client";
