@@ -62,7 +62,7 @@ export function useMembers(filters: MemberFilterState) {
       const { data, count, error: dbErr } = await q;
       if (dbErr) throw dbErr;
 
-      const rawMembers = (data ?? []) as unknown as (Member & { cell_groups: { name: string } | null })[];
+      const rawMembers = (data ?? []) as unknown as (Member & { cell_groups: { name: string } | null; membership_stage: string | null; created_at: string })[];
       const memberIds = rawMembers.map((m) => m.id);
 
       // Department joins + biometrics enrollment
