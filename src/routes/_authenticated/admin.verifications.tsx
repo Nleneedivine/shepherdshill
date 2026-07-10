@@ -237,7 +237,7 @@ function VerificationsPage() {
         {selectedList.length > 0 && (
           <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-30 bg-[#0d1117] border border-white/10 rounded-2xl px-4 py-3 flex items-center gap-4 shadow-2xl">
             <span className="text-sm text-white">{selectedList.length} selected</span>
-            <Button size="sm" variant="success" disabled={!canBulkApprove} onClick={handleBulkApprove}>
+            <Button size="sm" variant="primary" disabled={!canBulkApprove} onClick={handleBulkApprove}>
               <CheckCircle2 size={14} /> Bulk Approve
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>

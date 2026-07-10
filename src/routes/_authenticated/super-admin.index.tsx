@@ -49,8 +49,8 @@ function SystemOverview() {
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Total Members" value={members} icon={<Users size={20} />} />
         <StatCard label="Active Branches" value={branches} icon={<Building2 size={20} />} />
-        <StatCard label="System Health" value="99.9%" icon={<Activity size={20} />} glowColor="green" />
-        <StatCard label="Database Size" value="calculating…" icon={<Database size={20} />} />
+        <StatCard label="System Health" value={99.9} unit="%" icon={<Activity size={20} />} glowColor="green" />
+        <StatCard label="Database Size" value={0} unit="MB" icon={<Database size={20} />} />
       </section>
 
       <section className="mb-8">
