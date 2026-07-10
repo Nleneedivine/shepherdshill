@@ -167,7 +167,7 @@ function VerificationsPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatCard label="Pending" value={stats.pending} icon={<Filter size={20} />} glowColor="amber" />
           <StatCard label="AI Cleared" value={stats.aiCleared} icon={<ShieldCheck size={20} />} />
-          <StatCard label="Flagged" value={stats.flagged} icon={<XCircle size={20} />} glowColor="rose" />
+          <StatCard label="Flagged" value={stats.flagged} icon={<XCircle size={20} />} glowColor="red" />
           <StatCard label="Approved Today" value={stats.approvedToday} icon={<CheckCircle2 size={20} />} glowColor="green" />
         </div>
 
@@ -188,7 +188,7 @@ function VerificationsPage() {
               <option value="usher">Usher Assisted</option>
               <option value="admin">Admin Entry</option>
             </Select>
-            <Input label="Search" placeholder="Name or phone…" value={search} onChange={(e) => setSearch(e.target.value)} icon={<Search size={14} />} />
+            <Input label="Search" placeholder="Name or phone…" value={search} onChange={(e) => setSearch(e.target.value)} />
             <Input label="From" type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setPage(0); }} />
             <Input label="To" type="date" value={toDate} onChange={(e) => { setToDate(e.target.value); setPage(0); }} />
           </div>
