@@ -153,7 +153,7 @@ export function ReviewPanel({ submission, onClose, onApprove, onReject, onReques
               <section>
                 <h3 className="text-xs uppercase text-slate-400 mb-1">AI Flags</h3>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant={submission.ai_duplicate_flag ? "amber" : "green"}>
+                  <Badge variant={submission.ai_duplicate_flag ? "warning" : "success"}>
                     Duplicate: {submission.ai_duplicate_flag ? "yes" : "no"}
                   </Badge>
                   <Badge variant="info">Score: {submission.ai_completeness_score ?? 0}%</Badge>
