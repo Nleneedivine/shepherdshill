@@ -94,17 +94,27 @@ function VerificationsPage() {
   useEffect(() => { void fetchStats(); }, [fetchStats]);
   useEffect(() => { void fetchList(); }, [fetchList]);
 
-  // Realtime: prepend new submissions
+  // Realtime: prepend new submissions, patch updates, track connection state
   useEffect(() => {
+    setLive("connecting");
     const channel = supabase
-      .channel("member_registrations_admin")
+      .channel("verification-queue")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "member_registrations" }, (payload) => {
-        setItems((prev) => [payload.new as unknown as Submission, ...prev]);
-        void fetchStats();
+        const row = payload.new as unknown as Submission;
+        setItems((prev) => [row, ...prev]);
+        setStats((prev) => ({ ...prev, pending: prev.pending + 1 }));
+        showToast(`New registration: ${row.first_name ?? ""} ${row.last_name ?? ""}`.trim(), "info");
       })
-      .subscribe();
-    return () => { void supabase.removeChannel(channel); };
-  }, [fetchStats]);
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "member_registrations" }, (payload) => {
+        const row = payload.new as unknown as Submission;
+        setItems((prev) => prev.map((s) => (s.id === row.id ? row : s)));
+      })
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") setLive("live");
+        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") setLive("reconnecting");
+      });
+    return () => { void supabase.removeChannel(channel); setLive("connecting"); };
+  }, [showToast]);
 
   const handleApprove = async (s: Submission, edited?: Record<string, unknown>) => {
     setApprovingIds((prev) => new Set(prev).add(s.id));
