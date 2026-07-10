@@ -25,13 +25,13 @@ function relativeTime(iso: string) {
   return `${days}d ago`;
 }
 
-const statusColor: Record<string, "amber" | "green" | "rose" | "violet" | "blue"> = {
-  pending: "amber",
-  ai_cleared: "blue",
-  flagged: "amber",
-  held: "amber",
-  approved: "green",
-  rejected: "rose",
+const statusColor: Record<string, "warning" | "success" | "danger" | "purple" | "info"> = {
+  pending: "warning",
+  ai_cleared: "info",
+  flagged: "warning",
+  held: "warning",
+  approved: "success",
+  rejected: "danger",
 };
 
 export function SubmissionCard({ submission, selected, onSelect, onReview, onApprove, onReject, approving }: Props) {
@@ -67,7 +67,7 @@ export function SubmissionCard({ submission, selected, onSelect, onReview, onApp
         {submission.membership_stage && (
           <Badge variant="purple">{submission.membership_stage.replace(/_/g, " ")}</Badge>
         )}
-        <Badge variant={score >= 80 ? "green" : score >= 50 ? "amber" : "rose"}>{score}% complete</Badge>
+        <Badge variant={score >= 80 ? "success" : score >= 50 ? "warning" : "danger"}>{score}% complete</Badge>
         {submission.ai_duplicate_flag && <Badge variant="warning">Possible duplicate</Badge>}
       </div>
 
@@ -77,7 +77,7 @@ export function SubmissionCard({ submission, selected, onSelect, onReview, onApp
           <Eye size={14} /> Review
         </Button>
         {canQuickApprove && (
-          <Button size="sm" variant="success" onClick={onApprove} loading={approving}>
+          <Button size="sm" variant="primary" onClick={onApprove} loading={approving}>
             <Check size={14} /> Approve
           </Button>
         )}
