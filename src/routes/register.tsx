@@ -4,8 +4,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Church, Send } from "lucide-react";
 import { Button } from "@/components/ds";
 import { useToastContext } from "@/components/ds/Toast";
-import { supabase } from "@/integrations/supabase/client";
-import { initialRegistrationData, completenessScore } from "@/lib/registration";
+import { submitRegistration } from "@/lib/submitRegistration";
+import { initialRegistrationData } from "@/lib/registration";
 import { isValidNigerianPhone } from "@/lib/nigeria";
 import { formReducer, type FormState } from "@/features/register/reducer";
 import { StepIndicator } from "@/features/register/StepIndicator";
@@ -81,27 +81,13 @@ function RegisterPage() {
       return;
     }
     dispatch({ type: "SET_SUBMITTING", value: true });
-    try {
-      const { photoFile: _pf, photoPreview: _pp, ...personal } = state.data.personal;
-      void _pf; void _pp;
-      const payload = {
-        personal,
-        contact: state.data.contact,
-        family: state.data.family,
-        church_life: state.data.churchLife,
-        spiritual: state.data.spiritual,
-        consent: state.data.consent,
-        cell_group_id: state.data.churchLife.cellGroupId,
-        status: "pending",
-        completeness_score: completenessScore(state.data),
-      } as never;
-      const { data, error } = await supabase.from("member_registrations").insert(payload).select("id").single();
-      if (error) throw error;
-      dispatch({ type: "SET_SUBMITTED", id: (data as { id: string }).id });
+    const result = await submitRegistration(state.data);
+    if (result.success && result.submissionId) {
+      dispatch({ type: "SET_SUBMITTED", id: result.submissionId });
       showToast("Registration submitted!", "success");
-    } catch (err) {
+    } else {
       dispatch({ type: "SET_SUBMITTING", value: false });
-      showToast(err instanceof Error ? err.message : "Submission failed", "error");
+      showToast(result.error ?? "Submission failed", "error");
     }
   };
 
