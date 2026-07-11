@@ -140,3 +140,24 @@
 @utility orb-3 {
   animation: orb-float-3 15s ease-in-out infinite;
 }
+
+@keyframes orbFloat1 { from { transform: translate(0,0); } to { transform: translate(40px, 30px); } }
+@keyframes orbFloat2 { from { transform: translate(0,0); } to { transform: translate(-30px, -40px); } }
+@keyframes orbFloat3 { from { transform: translate(0,0); } to { transform: translate(-20px, 25px); } }
+@keyframes orbFloat4 { from { transform: translate(0,0); } to { transform: translate(35px, -20px); } }
+
+@keyframes logoGlow {
+  0%   { background: radial-gradient(circle, rgba(45,27,142,0.5) 0%, transparent 70%); }
+  33%  { background: radial-gradient(circle, rgba(204,0,0,0.5) 0%, transparent 70%); }
+  66%  { background: radial-gradient(circle, rgba(26,122,42,0.5) 0%, transparent 70%); }
+  100% { background: radial-gradient(circle, rgba(45,27,142,0.5) 0%, transparent 70%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
