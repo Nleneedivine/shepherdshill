@@ -35,7 +35,7 @@ export function LogoHero() {
         opacity: introOpacity,
       };
 
-  const transition = reduce
+  const transition: any = reduce
     ? { duration: 0 }
     : skipIntro
       ? { y: { duration: 3, ease: "easeInOut", repeat: Infinity } }
