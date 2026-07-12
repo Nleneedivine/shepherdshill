@@ -70,7 +70,9 @@ export function formatPhoneNumber(phone: string): string {
   return cleaned
 }
 
-export function calculateCompletenessScore(data: RegistrationFormData): number {
+export function calculateCompletenessScore(
+  data: RegistrationFormData
+): number {
   let score = 0
   if (data.personal.firstName) score += 10
   if (data.personal.lastName) score += 10
@@ -87,23 +89,56 @@ export function calculateCompletenessScore(data: RegistrationFormData): number {
   return Math.min(score, 100)
 }
 
+async function getBranchId(): Promise<string | null> {
+  // Try environment variable first
+  const envBranchId = import.meta.env.VITE_DEFAULT_BRANCH_ID
+  if (envBranchId) return envBranchId
+
+  // Fall back to querying the database
+  try {
+    const { data } = await supabase
+      .from('branches')
+      .select('id')
+      .eq('name', 'Main Campus')
+      .single()
+    if (data?.id) return data.id
+  } catch {
+    // Try getting any branch
+  }
+
+  try {
+    const { data } = await supabase
+      .from('branches')
+      .select('id')
+      .limit(1)
+      .single()
+    return data?.id || null
+  } catch {
+    return null
+  }
+}
+
 export async function submitRegistration(
   data: RegistrationFormData
 ): Promise<SubmissionResult> {
-  let photoUrl: string | null = null
+  console.log('[REG] Step 1 - Starting registration submission...')
 
-  // Step 1: Upload photo if provided
+  // Step 1 — Upload photo (non-blocking)
+  let photoUrl: string | null = null
   if (data.personal.photoFile) {
     try {
       const file = data.personal.photoFile
       const ext = file.name.split('.').pop() || 'jpg'
-      const fileName = `onboarding/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const fileName = `onboarding/${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2)}.${ext}`
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase
+        .storage
         .from('member-photos')
         .upload(fileName, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: false,
         })
 
       if (!uploadError && uploadData) {
@@ -111,166 +146,187 @@ export async function submitRegistration(
           .from('member-photos')
           .getPublicUrl(uploadData.path)
         photoUrl = urlData?.publicUrl || null
+        console.log('[REG] Photo uploaded successfully:', photoUrl)
       }
-      // If photo upload fails, we continue without it
-    } catch {
-      // Photo upload failure is non-blocking
-      console.warn('Photo upload failed, continuing without photo')
+    } catch (photoError) {
+      console.warn('[REG] Photo upload failed (non-blocking):', photoError)
     }
   }
 
-  // Step 2: Calculate completeness score
+  // Step 2 — Get branch ID
+  const branchId = await getBranchId()
+  console.log('[REG] Step 2 - Branch ID:', branchId)
+
+  // Step 3 — Calculate completeness score
   const completenessScore = calculateCompletenessScore(data)
+  console.log('[REG] Step 3 - Completeness score:', completenessScore)
 
-  // Step 3: Get branch ID
-  // Try environment variable first, then query the first branch
-  let branchId = import.meta.env.VITE_DEFAULT_BRANCH_ID
-
-  if (!branchId) {
-    try {
-      const { data: branchData } = await supabase
-        .from('branches')
-        .select('id')
-        .limit(1)
-        .single()
-      branchId = branchData?.id || null
-    } catch {
-      branchId = null
-    }
-  }
-
-  // Step 4: Build the submission object
-  // Map to whatever columns actually exist in your table
-  const submission: Record<string, unknown> = {
-    // Branch
-    branch_id: branchId,
-
-    // Personal
+  // Step 4 — Build submission object
+  // IMPORTANT: This table stores data as JSONB blobs
+  // The structure matches exactly what the table columns expect
+  const submission = {
+    // Top level fields (actual columns in the table)
     first_name: data.personal.firstName,
-    middle_name: data.personal.middleName || null,
     last_name: data.personal.lastName,
-    preferred_name: data.personal.preferredName || null,
-    date_of_birth: data.personal.dob || null,
-    gender: data.personal.gender || null,
-    profile_photo_url: photoUrl,
-
-    // Contact
     phone_primary: data.contact.phonePrimary
       ? formatPhoneNumber(data.contact.phonePrimary)
       : null,
-    phone_secondary: data.contact.phoneSecondary
-      ? formatPhoneNumber(data.contact.phoneSecondary)
-      : null,
-    email: data.contact.email || null,
-    address: data.contact.address || null,
-    city: data.contact.city || null,
-    state: data.contact.state || null,
-    country: data.contact.country || 'Nigeria',
-
-    // Family (stored as JSON)
-    family_info: {
-      maritalStatus: data.family.maritalStatus,
-      spouseName: data.family.spouseName,
-      spousePhone: data.family.spousePhone,
-      spouseIsMember: data.family.spouseIsMember,
-      children: data.family.children,
-      otherFamilyMembers: data.family.otherFamilyMembers,
-    },
-
-    // Church life
-    membership_stage_self_reported: data.churchLife.membershipStage || null,
+    profile_photo_url: photoUrl,
+    branch_id: branchId,
     cell_group_id: data.churchLife.cellGroupId || null,
-    cell_group_text: data.churchLife.cellGroupText || null,
-    department_ids: data.churchLife.departmentIds,
-    how_they_heard: data.churchLife.howHeard || null,
+    membership_stage: data.churchLife.membershipStage || null,
+    status: 'pending',
+    verification_status: 'pending',
+    submission_method: 'self',
+    completeness_score: completenessScore,
+    ai_completeness_score: completenessScore,
+    submitted_at: new Date().toISOString(),
 
-    // Spiritual (stored as JSON)
-    spiritual_journey: {
-      salvation: data.spiritual.salvation,
-      baptised: data.spiritual.baptised,
-      believersClass: data.spiritual.believersClass,
-      baptismalClass: data.spiritual.baptismalClass,
-      workerTraining: data.spiritual.workerTraining,
-      otherTraining: data.spiritual.otherTraining,
+    // JSONB columns — store as structured objects
+    personal: {
+      firstName: data.personal.firstName,
+      middleName: data.personal.middleName || null,
+      lastName: data.personal.lastName,
+      preferredName: data.personal.preferredName || null,
+      dateOfBirth: data.personal.dob || null,
+      gender: data.personal.gender || null,
+      photoUrl: photoUrl,
     },
 
-    // Consent
-    consent_given: data.consent.churchUse,
-    photo_consent: data.consent.photoConsent,
+    contact: {
+      phonePrimary: data.contact.phonePrimary
+        ? formatPhoneNumber(data.contact.phonePrimary)
+        : null,
+      phoneSecondary: data.contact.phoneSecondary
+        ? formatPhoneNumber(data.contact.phoneSecondary)
+        : null,
+      email: data.contact.email || null,
+      address: data.contact.address || null,
+      city: data.contact.city || null,
+      state: data.contact.state || null,
+      country: data.contact.country || 'Nigeria',
+    },
 
-    // System fields
-    submission_method: 'self',
-    verification_status: 'pending',
-    ai_completeness_score: completenessScore,
+    family: {
+      maritalStatus: data.family.maritalStatus || null,
+      spouseName: data.family.spouseName || null,
+      spousePhone: data.family.spousePhone
+        ? formatPhoneNumber(data.family.spousePhone)
+        : null,
+      spouseIsMember: data.family.spouseIsMember || null,
+      children: data.family.children || [],
+      otherFamilyMembers: data.family.otherFamilyMembers || null,
+    },
+
+    church_life: {
+      attendanceDuration: data.churchLife.attendanceDuration || null,
+      howHeard: data.churchLife.howHeard || null,
+      membershipStage: data.churchLife.membershipStage || null,
+      cellGroupId: data.churchLife.cellGroupId || null,
+      cellGroupText: data.churchLife.cellGroupText || null,
+      departmentIds: data.churchLife.departmentIds || [],
+      roleTitle: data.churchLife.roleTitle || null,
+    },
+
+    spiritual: {
+      salvation: data.spiritual.salvation || null,
+      baptised: data.spiritual.baptised || null,
+      believersClass: data.spiritual.believersClass || null,
+      baptismalClass: data.spiritual.baptismalClass || null,
+      workerTraining: data.spiritual.workerTraining || null,
+      otherTraining: data.spiritual.otherTraining || null,
+    },
+
+    consent: {
+      infoAccurate: data.consent.infoAccurate,
+      churchUse: data.consent.churchUse,
+      photoConsent: data.consent.photoConsent,
+    },
   }
 
-  // Step 5: Submit to Supabase
+  console.log('[REG] Step 4 - Submission object built:', submission)
+
+  // Step 5 — Submit to Supabase
   try {
+    console.log('[REG] Step 5 - Submitting to Supabase...')
+
     const { data: result, error } = await supabase
       .from('member_registrations')
       .insert(submission)
       .select('id')
       .single()
 
-    if (error) {
-      console.error('Supabase insert error:', error)
+    console.log('[REG] Step 5 - Supabase response:', { result, error })
 
-      // Handle specific errors with friendly messages
+    if (error) {
+      console.error('[REG] Supabase error:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      })
+
+      // Handle specific errors
       if (error.code === '23505') {
-        // Unique constraint violation — duplicate phone/email
         if (error.message.includes('phone')) {
           return {
             success: false,
             error:
-              'This phone number is already registered. If you are already a member, please contact the church office.',
+              'This phone number is already registered. ' +
+              'If you are already a member, please contact the church office.',
           }
         }
-        if (error.message.includes('email')) {
-          return {
-            success: false,
-            error:
-              'This email address is already registered. Please use a different email or contact the church office.',
-          }
-        }
-        return {
-          success: false,
-          error: 'This information is already in our system. Please contact the church office.',
-        }
-      }
-
-      if (error.code === '42501' || error.message.includes('permission')) {
         return {
           success: false,
           error:
-            'Registration is temporarily unavailable. Please try again in a few minutes or speak to an usher.',
+            'This information is already in our system. ' +
+            'Please contact the church office.',
+        }
+      }
+
+      if (
+        error.code === '42501' ||
+        error.message?.includes('permission') ||
+        error.message?.includes('policy')
+      ) {
+        return {
+          success: false,
+          error:
+            'Registration is temporarily unavailable. ' +
+            'Please speak to an usher or try again in a few minutes.',
         }
       }
 
       if (error.code === 'PGRST116') {
-        // Column not found — schema mismatch
         return {
           success: false,
           error:
-            'A technical error occurred. Our team has been notified. Please try again or speak to an usher.',
+            'A technical error occurred. ' +
+            'Please speak to an usher who can register you manually.',
         }
       }
 
       return {
         success: false,
-        error: 'Something went wrong. Please check your connection and try again.',
+        error:
+          `Registration failed: ${error.message || 'Unknown error'}. ` +
+          'Please try again or speak to an usher.',
       }
     }
+
+    console.log('[REG] Step 5 - Success! Member ID:', result?.id)
 
     return {
       success: true,
       submissionId: result?.id,
     }
   } catch (networkError) {
-    console.error('Network error during registration:', networkError)
+    console.error('[REG] Network error:', networkError)
     return {
       success: false,
       error:
-        'Could not connect to the server. Please check your internet connection and try again.',
+        'Could not connect to the server. ' +
+        'Please check your internet connection and try again.',
     }
   }
 }
