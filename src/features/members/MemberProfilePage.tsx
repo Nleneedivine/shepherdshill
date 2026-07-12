@@ -391,10 +391,10 @@ function GivingTab() {
   return (
     <Card title="Giving summary">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <StatCard label="This year" value="₦0" />
-        <StatCard label="Last year" value="₦0" />
-        <StatCard label="Tithes" value="₦0" />
-        <StatCard label="Offerings" value="₦0" />
+        <TextStat label="This year" value="₦0" />
+        <TextStat label="Last year" value="₦0" />
+        <TextStat label="Tithes" value="₦0" />
+        <TextStat label="Offerings" value="₦0" />
       </div>
       <div className="text-sm text-slate-500 text-center py-8">
         Giving history will appear here once the Finance module is set up
