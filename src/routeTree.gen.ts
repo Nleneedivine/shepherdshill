@@ -25,7 +25,10 @@ import { Route as AuthenticatedSuperAdminHealthRouteImport } from './routes/_aut
 import { Route as AuthenticatedSuperAdminFeaturesRouteImport } from './routes/_authenticated/super-admin.features'
 import { Route as AuthenticatedSuperAdminBranchesRouteImport } from './routes/_authenticated/super-admin.branches'
 import { Route as AuthenticatedSuperAdminAuditRouteImport } from './routes/_authenticated/super-admin.audit'
+import { Route as AuthenticatedMembersIdRouteImport } from './routes/_authenticated/members.$id'
 import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
+import { Route as AuthenticatedAdminDraftsRouteImport } from './routes/_authenticated/admin.drafts'
+import { Route as AuthenticatedAdminFormsRegistrationFormRouteImport } from './routes/_authenticated/admin.forms.registration-form'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -114,10 +117,27 @@ const AuthenticatedSuperAdminAuditRoute =
     path: '/audit',
     getParentRoute: () => AuthenticatedSuperAdminRoute,
   } as any)
+const AuthenticatedMembersIdRoute = AuthenticatedMembersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedMembersRoute,
+} as any)
 const AuthenticatedAdminVerificationsRoute =
   AuthenticatedAdminVerificationsRouteImport.update({
     id: '/admin/verifications',
     path: '/admin/verifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminDraftsRoute =
+  AuthenticatedAdminDraftsRouteImport.update({
+    id: '/admin/drafts',
+    path: '/admin/drafts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminFormsRegistrationFormRoute =
+  AuthenticatedAdminFormsRegistrationFormRouteImport.update({
+    id: '/admin/forms/registration-form',
+    path: '/admin/forms/registration-form',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -127,9 +147,11 @@ export interface FileRoutesByFullPath {
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/members': typeof AuthenticatedMembersRoute
+  '/members': typeof AuthenticatedMembersRouteWithChildren
   '/super-admin': typeof AuthenticatedSuperAdminRouteWithChildren
+  '/admin/drafts': typeof AuthenticatedAdminDraftsRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/members/$id': typeof AuthenticatedMembersIdRoute
   '/super-admin/audit': typeof AuthenticatedSuperAdminAuditRoute
   '/super-admin/branches': typeof AuthenticatedSuperAdminBranchesRoute
   '/super-admin/features': typeof AuthenticatedSuperAdminFeaturesRoute
@@ -138,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/super-admin/settings': typeof AuthenticatedSuperAdminSettingsRoute
   '/super-admin/users': typeof AuthenticatedSuperAdminUsersRoute
   '/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
+  '/admin/forms/registration-form': typeof AuthenticatedAdminFormsRegistrationFormRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -145,8 +168,10 @@ export interface FileRoutesByTo {
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/members': typeof AuthenticatedMembersRoute
+  '/members': typeof AuthenticatedMembersRouteWithChildren
+  '/admin/drafts': typeof AuthenticatedAdminDraftsRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/members/$id': typeof AuthenticatedMembersIdRoute
   '/super-admin/audit': typeof AuthenticatedSuperAdminAuditRoute
   '/super-admin/branches': typeof AuthenticatedSuperAdminBranchesRoute
   '/super-admin/features': typeof AuthenticatedSuperAdminFeaturesRoute
@@ -155,6 +180,7 @@ export interface FileRoutesByTo {
   '/super-admin/settings': typeof AuthenticatedSuperAdminSettingsRoute
   '/super-admin/users': typeof AuthenticatedSuperAdminUsersRoute
   '/super-admin': typeof AuthenticatedSuperAdminIndexRoute
+  '/admin/forms/registration-form': typeof AuthenticatedAdminFormsRegistrationFormRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -164,9 +190,11 @@ export interface FileRoutesById {
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/members': typeof AuthenticatedMembersRoute
+  '/_authenticated/members': typeof AuthenticatedMembersRouteWithChildren
   '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRouteWithChildren
+  '/_authenticated/admin/drafts': typeof AuthenticatedAdminDraftsRoute
   '/_authenticated/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/_authenticated/members/$id': typeof AuthenticatedMembersIdRoute
   '/_authenticated/super-admin/audit': typeof AuthenticatedSuperAdminAuditRoute
   '/_authenticated/super-admin/branches': typeof AuthenticatedSuperAdminBranchesRoute
   '/_authenticated/super-admin/features': typeof AuthenticatedSuperAdminFeaturesRoute
@@ -175,6 +203,7 @@ export interface FileRoutesById {
   '/_authenticated/super-admin/settings': typeof AuthenticatedSuperAdminSettingsRoute
   '/_authenticated/super-admin/users': typeof AuthenticatedSuperAdminUsersRoute
   '/_authenticated/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
+  '/_authenticated/admin/forms/registration-form': typeof AuthenticatedAdminFormsRegistrationFormRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -186,7 +215,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/members'
     | '/super-admin'
+    | '/admin/drafts'
     | '/admin/verifications'
+    | '/members/$id'
     | '/super-admin/audit'
     | '/super-admin/branches'
     | '/super-admin/features'
@@ -195,6 +226,7 @@ export interface FileRouteTypes {
     | '/super-admin/settings'
     | '/super-admin/users'
     | '/super-admin/'
+    | '/admin/forms/registration-form'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -203,7 +235,9 @@ export interface FileRouteTypes {
     | '/register'
     | '/dashboard'
     | '/members'
+    | '/admin/drafts'
     | '/admin/verifications'
+    | '/members/$id'
     | '/super-admin/audit'
     | '/super-admin/branches'
     | '/super-admin/features'
@@ -212,6 +246,7 @@ export interface FileRouteTypes {
     | '/super-admin/settings'
     | '/super-admin/users'
     | '/super-admin'
+    | '/admin/forms/registration-form'
   id:
     | '__root__'
     | '/'
@@ -222,7 +257,9 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/members'
     | '/_authenticated/super-admin'
+    | '/_authenticated/admin/drafts'
     | '/_authenticated/admin/verifications'
+    | '/_authenticated/members/$id'
     | '/_authenticated/super-admin/audit'
     | '/_authenticated/super-admin/branches'
     | '/_authenticated/super-admin/features'
@@ -231,6 +268,7 @@ export interface FileRouteTypes {
     | '/_authenticated/super-admin/settings'
     | '/_authenticated/super-admin/users'
     | '/_authenticated/super-admin/'
+    | '/_authenticated/admin/forms/registration-form'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -355,6 +393,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSuperAdminAuditRouteImport
       parentRoute: typeof AuthenticatedSuperAdminRoute
     }
+    '/_authenticated/members/$id': {
+      id: '/_authenticated/members/$id'
+      path: '/$id'
+      fullPath: '/members/$id'
+      preLoaderRoute: typeof AuthenticatedMembersIdRouteImport
+      parentRoute: typeof AuthenticatedMembersRoute
+    }
     '/_authenticated/admin/verifications': {
       id: '/_authenticated/admin/verifications'
       path: '/admin/verifications'
@@ -362,8 +407,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminVerificationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/drafts': {
+      id: '/_authenticated/admin/drafts'
+      path: '/admin/drafts'
+      fullPath: '/admin/drafts'
+      preLoaderRoute: typeof AuthenticatedAdminDraftsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/forms/registration-form': {
+      id: '/_authenticated/admin/forms/registration-form'
+      path: '/admin/forms/registration-form'
+      fullPath: '/admin/forms/registration-form'
+      preLoaderRoute: typeof AuthenticatedAdminFormsRegistrationFormRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
+
+interface AuthenticatedMembersRouteChildren {
+  AuthenticatedMembersIdRoute: typeof AuthenticatedMembersIdRoute
+}
+
+const AuthenticatedMembersRouteChildren: AuthenticatedMembersRouteChildren = {
+  AuthenticatedMembersIdRoute: AuthenticatedMembersIdRoute,
+}
+
+const AuthenticatedMembersRouteWithChildren =
+  AuthenticatedMembersRoute._addFileChildren(AuthenticatedMembersRouteChildren)
 
 interface AuthenticatedSuperAdminRouteChildren {
   AuthenticatedSuperAdminAuditRoute: typeof AuthenticatedSuperAdminAuditRoute
@@ -395,16 +465,21 @@ const AuthenticatedSuperAdminRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedMembersRoute: typeof AuthenticatedMembersRoute
+  AuthenticatedMembersRoute: typeof AuthenticatedMembersRouteWithChildren
   AuthenticatedSuperAdminRoute: typeof AuthenticatedSuperAdminRouteWithChildren
+  AuthenticatedAdminDraftsRoute: typeof AuthenticatedAdminDraftsRoute
   AuthenticatedAdminVerificationsRoute: typeof AuthenticatedAdminVerificationsRoute
+  AuthenticatedAdminFormsRegistrationFormRoute: typeof AuthenticatedAdminFormsRegistrationFormRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedMembersRoute: AuthenticatedMembersRoute,
+  AuthenticatedMembersRoute: AuthenticatedMembersRouteWithChildren,
   AuthenticatedSuperAdminRoute: AuthenticatedSuperAdminRouteWithChildren,
+  AuthenticatedAdminDraftsRoute: AuthenticatedAdminDraftsRoute,
   AuthenticatedAdminVerificationsRoute: AuthenticatedAdminVerificationsRoute,
+  AuthenticatedAdminFormsRegistrationFormRoute:
+    AuthenticatedAdminFormsRegistrationFormRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
