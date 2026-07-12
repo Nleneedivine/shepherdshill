@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const SESSION_ID_KEY = "session_id";
 const DRAFT_LOCAL_PREFIX = "draft_";
 
 export interface FormDraft {
@@ -21,20 +20,11 @@ export interface UseFormDraftReturn {
   isSaving: boolean;
 }
 
-function getAnonSessionId(): string {
-  if (typeof window === "undefined") return "";
-  let id = window.localStorage.getItem(SESSION_ID_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    window.localStorage.setItem(SESSION_ID_KEY, id);
-  }
-  return id;
-}
-
 /**
  * Auto-save + resume for multi-step forms.
  * Stored in Supabase `form_drafts` (30-day expiry) with localStorage fallback.
- * Anonymous drafts identified by a browser-local session_id.
+ * Every visitor (anonymous or logged in) gets a real Supabase auth uid,
+ * so drafts are scoped by auth.uid() and enforced by RLS server-side.
  */
 export function useFormDraft(formKey: string): UseFormDraftReturn {
   const [draft, setDraft] = useState<FormDraft | null>(null);
@@ -42,43 +32,44 @@ export function useFormDraft(formKey: string): UseFormDraftReturn {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const userIdRef = useRef<string | null>(null);
-  const sessionIdRef = useRef<string>("");
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const { data: sess } = await supabase.auth.getSession();
-        const uid = sess.session?.user.id ?? null;
+        // Get existing session, or create a real anonymous auth session.
+        // This replaces the old client-generated session_id, which could
+        // be spoofed to read/edit anyone else's draft.
+        let { data: sess } = await supabase.auth.getSession();
+        let uid = sess.session?.user.id ?? null;
+
+        if (!uid) {
+          const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
+          if (!anonError && anonData.session) {
+            uid = anonData.session.user.id;
+          }
+        }
+
         userIdRef.current = uid;
-        sessionIdRef.current = uid ? "" : getAnonSessionId();
 
-        let query = supabase
-          .from("form_drafts" as never)
-          .select("form_data, current_step, completeness_score, last_saved_at, expires_at")
-          .eq("form_key" as never, formKey as never)
-          .maybeSingle();
-
-        if (uid) query = supabase.from("form_drafts" as never)
-          .select("form_data, current_step, completeness_score, last_saved_at, expires_at")
-          .eq("user_id" as never, uid as never)
-          .eq("form_key" as never, formKey as never)
-          .maybeSingle();
-        else if (sessionIdRef.current) query = supabase.from("form_drafts" as never)
-          .select("form_data, current_step, completeness_score, last_saved_at, expires_at")
-          .eq("session_id" as never, sessionIdRef.current as never)
-          .eq("form_key" as never, formKey as never)
-          .maybeSingle();
-
-        const { data } = await query;
-        const row = data as {
+        let row: {
           form_data?: Record<string, unknown>;
           current_step?: number;
           completeness_score?: number;
           last_saved_at?: string;
           expires_at?: string;
-        } | null;
+        } | null = null;
+
+        if (uid) {
+          const { data } = await supabase
+            .from("form_drafts" as never)
+            .select("form_data, current_step, completeness_score, last_saved_at, expires_at")
+            .eq("user_id" as never, uid as never)
+            .eq("form_key" as never, formKey as never)
+            .maybeSingle();
+          row = data as typeof row;
+        }
 
         if (row && row.expires_at && new Date(row.expires_at) > new Date()) {
           if (!cancelled) setDraft({
@@ -128,16 +119,6 @@ export function useFormDraft(formKey: string): UseFormDraftReturn {
       const now = new Date();
       const expires = new Date(Date.now() + 30 * 24 * 3600 * 1000);
       const uid = userIdRef.current;
-      const sid = sessionIdRef.current;
-      const payload = {
-        form_key: formKey,
-        form_data: data,
-        current_step: step,
-        completeness_score: score,
-        last_saved_at: now.toISOString(),
-        expires_at: expires.toISOString(),
-        ...(uid ? { user_id: uid } : { session_id: sid }),
-      };
 
       // localStorage backup first (always succeeds; used by beforeunload)
       if (typeof window !== "undefined") {
@@ -151,12 +132,22 @@ export function useFormDraft(formKey: string): UseFormDraftReturn {
         }
       }
 
+      if (!uid) return; // no verified identity yet, localStorage backup still saved above
+
+      const payload = {
+        form_key: formKey,
+        form_data: data,
+        current_step: step,
+        completeness_score: score,
+        last_saved_at: now.toISOString(),
+        expires_at: expires.toISOString(),
+        user_id: uid,
+      };
+
       try {
         await supabase
           .from("form_drafts" as never)
-          .upsert(payload as never, {
-            onConflict: uid ? "user_id,form_key" : "session_id,form_key",
-          });
+          .upsert(payload as never, { onConflict: "user_id,form_key" });
       } catch {
         /* localStorage already saved above */
       }
@@ -191,11 +182,13 @@ export function useFormDraft(formKey: string): UseFormDraftReturn {
     }
     try {
       const uid = userIdRef.current;
-      const sid = sessionIdRef.current;
-      let q = supabase.from("form_drafts" as never).delete().eq("form_key" as never, formKey as never);
-      if (uid) q = q.eq("user_id" as never, uid as never);
-      else if (sid) q = q.eq("session_id" as never, sid as never);
-      await q;
+      if (uid) {
+        await supabase
+          .from("form_drafts" as never)
+          .delete()
+          .eq("user_id" as never, uid as never)
+          .eq("form_key" as never, formKey as never);
+      }
     } catch {
       /* ignore */
     }
