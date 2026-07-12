@@ -436,7 +436,7 @@ export function AddMemberModal({ open, onClose, onCreated, branchId, branchCode 
                 <div className="text-xs uppercase tracking-wider text-slate-500">Member code preview</div>
                 <div className="text-lg font-mono text-white mt-1">{nextCode || <Spinner />}</div>
               </div>
-              <Badge variant="green">Active</Badge>
+              <Badge variant="success">Active</Badge>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               <Row label="Name" value={`${data.first_name} ${data.middle_name} ${data.last_name}`.trim()} />

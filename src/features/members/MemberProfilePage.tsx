@@ -55,7 +55,7 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
   const [member, setMember] = useState<MemberFull | null>(null);
   const [cellGroup, setCellGroup] = useState<{ name: string; leader_name: string | null } | null>(null);
   const [departments, setDepartments] = useState<string[]>([]);
-  const [journey, setJourney] = useState<{ milestone: string; status: string; completed_at: string | null }[]>([]);
+  const [journey, setJourney] = useState<{ milestone: string; status: string; recorded_at: string | null }[]>([]);
   const [biometrics, setBiometrics] = useState<{ has_face: boolean; has_fingerprint: boolean; has_qr: boolean; qr_code: string | null } | null>(null);
   const [incompleteness, setIncompleteness] = useState<{ score: number; missing: string[] } | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
@@ -71,7 +71,7 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
       const [{ data: m }, { data: dm }, { data: sj }, { data: bio }, { data: inc }] = await Promise.all([
         supabase.from("members").select("*").eq("id", memberId).maybeSingle(),
         supabase.from("department_members").select("departments(name)").eq("member_id", memberId),
-        supabase.from("spiritual_journey").select("milestone, status, completed_at").eq("member_id", memberId),
+        supabase.from("spiritual_journey").select("milestone, status, recorded_at").eq("member_id", memberId),
         supabase.from("member_biometrics").select("has_face, has_fingerprint, has_qr, qr_code").eq("member_id", memberId).maybeSingle(),
         supabase.from("incomplete_profiles").select("completeness_score, missing_fields").eq("member_id", memberId).maybeSingle(),
       ]);
@@ -84,7 +84,7 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
       }
       const deptRows = (dm ?? []) as { departments: { name: string } | null }[];
       setDepartments(deptRows.map((r) => r.departments?.name).filter(Boolean) as string[]);
-      setJourney((sj ?? []) as { milestone: string; status: string; completed_at: string | null }[]);
+      setJourney((sj ?? []) as { milestone: string; status: string; recorded_at: string | null }[]);
       setBiometrics(bio as { has_face: boolean; has_fingerprint: boolean; has_qr: boolean; qr_code: string | null } | null);
       const incRow = inc as { completeness_score?: number; missing_fields?: string[] } | null;
       setIncompleteness(incRow ? { score: incRow.completeness_score ?? 0, missing: (incRow.missing_fields ?? []) as string[] } : null);
@@ -170,12 +170,12 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
                       </button>
                     )}
                     {member.membership_stage && (
-                      <Badge variant="purple" glow>{member.membership_stage.replace("_", " ")}</Badge>
+                      <Badge variant="purple">{member.membership_stage.replace("_", " ")}</Badge>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-3">
-                    {cellGroup && <Badge variant="blue">{cellGroup.name}</Badge>}
-                    {departments.slice(0, 3).map((d) => <Badge key={d} variant="green">{d}</Badge>)}
+                    {cellGroup && <Badge variant="info">{cellGroup.name}</Badge>}
+                    {departments.slice(0, 3).map((d) => <Badge key={d} variant="success">{d}</Badge>)}
                     {departments.length > 3 && <Badge>+{departments.length - 3} more</Badge>}
                   </div>
                 </div>
@@ -296,7 +296,7 @@ function OverviewTab({ member, cellGroup, canEditNotes }: { member: MemberFull; 
 
 const STAGES_ORDER = ["salvation", "believers_class", "baptised", "baptismal_class", "worker_training"] as const;
 
-function SpiritualTab({ journey }: { journey: { milestone: string; status: string; completed_at: string | null }[] }) {
+function SpiritualTab({ journey }: { journey: { milestone: string; status: string; recorded_at: string | null }[] }) {
   const byMilestone = new Map(journey.map((j) => [j.milestone, j]));
   return (
     <Card title="Spiritual journey">
@@ -321,7 +321,7 @@ function SpiritualTab({ journey }: { journey: { milestone: string; status: strin
               </div>
               <div className="text-sm text-white capitalize">{m.replace(/_/g, " ")}</div>
               <div className="text-xs text-slate-500 mt-0.5">
-                {isDone && `Completed${j?.completed_at ? ` · ${new Date(j.completed_at).toLocaleDateString()}` : ""}`}
+                {isDone && `Completed${j?.recorded_at ? ` · ${new Date(j.recorded_at).toLocaleDateString()}` : ""}`}
                 {isProg && "In progress"}
                 {!isDone && !isProg && "Not started"}
               </div>
@@ -363,7 +363,7 @@ function BiometricsTab({ bio, memberCode, name }: { bio: { has_face: boolean; ha
         <Card key={it.label}>
           <div className="flex items-center justify-between mb-3">
             <it.icon size={20} className="text-violet-400" />
-            {it.enrolled ? <Badge variant="green" glow>Enrolled</Badge> : <Badge variant="amber">Not enrolled</Badge>}
+            {it.enrolled ? <Badge variant="success">Enrolled</Badge> : <Badge variant="warning">Not enrolled</Badge>}
           </div>
           <div className="text-sm font-medium text-white">{it.label}</div>
           <div className="text-xs text-slate-500 mt-1">{it.enrolled ? "Last used —" : "Ready to enrol"}</div>
