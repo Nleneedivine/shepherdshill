@@ -412,3 +412,15 @@ function PastoralTab({ onFlag }: { onFlag: () => void }) {
     </Card>
   );
 }
+
+function TextStat({ label, value, icon, hint }: { label: string; value: string; icon?: React.ReactNode; hint?: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex items-center justify-between text-slate-400 text-xs uppercase tracking-wider">
+        <span>{label}</span>{icon}
+      </div>
+      <div className="mt-2 text-2xl font-bold text-white">{value}</div>
+      {hint && <div className="text-[10px] text-slate-600 mt-1">{hint}</div>}
+    </div>
+  );
+}
