@@ -142,6 +142,69 @@ export type Database = {
         }
         Relationships: []
       }
+      field_memory: {
+        Row: {
+          field_key: string
+          id: string
+          updated_at: string
+          user_id: string
+          values: Json
+        }
+        Insert: {
+          field_key: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          values?: Json
+        }
+        Update: {
+          field_key?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          values?: Json
+        }
+        Relationships: []
+      }
+      form_drafts: {
+        Row: {
+          completeness_score: number
+          created_at: string
+          current_step: number
+          expires_at: string
+          form_data: Json
+          form_key: string
+          id: string
+          last_saved_at: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completeness_score?: number
+          created_at?: string
+          current_step?: number
+          expires_at?: string
+          form_data?: Json
+          form_key: string
+          id?: string
+          last_saved_at?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completeness_score?: number
+          created_at?: string
+          current_step?: number
+          expires_at?: string
+          form_data?: Json
+          form_key?: string
+          id?: string
+          last_saved_at?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       incomplete_profiles: {
         Row: {
           completeness_score: number
