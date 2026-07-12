@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
@@ -413,7 +413,7 @@ function PastoralTab({ onFlag }: { onFlag: () => void }) {
   );
 }
 
-function TextStat({ label, value, icon, hint }: { label: string; value: string; icon?: React.ReactNode; hint?: string }) {
+function TextStat({ label, value, icon, hint }: { label: string; value: string; icon?: ReactNode; hint?: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
       <div className="flex items-center justify-between text-slate-400 text-xs uppercase tracking-wider">
