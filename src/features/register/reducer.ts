@@ -1,5 +1,4 @@
 import type { RegistrationData } from "@/types";
-
 export type FormAction =
   | { type: "SET_STEP"; step: number }
   | { type: "NEXT" }
@@ -12,8 +11,8 @@ export type FormAction =
   | { type: "UPDATE_CONSENT"; patch: Partial<RegistrationData["consent"]> }
   | { type: "SET_ERRORS"; errors: Record<string, string> }
   | { type: "SET_SUBMITTING"; value: boolean }
-  | { type: "SET_SUBMITTED"; id: string };
-
+  | { type: "SET_SUBMITTED"; id: string }
+  | { type: "LOAD_DRAFT"; data: RegistrationData; step: number };
 export interface FormState {
   currentStep: number;
   data: RegistrationData;
@@ -22,7 +21,6 @@ export interface FormState {
   isSubmitted: boolean;
   submissionId: string | null;
 }
-
 export function formReducer(state: FormState, action: FormAction): FormState {
   switch (action.type) {
     case "SET_STEP": return { ...state, currentStep: action.step, errors: {} };
@@ -37,5 +35,6 @@ export function formReducer(state: FormState, action: FormAction): FormState {
     case "SET_ERRORS": return { ...state, errors: action.errors };
     case "SET_SUBMITTING": return { ...state, isSubmitting: action.value };
     case "SET_SUBMITTED": return { ...state, isSubmitted: true, submissionId: action.id, isSubmitting: false };
+    case "LOAD_DRAFT": return { ...state, data: action.data, currentStep: action.step, errors: {} };
   }
 }
