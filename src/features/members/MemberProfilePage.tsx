@@ -205,9 +205,9 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <StatCard label="Tenure" value={tenure.label} icon={<User size={20} />} />
-              <StatCard label="Attendance rate" value="0%" icon={<Check size={20} />} sublabel="Sprint 3" />
-              <StatCard label="Total giving" value="₦0" icon={<Heart size={20} />} sublabel="Sprint 4" />
+              <TextStat label="Tenure" value={tenure.label} icon={<User size={20} />} />
+              <TextStat label="Attendance rate" value="0%" icon={<Check size={20} />} hint="Sprint 3" />
+              <TextStat label="Total giving" value="₦0" icon={<Heart size={20} />} hint="Sprint 4" />
               <StatCard label="Active departments" value={departments.length} icon={<Users size={20} />} />
             </div>
 
