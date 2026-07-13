@@ -5,6 +5,10 @@
 // Provider tokens are read from env; when missing, that channel is skipped cleanly
 // so the function stays deployable before secrets are configured.
 //
+// SECURITY: this function requires a valid authenticated session belonging to an
+// admin/super_admin/pastoral_team user. It is never callable anonymously, since it
+// can trigger paid WhatsApp/SMS sends to arbitrary phone numbers.
+//
 // Env expected (all optional until you enable a channel):
 //   WHATSAPP_API_TOKEN            (Meta Cloud API token)
 //   WHATSAPP_PHONE_NUMBER_ID      (Meta Cloud API phone number id)
@@ -30,6 +34,9 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const appUrl = Deno.env.get("APP_URL") ?? "";
 
+// Roles allowed to trigger notifications from this function.
+const ALLOWED_ROLES = ["admin", "super_admin", "pastoral_team"] as const;
+
 async function logAudit(action: string, details: Record<string, unknown>) {
   try {
     const admin = createClient(supabaseUrl, serviceRoleKey);
@@ -39,6 +46,34 @@ async function logAudit(action: string, details: Record<string, unknown>) {
       details,
     });
   } catch (_) { /* non-fatal */ }
+}
+
+/**
+ * Verifies the caller's JWT and confirms they hold one of ALLOWED_ROLES.
+ * Returns the authenticated user id on success, or null if unauthorized.
+ */
+async function authorizeCaller(req: Request): Promise<string | null> {
+  const authHeader = req.headers.get("authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!token) return null;
+
+  const admin = createClient(supabaseUrl, serviceRoleKey);
+
+  // Validate the JWT and get the underlying user.
+  const { data: userData, error: userError } = await admin.auth.getUser(token);
+  if (userError || !userData?.user) return null;
+  const userId = userData.user.id;
+
+  // Confirm the user holds an allowed role.
+  // Adjust the RPC/table name below if your project's role-check differs from `has_role`.
+  for (const role of ALLOWED_ROLES) {
+    const { data: hasRole, error: roleError } = await admin.rpc("has_role", {
+      _user_id: userId,
+      _role: role,
+    });
+    if (!roleError && hasRole === true) return userId;
+  }
+  return null;
 }
 
 async function sendWhatsApp(phone: string, message: string) {
@@ -113,13 +148,23 @@ async function deliver(channel: Channel, phone: string, message: string) {
 
 Deno.serve(async (req) => {
   try {
+    // --- AUTH GATE: block every request that isn't from a signed-in admin/pastoral user ---
+    const callerId = await authorizeCaller(req);
+    if (!callerId) {
+      return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), {
+        status: 401,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    // --- end auth gate ---
+
     const body = await req.json().catch(() => ({}));
 
     // Direct-message mode
     if (body?.payload) {
       const p = body.payload as DirectPayload;
       const result = await deliver(p.channel ?? "auto", p.recipientPhone, p.message);
-      await logAudit("notification_sent", { mode: "direct", recipient: p.recipientPhone, result });
+      await logAudit("notification_sent", { mode: "direct", recipient: p.recipientPhone, result, sentBy: callerId });
       return new Response(JSON.stringify(result), { headers: { "content-type": "application/json" } });
     }
 
@@ -162,7 +207,7 @@ Deno.serve(async (req) => {
       `Log in: ${loginLink}`;
 
     const result = await deliver("auto", phone, message);
-    await logAudit("welcome_notification_sent", { memberId, phone, result });
+    await logAudit("welcome_notification_sent", { memberId, phone, result, sentBy: callerId });
 
     return new Response(JSON.stringify({ ok: true, memberId, result }), {
       headers: { "content-type": "application/json" },
