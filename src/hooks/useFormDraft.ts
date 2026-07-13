@@ -62,13 +62,23 @@ export function useFormDraft(formKey: string): UseFormDraftReturn {
         } | null = null;
 
         if (uid) {
-          const { data } = await supabase
-            .from("form_drafts" as never)
+          const { data } = await (supabase as unknown as {
+            from: (t: string) => {
+              select: (c: string) => {
+                eq: (c: string, v: string) => {
+                  eq: (c: string, v: string) => {
+                    maybeSingle: () => Promise<{ data: typeof row }>;
+                  };
+                };
+              };
+            };
+          })
+            .from("form_drafts")
             .select("form_data, current_step, completeness_score, last_saved_at, expires_at")
-            .eq("user_id" as never, uid as never)
-            .eq("form_key" as never, formKey as never)
+            .eq("user_id", uid)
+            .eq("form_key", formKey)
             .maybeSingle();
-          row = data as typeof row;
+          row = data;
         }
 
         if (row && row.expires_at && new Date(row.expires_at) > new Date()) {
