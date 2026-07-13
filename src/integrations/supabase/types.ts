@@ -148,21 +148,21 @@ export type Database = {
           id: string
           updated_at: string
           user_id: string
-          values: Json
+          values: string[]
         }
         Insert: {
           field_key: string
           id?: string
           updated_at?: string
           user_id: string
-          values?: Json
+          values?: string[]
         }
         Update: {
           field_key?: string
           id?: string
           updated_at?: string
           user_id?: string
-          values?: Json
+          values?: string[]
         }
         Relationships: []
       }
@@ -696,6 +696,24 @@ export type Database = {
         | "worker"
         | "member"
         | "first_timer"
+        | "cell_leader"
+        | "parish_pastor"
+        | "area_supervisor"
+        | "zonal_pastor"
+        | "provincial_pastor"
+        | "finance_director"
+        | "finance_team"
+        | "media_team"
+        | "communications_team"
+        | "facilities_team"
+        | "prayer_coordinator"
+        | "counselling_pastor"
+        | "volunteer"
+        | "department_head"
+        | "it_team"
+        | "protocol_team"
+        | "usher"
+        | "visitor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -831,6 +849,24 @@ export const Constants = {
         "worker",
         "member",
         "first_timer",
+        "cell_leader",
+        "parish_pastor",
+        "area_supervisor",
+        "zonal_pastor",
+        "provincial_pastor",
+        "finance_director",
+        "finance_team",
+        "media_team",
+        "communications_team",
+        "facilities_team",
+        "prayer_coordinator",
+        "counselling_pastor",
+        "volunteer",
+        "department_head",
+        "it_team",
+        "protocol_team",
+        "usher",
+        "visitor",
       ],
     },
   },
