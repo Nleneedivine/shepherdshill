@@ -108,7 +108,7 @@ function RegisterPage() {
       return;
     }
     dispatch({ type: "SET_SUBMITTING", value: true });
-    const result = await submitRegistration(state.data);
+    const result = await submitRegistration(state.data as unknown as Parameters<typeof submitRegistration>[0]);
     if (result.success && result.submissionId) {
       dispatch({ type: "SET_SUBMITTED", id: result.submissionId });
       await clearDraft();
