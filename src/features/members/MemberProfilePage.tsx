@@ -282,14 +282,50 @@ function OverviewTab({ member, cellGroup, canEditNotes }: { member: MemberFull; 
       </Card>
       <Card title="Church details">
         <div className="space-y-0.5">
-          <Row label="Cell group" value={cellGroup?.name} />
-          <Row label="Cell leader" value={cellGroup?.leader_name} />
+          <Row label="House Fellowship Centre" value={cellGroup?.name} />
+          <Row label="Coordinator" value={cellGroup?.leader_name} />
           <Row label="Membership stage" value={member.membership_stage?.replace("_", " ")} />
           <Row label="Status" value={member.membership_status} />
           <Row label="Joined" value={new Date(member.created_at).toLocaleDateString()} />
           {canEditNotes && <Row label="Admin notes" value="—" />}
         </div>
       </Card>
+      <Card title="Family Group">
+        <div className="flex flex-col gap-3">
+          <FamilyGroupBadge memberId={member.id} showScheme size="lg" />
+          <MemberFamilyGroupAssign memberId={member.id} />
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function MemberFamilyGroupAssign({ memberId }: { memberId: string }) {
+  const { showToast } = useToastContext();
+  const [assigning, setAssigning] = useState(false);
+  const [assigned, setAssigned] = useState<boolean | null>(null);
+  useEffect(() => {
+    void supabase.from("member_family_groups").select("id").eq("member_id", memberId).eq("is_active", true).maybeSingle()
+      .then(({ data }) => setAssigned(!!data));
+  }, [memberId]);
+  if (assigned === null || assigned) return null;
+  const doAssign = async () => {
+    setAssigning(true);
+    try {
+      const { error } = await supabase.rpc("assign_member_family_group", { p_member_id: memberId });
+      if (error) throw error;
+      showToast("Family group assigned", "success");
+      setAssigned(true);
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Assignment failed", "error");
+    } finally {
+      setAssigning(false);
+    }
+  };
+  return (
+    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200 flex items-center justify-between gap-2">
+      <span>Family group will be assigned automatically based on age and marital status.</span>
+      <Button size="sm" variant="secondary" onClick={doAssign} loading={assigning}>Assign Now</Button>
     </div>
   );
 }
