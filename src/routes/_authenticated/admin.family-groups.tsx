@@ -306,7 +306,7 @@ function FamilyGroupsAdmin() {
           </div>
         )}
 
-        <Modal open={!!confirming} onClose={() => !switching && setConfirming(null)} title={confirming ? `Switch to ${confirming.name}?` : ""}>
+        <Modal isOpen={!!confirming} onClose={() => { if (!switching) setConfirming(null); }} title={confirming ? `Switch to ${confirming.name}?` : ""}>
           <div className="space-y-4">
             <p className="text-sm text-slate-300">
               This will reassign all <span className="font-semibold text-white">{activeMembers}</span> active members
@@ -318,7 +318,7 @@ function FamilyGroupsAdmin() {
               value={threshold}
               onChange={(e) => setThreshold(Number(e.target.value) || 60)}
               min={40} max={100}
-              helper={`Members aged ${threshold} and above will be placed in the Elders group.`}
+              hint={`Members aged ${threshold} and above will be placed in the Elders group.`}
             />
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={() => setConfirming(null)} disabled={switching}>Cancel</Button>
