@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, Info, X, Music2, Shield, Star, Megaphone, Heart, Baby, Camera, Monitor, Sun, Flame, Brush, Users, type LucideIcon } from "lucide-react";
+import { Search, Info, X, Music2, Shield, Star, Megaphone, Heart, Baby, Camera, Monitor, Sun, Flame, Brush, Users, type LucideIcon } from "lucide-react";import { Search, Info, X, Music2, Shield, Star, Megaphone, Heart, Baby, Camera, Monitor, Sun, Flame, Brush, Users, CheckCircle, type LucideIcon } from "lucide-react";
 import { Input, Select } from "@/components/ds";
 import { supabase } from "@/integrations/supabase/client";
 import type { CellGroup, Department, RegistrationData } from "@/types";
@@ -206,8 +206,86 @@ export function Step4Church({ data, errors, onChange }: Props) {
         </div>
       </div>
 
-      <Input label="Role/title (optional)" value={data.roleTitle}
+     <Input label="Role/title (optional)" value={data.roleTitle}
         onChange={(e) => onChange({ roleTitle: e.target.value })} />
+
+      {/* ── FAMILY GROUP PREVIEW ── */}
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-1">
+            Family Group
+          </label>
+          <p className="text-xs text-slate-500">
+            Automatically assigned based on your age and marital
+            status. No selection needed.
+          </p>
+        </div>
+
+        {/* Info card showing all groups */}
+        <div
+          className="rounded-xl p-4 border"
+          style={{
+            background: "rgba(124,58,237,0.08)",
+            borderColor: "rgba(124,58,237,0.25)",
+            borderLeft: "3px solid #7C3AED",
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <Users
+              size={18}
+              className="mt-0.5 flex-shrink-0"
+              style={{ color: "#7C3AED" }}
+            />
+            <div className="flex-1">
+              <p
+                className="text-sm font-medium mb-2"
+                style={{ color: "#C4B5FD" }}
+              >
+                Shepherd's Hill Family Groups
+              </p>
+              <div className="space-y-1.5">
+                {[
+                  { emoji: "👶", range: "Ages 0–12", group: "Junior Church" },
+                  { emoji: "🧑", range: "Ages 13–19", group: "Teens Church" },
+                  { emoji: "👤", range: "Ages 20–35 (unmarried)", group: "YAYA" },
+                  { emoji: "👨", range: "Men 35+ or married", group: "RMF" },
+                  { emoji: "👩", range: "Women 35+ or married", group: "Good Women Fellowship" },
+                  { emoji: "🧓", range: "Ages 60+", group: "Elders Fellowship" },
+                ].map((item) => (
+                  <div key={item.group} className="flex items-center gap-2 text-xs">
+                    <span>{item.emoji}</span>
+                    <span className="text-slate-400">{item.range}</span>
+                    <span className="text-slate-600">→</span>
+                    <span className="font-medium" style={{ color: "#C4B5FD" }}>
+                      {item.group}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Note - prediction requires data from earlier steps */}
+        <div
+          className="rounded-xl p-3 border text-xs"
+          style={{
+            background: "rgba(16,185,129,0.08)",
+            borderColor: "rgba(16,185,129,0.2)",
+            color: "#6EE7B7",
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <CheckCircle size={14} style={{ color: "#10B981" }} />
+            <span>
+              Your family group will be automatically assigned when
+              your registration is approved, based on the age and
+              marital status you provided in the earlier steps.
+            </span>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
