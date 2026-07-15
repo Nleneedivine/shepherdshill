@@ -42,7 +42,7 @@ export function MembersTable({ items, selected, onToggle, onToggleAll, sort, dir
             <th className="px-4 py-3 text-xs uppercase text-slate-400">Member ID</th>
             <th className="px-4 py-3 text-xs uppercase text-slate-400">Phone</th>
             <th className="px-4 py-3"><SortHeader label="Stage" active={sort === "membership_stage"} dir={dir} onClick={() => onSort("membership_stage")} /></th>
-            <th className="px-4 py-3 text-xs uppercase text-slate-400">Cell group</th>
+            <th className="px-4 py-3 text-xs uppercase text-slate-400">House Fellowship</th>
             <th className="px-4 py-3 text-xs uppercase text-slate-400">Departments</th>
             <th className="px-4 py-3 text-xs uppercase text-slate-400">Status</th>
             <th className="px-4 py-3 text-right"><SortHeader label="Joined" active={sort === "created_at"} dir={dir} onClick={() => onSort("created_at")} /></th>
