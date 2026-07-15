@@ -410,7 +410,7 @@ function Hero({
           <div className="hidden sm:block w-px h-10 bg-white/10" />
           <StatItem
             value={stats?.cellGroups ?? 0}
-            label="Cell Groups"
+            label="House Fellowship Centres"
             delay={3.7}
           />
           <div className="hidden sm:block w-px h-10 bg-white/10" />
@@ -525,8 +525,8 @@ const FEATURES = [
     icon: Globe2,
     gradient: "linear-gradient(135deg, #B45309, #D97706)",
     glow: "rgba(180,83,9,0.5)",
-    title: "Cell Groups & Community",
-    desc: "Stay connected to your cell group, zone, and parish. The church that prays together stays together.",
+    title: "House Fellowship Centres & Community",
+    desc: "Stay connected to your House Fellowship Centre, zone, and parish. The church that prays together stays together.",
   },
 ];
 
@@ -660,7 +660,7 @@ function CTA({ stats }: { stats: Stats | undefined }) {
           <div className="hidden md:block w-px h-12 bg-white/10" />
           <StatItem
             value={stats?.cellGroups ?? 0}
-            label="Cell Groups"
+            label="House Fellowship Centres"
             color="text-[#FCA5A5]"
             large
           />

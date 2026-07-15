@@ -99,7 +99,7 @@ export function RoleModal({ user, currentUserId, callerIsSuperAdmin, onClose, on
             <input type="radio" name="role" checked={choice === "admin"} onChange={() => setChoice("admin")} className="mt-1 accent-violet-600" />
             <div>
               <div className="text-sm font-medium text-white">Admin</div>
-              <div className="text-xs text-slate-400">Full branch management — members, verifications, cell groups.</div>
+              <div className="text-xs text-slate-400">Full branch management — members, verifications, House Fellowship Centres.</div>
             </div>
           </label>
 
