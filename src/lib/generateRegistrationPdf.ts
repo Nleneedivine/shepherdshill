@@ -166,7 +166,7 @@ export function generateRegistrationPdf(): jsPDF {
   ctx.y += 3;
   twoCol(ctx, "Received by", "Date received");
   twoCol(ctx, "Member code assigned", "Verified by");
-  twoCol(ctx, "Cell group assigned", "Branch");
+  twoCol(ctx, "House Fellowship Centre assigned", "Branch");
   line(ctx, "Notes");
   ctx.y = gY + 52;
 

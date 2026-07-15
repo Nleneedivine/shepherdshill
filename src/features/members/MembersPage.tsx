@@ -221,7 +221,7 @@ export function MembersPage() {
             <span className="text-sm text-white">{selected.size} selected</span>
             <Button size="sm" variant="secondary" onClick={() => showToast("Bulk messaging arrives in Sprint 2", "info")}>Send Message</Button>
             <Button size="sm" variant="secondary" onClick={exportSelected}>Export Selected</Button>
-            <Button size="sm" variant="secondary" onClick={() => showToast("Cell group assignment arrives in Sprint 1B", "info")}>Assign to Cell</Button>
+            <Button size="sm" variant="secondary" onClick={() => showToast("House Fellowship Centre assignment arrives in Sprint 1B", "info")}>Assign to Centre</Button>
             <Button size="sm" variant="secondary" onClick={() => showToast("Stage change arrives in Sprint 1B", "info")}>Change Stage</Button>
             <Button size="sm" variant="danger" onClick={() => { void refresh(); showToast("Deactivation arrives in Sprint 1B", "info"); }}>Deactivate</Button>
             <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>

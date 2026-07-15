@@ -137,7 +137,7 @@ export function ReviewPanel({ submission, onClose, onApprove, onReject, onReques
                 <h3 className="text-xs uppercase text-slate-400 mb-1">Church life</h3>
                 <dl>
                   <Row label="Stage" value={j(submission.church_life, "membershipStage")} />
-                  <Row label="Cell group" value={j(submission.church_life, "cellGroupText")} />
+                  <Row label="House Fellowship Centre" value={j(submission.church_life, "cellGroupText")} />
                   <Row label="Attendance" value={j(submission.church_life, "attendanceDuration")} />
                 </dl>
               </section>
@@ -158,7 +158,7 @@ export function ReviewPanel({ submission, onClose, onApprove, onReject, onReques
                   </Badge>
                   <Badge variant="info">Score: {submission.ai_completeness_score ?? 0}%</Badge>
                   {submission.ai_cell_group_suggestion_id && (
-                    <Badge variant="purple">Cell group suggestion</Badge>
+                    <Badge variant="purple">House Fellowship Centre suggestion</Badge>
                   )}
                 </div>
                 {submission.ai_processing_notes && (

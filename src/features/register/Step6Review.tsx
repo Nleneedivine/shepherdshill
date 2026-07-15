@@ -100,9 +100,13 @@ export function Step6Review({ data, onEdit, onConsentChange }: Props) {
       <Section title="Church Life" step={4} onEdit={onEdit}>
         <Row label="Attendance" value={fmt(data.churchLife.attendanceDuration)} />
         <Row label="Stage" value={fmt(data.churchLife.membershipStage)} />
-        <Row label="Cell group" value={fmt(data.churchLife.cellGroupText)} />
+        <Row label="House Fellowship Centre" value={fmt(data.churchLife.cellGroupText)} />
         <Row label="Departments" value={data.churchLife.departmentIds.length ? `${data.churchLife.departmentIds.length} selected` : <span className="text-slate-500">None</span>} />
       </Section>
+
+      <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-xs text-blue-200">
+        Your family group will be automatically assigned based on your age and marital status after registration.
+      </div>
 
       <Section title="Spiritual" step={5} onEdit={onEdit}>
         <Row label="Salvation" value={fmt(data.spiritual.salvation)} />

@@ -128,12 +128,12 @@ export function Step4Church({ data, errors, onChange }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">Your cell group</label>
+        <label className="block text-sm font-medium text-slate-300 mb-2">House Fellowship Centre</label>
         {selectedGroup ? (
           <div className="p-4 rounded-xl bg-gradient-to-br from-violet-600/10 to-blue-500/10 border border-violet-500/30 flex items-start justify-between">
             <div>
               <div className="font-semibold text-white">{selectedGroup.name}</div>
-              <div className="text-sm text-slate-400">Leader: {selectedGroup.leader_name}</div>
+              <div className="text-sm text-slate-400">Coordinator: {selectedGroup.leader_name}</div>
               <div className="text-xs text-slate-500 mt-1">{selectedGroup.meeting_day} • {selectedGroup.meeting_time}</div>
             </div>
             <button type="button" onClick={clearGroup} className="text-slate-400 hover:text-white"><X size={16} /></button>
@@ -142,8 +142,8 @@ export function Step4Church({ data, errors, onChange }: Props) {
           <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2">
             <Info size={18} className="text-amber-400 mt-0.5" />
             <div className="flex-1">
-              <div className="text-sm text-white">Marked as unknown</div>
-              <div className="text-xs text-slate-400 mt-1">Your profile will be marked incomplete until assigned.</div>
+              <div className="text-sm text-white">I will be assigned to a House Fellowship Centre</div>
+              <div className="text-xs text-slate-400 mt-1">An admin will place you in the right centre.</div>
             </div>
             <button type="button" onClick={clearGroup} className="text-slate-400 hover:text-white"><X size={16} /></button>
           </div>
@@ -155,7 +155,7 @@ export function Step4Church({ data, errors, onChange }: Props) {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by group name or leader…"
+                placeholder="Search by centre name or coordinator…"
                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-slate-500 outline-none focus:border-violet-500"
               />
             </div>
@@ -175,7 +175,7 @@ export function Step4Church({ data, errors, onChange }: Props) {
               </div>
             )}
             <button type="button" onClick={markUnknown} className="mt-2 text-xs text-slate-500 hover:text-slate-300">
-              I don't know my cell group
+              I will be assigned to a House Fellowship Centre
             </button>
           </>
         )}

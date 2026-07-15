@@ -35,7 +35,7 @@ export function MembersGrid({ items, selected, onToggle }: Props) {
               {m.membership_stage && <Badge variant="purple">{m.membership_stage.replace(/_/g, " ")}</Badge>}
               <Badge variant={m.membership_status === "active" ? "success" : "warning"}>{m.membership_status}</Badge>
             </div>
-            <div className="mt-2 text-xs text-slate-400 truncate max-w-full">{m.cell_group_name ?? "No cell group"}</div>
+            <div className="mt-2 text-xs text-slate-400 truncate max-w-full">{m.cell_group_name ?? "No House Fellowship Centre"}</div>
             <div className="mt-4 flex gap-2 w-full">
               <Button size="sm" variant="secondary" className="flex-1"><Eye size={14} /> View</Button>
               <Button size="sm" variant="ghost" className="flex-1"><MessageSquare size={14} /> Message</Button>

@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Users, UserPlus, Building2, HeartHandshake, LogOut, LayoutDashboard } from "lucide-react";
-import { AppLayout, Card, StatCard, PageWrapper, Button } from "@/components/ds";
+import { Users, UserPlus, Building2, HeartHandshake, LogOut, LayoutDashboard, ArrowRight, Users2 } from "lucide-react";
+import { AppLayout, Card, StatCard, PageWrapper, Button, Badge } from "@/components/ds";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -9,10 +9,20 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
 });
 
+interface GroupTally {
+  id: string;
+  name: string;
+  emoji: string | null;
+  colour: string | null;
+  count: number;
+}
+
 function DashboardPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [stats, setStats] = useState({ members: 0, pending: 0, cellGroups: 0, branches: 0 });
+  const [schemeName, setSchemeName] = useState<string>("");
+  const [groupTally, setGroupTally] = useState<GroupTally[]>([]);
 
   useEffect(() => {
     void (async () => {
@@ -28,6 +38,29 @@ function DashboardPage() {
         cellGroups: c.count ?? 0,
         branches: b.count ?? 0,
       });
+
+      // Family groups widget
+      const { data: sch } = await supabase.from("family_grouping_schemes").select("id, name").eq("is_active", true).maybeSingle();
+      const scheme = sch as { id: string; name: string } | null;
+      if (scheme) {
+        setSchemeName(scheme.name);
+        const { data: grps } = await supabase
+          .from("family_groups")
+          .select("id, name, emoji, colour, sequence_order")
+          .eq("scheme_id", scheme.id)
+          .eq("is_active", true)
+          .order("sequence_order", { ascending: true, nullsFirst: false });
+        const { data: assigns } = await supabase
+          .from("member_family_groups")
+          .select("group_id")
+          .eq("scheme_id", scheme.id)
+          .eq("is_active", true);
+        const counts: Record<string, number> = {};
+        ((assigns ?? []) as { group_id: string }[]).forEach((r) => {
+          counts[r.group_id] = (counts[r.group_id] ?? 0) + 1;
+        });
+        setGroupTally(((grps ?? []) as Omit<GroupTally, "count">[]).map((g) => ({ ...g, count: counts[g.id] ?? 0 })));
+      }
     })();
   }, []);
 
@@ -64,24 +97,55 @@ function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard label="Total Members" value={stats.members} icon={<Users size={20} />} />
           <StatCard label="Pending Registrations" value={stats.pending} icon={<UserPlus size={20} />} glowColor="amber" />
-          <StatCard label="Cell Groups" value={stats.cellGroups} icon={<HeartHandshake size={20} />} glowColor="green" />
+          <StatCard label="House Fellowship Centres" value={stats.cellGroups} icon={<HeartHandshake size={20} />} glowColor="green" />
           <StatCard label="Branches" value={stats.branches} icon={<Building2 size={20} />} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
-          <Card title="Your Role" subtitle="Permissions granted to your account">
-            <div className="flex flex-wrap gap-2">
-              {user?.roles.map((r) => (
-                <span key={r} className="px-3 py-1 rounded-full bg-violet-500/20 border border-violet-500/30 text-violet-200 text-xs font-medium">
-                  {r.replace("_", " ")}
-                </span>
-              ))}
-            </div>
+          <Card
+            title="Family Groups"
+            subtitle={schemeName ? `Active: ${schemeName}` : "No active scheme"}
+          >
+            {groupTally.length === 0 ? (
+              <p className="text-sm text-slate-500">No family group assignments yet.</p>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {groupTally.slice(0, 4).map((g) => (
+                    <span key={g.id}
+                      className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium"
+                      style={{
+                        backgroundColor: `${g.colour ?? "#6366f1"}26`,
+                        borderColor: `${g.colour ?? "#6366f1"}66`,
+                        color: g.colour ?? "#6366f1",
+                      }}>
+                      {g.emoji && <span>{g.emoji}</span>}
+                      <span>{g.name}</span>
+                      <Badge>{g.count}</Badge>
+                    </span>
+                  ))}
+                  {groupTally.length > 4 && (
+                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-300">
+                      +{groupTally.length - 4} more
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => navigate({ to: "/admin/family-groups" })}
+                  className="text-xs text-violet-400 hover:text-violet-300 inline-flex items-center gap-1"
+                >
+                  Manage Groups <ArrowRight size={12} />
+                </button>
+              </>
+            )}
           </Card>
           <Card title="Quick Actions" subtitle="Common tasks">
             <div className="flex flex-col gap-2">
               <Button variant="secondary" onClick={() => navigate({ to: "/members" })}>
                 <Users size={16} /> View members
+              </Button>
+              <Button variant="secondary" onClick={() => navigate({ to: "/admin/family-groups" })}>
+                <Users2 size={16} /> Manage Family Groups
               </Button>
             </div>
           </Card>

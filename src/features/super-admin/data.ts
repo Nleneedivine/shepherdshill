@@ -13,7 +13,7 @@ export const MODULES: ModuleInfo[] = [
   { number: 3, name: "Approval & Records", status: "active" },
   { number: 4, name: "Check-in Kiosk", status: "in_development" },
   { number: 5, name: "Attendance Analytics", status: "coming_soon" },
-  { number: 6, name: "Cell Groups", status: "coming_soon" },
+  { number: 6, name: "House Fellowship Centres", status: "coming_soon" },
   { number: 7, name: "Departments & Teams", status: "coming_soon" },
   { number: 8, name: "Giving & Finance", status: "coming_soon" },
   { number: 9, name: "Events & Programmes", status: "coming_soon" },

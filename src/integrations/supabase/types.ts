@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      branch_settings: {
+        Row: {
+          active_family_scheme_id: string | null
+          branch_id: string | null
+          elders_age_threshold: number | null
+          id: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          active_family_scheme_id?: string | null
+          branch_id?: string | null
+          elders_age_threshold?: number | null
+          id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          active_family_scheme_id?: string | null
+          branch_id?: string | null
+          elders_age_threshold?: number | null
+          id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branch_settings_active_family_scheme_id_fkey"
+            columns: ["active_family_scheme_id"]
+            isOneToOne: false
+            referencedRelation: "family_grouping_schemes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "branch_settings_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: true
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branches: {
         Row: {
           branch_code: string
@@ -141,6 +183,122 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      family_grouping_schemes: {
+        Row: {
+          branch_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_grouping_schemes_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_groups: {
+        Row: {
+          assignment_priority: number | null
+          branch_id: string | null
+          colour: string | null
+          created_at: string | null
+          description: string | null
+          emoji: string | null
+          gender_restriction: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          marital_status_rule: string | null
+          max_age: number | null
+          min_age: number | null
+          name: string
+          scheme_id: string | null
+          sequence_order: number | null
+          short_name: string | null
+        }
+        Insert: {
+          assignment_priority?: number | null
+          branch_id?: string | null
+          colour?: string | null
+          created_at?: string | null
+          description?: string | null
+          emoji?: string | null
+          gender_restriction?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          marital_status_rule?: string | null
+          max_age?: number | null
+          min_age?: number | null
+          name: string
+          scheme_id?: string | null
+          sequence_order?: number | null
+          short_name?: string | null
+        }
+        Update: {
+          assignment_priority?: number | null
+          branch_id?: string | null
+          colour?: string | null
+          created_at?: string | null
+          description?: string | null
+          emoji?: string | null
+          gender_restriction?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          marital_status_rule?: string | null
+          max_age?: number | null
+          min_age?: number | null
+          name?: string
+          scheme_id?: string | null
+          sequence_order?: number | null
+          short_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_groups_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_groups_scheme_id_fkey"
+            columns: ["scheme_id"]
+            isOneToOne: false
+            referencedRelation: "family_grouping_schemes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       field_memory: {
         Row: {
@@ -283,6 +441,58 @@ export type Database = {
             columns: ["member_id"]
             isOneToOne: true
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_family_groups: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          group_id: string | null
+          id: string
+          is_active: boolean | null
+          member_id: string | null
+          scheme_id: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          group_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          member_id?: string | null
+          scheme_id?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          group_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          member_id?: string | null
+          scheme_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_family_groups_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_family_groups_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_family_groups_scheme_id_fkey"
+            columns: ["scheme_id"]
+            isOneToOne: false
+            referencedRelation: "family_grouping_schemes"
             referencedColumns: ["id"]
           },
         ]
@@ -670,6 +880,10 @@ export type Database = {
           member_id: string
         }[]
       }
+      assign_member_family_group: {
+        Args: { p_member_id: string; p_scheme_id?: string }
+        Returns: string
+      }
       assign_user_role: {
         Args: {
           p_branch_id?: string
@@ -685,6 +899,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      reassign_all_members_to_scheme: {
+        Args: { p_branch_id: string; p_scheme_id: string }
+        Returns: number
+      }
+      switch_family_grouping_scheme: {
+        Args: { p_branch_id: string; p_scheme_id: string }
+        Returns: Json
       }
     }
     Enums: {

@@ -383,7 +383,7 @@ export function AddMemberModal({ open, onClose, onCreated, branchId, branchCode 
             <SmartSelect fieldKey="addmember.stage" label="Membership stage" required value={data.membership_stage} onValueChange={(v) => patch({ membership_stage: v })}>
               {STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
             </SmartSelect>
-            <SmartSelect fieldKey="addmember.cell_group" label="Cell group" value={data.cell_group_id} onValueChange={(v) => patch({ cell_group_id: v })}>
+            <SmartSelect fieldKey="addmember.cell_group" label="House Fellowship Centre" value={data.cell_group_id} onValueChange={(v) => patch({ cell_group_id: v })}>
               <option value="">Unassigned</option>
               {options.cellGroups.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </SmartSelect>
@@ -443,7 +443,7 @@ export function AddMemberModal({ open, onClose, onCreated, branchId, branchCode 
               <Row label="Phone" value={data.phone_primary} />
               <Row label="Email" value={data.email || "—"} />
               <Row label="Stage" value={STAGES.find((s) => s.value === data.membership_stage)?.label ?? data.membership_stage} />
-              <Row label="Cell group" value={options.cellGroups.find((c) => c.id === data.cell_group_id)?.name ?? "Unassigned"} />
+              <Row label="House Fellowship Centre" value={options.cellGroups.find((c) => c.id === data.cell_group_id)?.name ?? "Unassigned"} />
               <Row label="Departments" value={data.department_ids.length ? String(data.department_ids.length) : "None"} />
               <Row label="Join date" value={data.join_date} />
             </div>

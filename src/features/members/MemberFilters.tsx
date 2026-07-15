@@ -38,8 +38,8 @@ export function MemberFilters({ filters, onChange, searchInput, onSearchInput, o
           <option value="all">All departments</option>
           {options.departments.map((d) => (<option key={d.id} value={d.id}>{d.name}</option>))}
         </Select>
-        <Select label="Cell group" value={filters.cell} onChange={(e) => onChange({ cell: e.target.value })}>
-          <option value="all">All cell groups</option>
+        <Select label="House Fellowship Centre" value={filters.cell} onChange={(e) => onChange({ cell: e.target.value })}>
+          <option value="all">All House Fellowship Centres</option>
           {options.cellGroups.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
         </Select>
         <Select label="Status" value={filters.status} onChange={(e) => onChange({ status: e.target.value })}>
