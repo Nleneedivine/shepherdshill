@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { AppLayout, PageWrapper, StatCard, Button, Card, Badge, EmptyState, Avatar } from "@/components/ds";
 import { supabase } from "@/integrations/supabase/client";
+import { FamilyGroupBadge } from "@/components/FamilyGroupBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { useToastContext } from "@/components/ds/Toast";
 
