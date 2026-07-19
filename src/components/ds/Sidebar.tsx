@@ -2,6 +2,7 @@ import type { ComponentType, ReactNode } from "react";
 import { ChevronsLeft, ChevronsRight, LogOut, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar } from "./Avatar";
+import { ITProjectButton } from "@/components/ITProjectButton";
 
 export interface NavItem {
   label: string;
@@ -97,6 +98,11 @@ export function Sidebar({ collapsed, onToggle, navItems, userProfile, logo }: Si
           );
         })}
       </nav>
+
+      {/* IT Project Button */}
+      <div className="px-3 py-2 border-t border-white/10">
+        <ITProjectButton source="sidebar" />
+      </div>
 
       {/* User */}
       {userProfile && (
