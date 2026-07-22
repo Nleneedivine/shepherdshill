@@ -15,6 +15,7 @@ import {
   Twitter,
   UserPlus,
   Users2,
+  Wrench,
   Youtube,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,7 +106,20 @@ function Navbar({ isAuthed }: { isAuthed: boolean }) {
           </div>
         </Link>
 
-        <div className="flex items-center gap-2 md:gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
+          <a
+            href="https://your-it-project-link.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:inline-flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl font-semibold text-white text-sm transition-transform hover:scale-[1.03] active:scale-[0.98]"
+            style={{
+              background: "linear-gradient(135deg, #0EA5E9, #0284C7)",
+            }}
+          >
+            <Wrench size={16} />
+            <span className="hidden md:inline">IT Project</span>
+          </a>
+
           {isAuthed ? (
             <Link
               to="/dashboard"
