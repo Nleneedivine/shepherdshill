@@ -99,11 +99,16 @@ export function Sidebar({ collapsed, onToggle, navItems, userProfile, logo }: Si
         })}
       </nav>
 
-      {/* IT Project Button */}
-      <div className="px-3 py-2 border-t border-white/10">
-        <ITProjectButton source="sidebar" />
+        {/* IT Project Button */}
+      <div className={cn("border-t border-white/10", collapsed ? "px-2 py-2" : "px-3 py-2")}>
+        <ITProjectButton
+          source="sidebar"
+          variant={collapsed ? "icon" : "default"}
+          collapsed={collapsed}
+          className="w-full"
+        />
       </div>
-
+      
       {/* User */}
       {userProfile && (
         <div className="border-t border-white/10 p-3">
