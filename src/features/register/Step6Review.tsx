@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Edit2 } from "lucide-react";
+import { useEffect, useRef } from "react";
 import type { RegistrationData } from "@/types";
 import { completenessScore } from "@/lib/registration";
 
@@ -7,6 +8,7 @@ interface Props {
   data: RegistrationData;
   onEdit: (step: number) => void;
   onConsentChange: (patch: Partial<RegistrationData["consent"]>) => void;
+  onTurnstileVerify: (token: string | null) => void;
 }
 
 function fmt(v: unknown) {
@@ -38,7 +40,60 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-export function Step6Review({ data, onEdit, onConsentChange }: Props) {
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        container: HTMLElement,
+        options: { sitekey: string; callback: (token: string) => void; "expired-callback"?: () => void }
+      ) => string;
+      reset: (widgetId?: string) => void;
+    };
+  }
+}
+
+function TurnstileWidget({ onVerify }: { onVerify: (token: string | null) => void }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    function renderWidget() {
+      if (cancelled || !containerRef.current || !window.turnstile) return;
+      widgetIdRef.current = window.turnstile.render(containerRef.current, {
+        sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY,
+        callback: (token: string) => onVerify(token),
+        "expired-callback": () => onVerify(null),
+      });
+    }
+
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      // Script may still be loading — poll briefly until it's ready
+      const interval = setInterval(() => {
+        if (window.turnstile) {
+          clearInterval(interval);
+          renderWidget();
+        }
+      }, 200);
+      return () => {
+        cancelled = true;
+        clearInterval(interval);
+      };
+    }
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return <div ref={containerRef} className="flex justify-center py-2" />;
+}
+
+export function Step6Review({ data, onEdit, onConsentChange, onTurnstileVerify }: Props) {
   const score = completenessScore(data);
   const color = score >= 80 ? "#10b981" : score >= 50 ? "#f59e0b" : "#f43f5e";
   const circumference = 2 * Math.PI * 40;
@@ -121,6 +176,11 @@ export function Step6Review({ data, onEdit, onConsentChange }: Props) {
           { key: "infoAccurate" as const, label: "I confirm this information is accurate", required: true },
           { key: "churchUse" as const, label: "I agree to church data usage", required: true },
           { key: "photoConsent" as const, label: "I consent to photo usage (optional)", required: false },
+          {
+            key: "attendanceTrackingAcknowledged" as const,
+            label: "I understand my attendance at services may be recorded digitally for church administrative and pastoral care purposes",
+            required: true,
+          },
         ].map(({ key, label, required }) => (
           <label key={key} className="flex items-start gap-3 cursor-pointer">
             <input
@@ -134,6 +194,11 @@ export function Step6Review({ data, onEdit, onConsentChange }: Props) {
             </span>
           </label>
         ))}
+      </div>
+
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+        <h3 className="font-semibold text-white mb-3 text-center">Verify you're human</h3>
+        <TurnstileWidget onVerify={onTurnstileVerify} />
       </div>
     </div>
   );
