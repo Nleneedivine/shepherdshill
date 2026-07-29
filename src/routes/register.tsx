@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useReducer, useEffect, useRef } from "react";
+import { useReducer, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Church, Send } from "lucide-react";
 import { Button } from "@/components/ds";
@@ -68,6 +68,7 @@ function RegisterPage() {
   const { draft, saveDraft, clearDraft, isDraftLoading } = useFormDraft("registration");
   const hasLoadedDraft = useRef(false);
   const skipNextSave = useRef(true); // don't save on the very first mount render
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   // Load saved draft once, after it's fetched from Supabase/localStorage
   useEffect(() => {
@@ -107,8 +108,15 @@ function RegisterPage() {
       showToast("Please accept the required consents", "error");
       return;
     }
+    if (!turnstileToken) {
+      showToast("Please complete the verification check", "error");
+      return;
+    }
     dispatch({ type: "SET_SUBMITTING", value: true });
-    const result = await submitRegistration(state.data as unknown as Parameters<typeof submitRegistration>[0]);
+    const result = await submitRegistration(
+      state.data as unknown as Parameters<typeof submitRegistration>[0],
+      turnstileToken
+    );
     if (result.success && result.submissionId) {
       dispatch({ type: "SET_SUBMITTED", id: result.submissionId });
       await clearDraft();
@@ -169,8 +177,12 @@ function RegisterPage() {
                       onChange={(patch) => dispatch({ type: "UPDATE_SPIRITUAL", patch })} />
                   )}
                   {state.currentStep === 6 && (
-                    <Step6Review data={state.data} onEdit={(s) => dispatch({ type: "SET_STEP", step: s })}
-                      onConsentChange={(patch) => dispatch({ type: "UPDATE_CONSENT", patch })} />
+                    <Step6Review
+                      data={state.data}
+                      onEdit={(s) => dispatch({ type: "SET_STEP", step: s })}
+                      onConsentChange={(patch) => dispatch({ type: "UPDATE_CONSENT", patch })}
+                      onTurnstileVerify={setTurnstileToken}
+                    />
                   )}
                 </motion.div>
               </AnimatePresence>
@@ -187,7 +199,11 @@ function RegisterPage() {
                   <Button
                     onClick={handleSubmit}
                     loading={state.isSubmitting}
-                    disabled={!state.data.consent.infoAccurate || !state.data.consent.churchUse}
+                    disabled={
+                      !state.data.consent.infoAccurate ||
+                      !state.data.consent.churchUse ||
+                      !turnstileToken
+                    }
                   >
                     <Send size={16} /> Submit registration
                   </Button>
