@@ -108,7 +108,7 @@ function Navbar({ isAuthed }: { isAuthed: boolean }) {
 
                 <div className="flex items-center gap-2 md:gap-3">
           <a
-            href="https://your-it-project-link.com"
+            href="https://shills.lovable.app/"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:inline-flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl font-semibold text-white text-sm transition-transform hover:scale-[1.03] active:scale-[0.98]"
@@ -117,7 +117,7 @@ function Navbar({ isAuthed }: { isAuthed: boolean }) {
             }}
           >
             <Wrench size={16} />
-            <span className="hidden md:inline">IT Project</span>
+            <span className="hidden md:inline">Join the IT Project</span>
           </a>
 
           {isAuthed ? (
