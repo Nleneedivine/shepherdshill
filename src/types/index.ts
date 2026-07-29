@@ -128,6 +128,7 @@ export interface RegistrationData {
     infoAccurate: boolean;
     churchUse: boolean;
     photoConsent: boolean;
+    attendanceTrackingAcknowledged: boolean;
   };
 }
 
