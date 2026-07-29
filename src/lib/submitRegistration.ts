@@ -49,6 +49,7 @@ export interface RegistrationFormData {
     infoAccurate: boolean
     churchUse: boolean
     photoConsent: boolean
+    attendanceTrackingAcknowledged: boolean
   }
 }
 
@@ -119,7 +120,8 @@ async function getBranchId(): Promise<string | null> {
 }
 
 export async function submitRegistration(
-  data: RegistrationFormData
+  data: RegistrationFormData,
+  turnstileToken: string
 ): Promise<SubmissionResult> {
   console.log('[REG] Step 1 - Starting registration submission...')
 
@@ -241,34 +243,29 @@ export async function submitRegistration(
       infoAccurate: data.consent.infoAccurate,
       churchUse: data.consent.churchUse,
       photoConsent: data.consent.photoConsent,
+      attendanceTrackingAcknowledged: data.consent.attendanceTrackingAcknowledged,
     },
   }
 
   console.log('[REG] Step 4 - Submission object built:', submission)
 
-  // Step 5 — Submit to Supabase
+  // Step 5 — Submit via Edge Function (handles CAPTCHA verification + rate limiting + insert)
   try {
-    console.log('[REG] Step 5 - Submitting to Supabase...')
+    console.log('[REG] Step 5 - Submitting via Edge Function...')
 
-    const { data: result, error } = await supabase
-      .from('member_registrations')
-      .insert(submission)
-      .select('id')
-      .single()
+    const { data: result, error } = await supabase.functions.invoke(
+      'submit-registration',
+      { body: { submission, turnstileToken } }
+    )
 
-    console.log('[REG] Step 5 - Supabase response:', { result, error })
+    console.log('[REG] Step 5 - Edge Function response:', { result, error })
 
-    if (error) {
-      console.error('[REG] Supabase error:', {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-      })
+    if (error || result?.error) {
+      const message = result?.error || error?.message || 'Unknown error'
+      console.error('[REG] Submission error:', message)
 
-      // Handle specific errors
-      if (error.code === '23505') {
-        if (error.message.includes('phone')) {
+      if (result?.code === '23505') {
+        if (String(message).includes('phone')) {
           return {
             success: false,
             error:
@@ -285,9 +282,9 @@ export async function submitRegistration(
       }
 
       if (
-        error.code === '42501' ||
-        error.message?.includes('permission') ||
-        error.message?.includes('policy')
+        result?.code === '42501' ||
+        String(message).includes('permission') ||
+        String(message).includes('policy')
       ) {
         return {
           success: false,
@@ -297,20 +294,9 @@ export async function submitRegistration(
         }
       }
 
-      if (error.code === 'PGRST116') {
-        return {
-          success: false,
-          error:
-            'A technical error occurred. ' +
-            'Please speak to an usher who can register you manually.',
-        }
-      }
-
       return {
         success: false,
-        error:
-          `Registration failed: ${error.message || 'Unknown error'}. ` +
-          'Please try again or speak to an usher.',
+        error: `Registration failed: ${message}. Please try again or speak to an usher.`,
       }
     }
 
