@@ -74,6 +74,6 @@ export function initialRegistrationData(): RegistrationData {
       believersClass: "", baptismalClass: "", workerTraining: "",
       otherTraining: "",
     },
-    consent: { infoAccurate: false, churchUse: false, photoConsent: false },
+    consent: { infoAccurate: false, churchUse: false, photoConsent: false, attendanceTrackingAcknowledged: false },
   };
 }
