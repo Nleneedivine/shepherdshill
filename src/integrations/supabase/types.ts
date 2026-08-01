@@ -162,27 +162,41 @@ export type Database = {
       }
       departments: {
         Row: {
+          branch_id: string | null
           created_at: string
+          description: string | null
           icon: string | null
           id: string
           is_active: boolean
           name: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
+          description?: string | null
           icon?: string | null
           id?: string
           is_active?: boolean
           name: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
+          description?: string | null
           icon?: string | null
           id?: string
           is_active?: boolean
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "departments_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       family_grouping_schemes: {
         Row: {
@@ -526,6 +540,7 @@ export type Database = {
           submission_method: string
           submitted_at: string
           updated_at: string
+          user_id: string | null
           verification_status: string
           verified_at: string | null
           verified_by: string | null
@@ -558,6 +573,7 @@ export type Database = {
           submission_method?: string
           submitted_at?: string
           updated_at?: string
+          user_id?: string | null
           verification_status?: string
           verified_at?: string | null
           verified_by?: string | null
@@ -590,6 +606,7 @@ export type Database = {
           submission_method?: string
           submitted_at?: string
           updated_at?: string
+          user_id?: string | null
           verification_status?: string
           verified_at?: string | null
           verified_by?: string | null
@@ -763,6 +780,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      registration_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string
+        }
+        Relationships: []
       }
       spiritual_journey: {
         Row: {
