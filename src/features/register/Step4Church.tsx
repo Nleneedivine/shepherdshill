@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, Info, X, Music2, Shield, Star, Megaphone, Heart, Baby, Camera, Monitor, Sun, Flame, Brush, Users, type LucideIcon } from "lucide-react";import { Search, Info, X, Music2, Shield, Star, Megaphone, Heart, Baby, Camera, Monitor, Sun, Flame, Brush, Users, CheckCircle, type LucideIcon } from "lucide-react";
+import { Search, Info, X, Music2, Shield, Star, Megaphone, Heart, Baby, Camera, Monitor, Sun, Flame, Brush, Users, CheckCircle, type LucideIcon } from "lucide-react";
 import { Input, Select } from "@/components/ds";
 import { supabase } from "@/integrations/supabase/client";
 import type { CellGroup, Department, RegistrationData } from "@/types";
