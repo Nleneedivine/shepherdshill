@@ -4,10 +4,10 @@ import { supabase } from '@/integrations/supabase/client'
 export interface CellGroup {
   id: string
   name: string
-  leader_name?: string
-  meeting_day?: string
-  meeting_time?: string
-  meeting_location?: string
+  leader_name?: string | null
+  meeting_day?: string | null
+  meeting_time?: string | null
+  meeting_location?: string | null
 }
 
 export function useCellGroups() {
