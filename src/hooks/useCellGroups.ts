@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/integrations/supabase/client'
 
 export interface CellGroup {
   id: string
   name: string
-  leader_name?: string
-  meeting_day?: string
-  meeting_time?: string
-  meeting_location?: string
+  leader_name?: string | null
+  meeting_day?: string | null
+  meeting_time?: string | null
+  meeting_location?: string | null
 }
 
 export function useCellGroups() {
@@ -25,7 +25,7 @@ export function useCellGroups() {
 
       let query = supabase
         .from('cell_groups')
-        .select('id, name, meeting_day, meeting_time, meeting_location')
+        .select('id, name, leader_name, meeting_day, meeting_time')
         .order('name', { ascending: true })
 
       if (branchId) {

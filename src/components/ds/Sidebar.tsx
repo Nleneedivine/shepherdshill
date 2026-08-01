@@ -2,7 +2,7 @@ import type { ComponentType, ReactNode } from "react";
 import { ChevronsLeft, ChevronsRight, LogOut, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar } from "./Avatar";
-import { ITProjectButton } from "@/components/ITProjectButton";
+import { ITProjectButton } from "@/components/global/ITProjectButton";
 
 export interface NavItem {
   label: string;
