@@ -640,6 +640,7 @@ export type Database = {
           membership_stage: string | null
           membership_status: string | null
           middle_name: string | null
+          notification_opt_out: boolean
           phone_primary: string | null
           phone_secondary: string | null
           preferred_name: string | null
@@ -666,6 +667,7 @@ export type Database = {
           membership_stage?: string | null
           membership_status?: string | null
           middle_name?: string | null
+          notification_opt_out?: boolean
           phone_primary?: string | null
           phone_secondary?: string | null
           preferred_name?: string | null
@@ -692,6 +694,7 @@ export type Database = {
           membership_stage?: string | null
           membership_status?: string | null
           middle_name?: string | null
+          notification_opt_out?: boolean
           phone_primary?: string | null
           phone_secondary?: string | null
           preferred_name?: string | null
