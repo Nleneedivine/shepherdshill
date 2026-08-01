@@ -25,7 +25,7 @@ export function useCellGroups() {
 
       let query = supabase
         .from('cell_groups')
-        .select('id, name, meeting_day, meeting_time, meeting_location')
+        .select('id, name, leader_name, meeting_day, meeting_time')
         .order('name', { ascending: true })
 
       if (branchId) {
