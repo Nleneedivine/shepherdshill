@@ -60,6 +60,7 @@ function TurnstileWidget({ onVerify }: { onVerify: (token: string | null) => voi
     let cancelled = false;
 
     function renderWidget() {
+      console.log("[Turnstile] sitekey value:", import.meta.env.VITE_TURNSTILE_SITE_KEY);
       if (cancelled || !containerRef.current || !window.turnstile) return;
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY,
