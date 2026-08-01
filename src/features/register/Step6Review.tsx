@@ -60,11 +60,9 @@ function TurnstileWidget({ onVerify }: { onVerify: (token: string | null) => voi
     let cancelled = false;
 
     function renderWidget() {
-      const sitekey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
-      (window as unknown as Record<string, string>).TURNSTILE_SITEKEY_USED = sitekey ?? "undefined";
       if (cancelled || !containerRef.current || !window.turnstile) return;
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
-        sitekey: sitekey,
+        sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY,
         callback: (token: string) => onVerify(token),
         "expired-callback": () => onVerify(null),
       });
