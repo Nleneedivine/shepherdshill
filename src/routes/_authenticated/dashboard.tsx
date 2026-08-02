@@ -26,8 +26,14 @@ function DashboardPage() {
   const [schemeName, setSchemeName] = useState<string>("");
   const [groupTally, setGroupTally] = useState<GroupTally[]>([]);
 
+  const roles = user?.roles ?? [];
+  const isStaff = roles.some((r) => STAFF_ROLES.includes(r));
+  const isAdmin = roles.some((r) => ADMIN_ROLES.includes(r));
+
   useEffect(() => {
+    if (!isStaff) return;
     void (async () => {
+
       const [m, p, c, b] = await Promise.all([
         supabase.from("members").select("id", { count: "exact", head: true }),
         supabase.from("member_registrations").select("id", { count: "exact", head: true }).eq("status", "pending"),
