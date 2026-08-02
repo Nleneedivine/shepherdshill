@@ -938,6 +938,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
       reassign_all_members_to_scheme: {
         Args: { p_branch_id: string; p_scheme_id: string }
         Returns: number
