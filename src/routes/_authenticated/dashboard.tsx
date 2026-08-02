@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Users, UserPlus, Building2, HeartHandshake, LogOut, LayoutDashboard, ArrowRight, Users2 } from "lucide-react";
+import { Users, UserPlus, Building2, HeartHandshake, LogOut, LayoutDashboard, ArrowRight, ArrowLeft, Users2 } from "lucide-react";
 import { AppLayout, Card, StatCard, PageWrapper, Button, Badge } from "@/components/ds";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -76,6 +76,25 @@ function DashboardPage() {
     await logout();
     navigate({ to: "/auth" });
   };
+
+  if (!isStaff) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#080c16" }}>
+        <div className="max-w-md w-full text-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
+          <h1 className="text-xl font-semibold text-white">Your dashboard is under development</h1>
+          <p className="mt-2 text-sm text-slate-400">
+            We&apos;re still building the member dashboard. Please check back soon.
+          </p>
+          <button
+            onClick={() => navigate({ to: "/" })}
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-2 text-sm font-medium text-white"
+          >
+            <ArrowLeft size={16} /> Back to home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AppLayout
