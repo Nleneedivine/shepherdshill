@@ -6,9 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { generateRegistrationPdf, FORM_VERSION } from "@/lib/generateRegistrationPdf";
 import { useToastContext } from "@/components/ds/Toast";
+import { requireRoles, ADMIN_ROLES } from "@/lib/routeGuards";
 
 export const Route = createFileRoute("/_authenticated/admin/forms/registration-form")({
   ssr: false,
+  beforeLoad: () => requireRoles(ADMIN_ROLES),
   component: RegistrationFormPage,
 });
 

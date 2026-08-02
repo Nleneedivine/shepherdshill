@@ -4,10 +4,12 @@ import { Users, UserPlus, Building2, HeartHandshake, LogOut, LayoutDashboard, Ar
 import { AppLayout, Card, StatCard, PageWrapper, Button, Badge } from "@/components/ds";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { ADMIN_ROLES, STAFF_ROLES } from "@/lib/routeGuards";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
 });
+
 
 interface GroupTally {
   id: string;
@@ -24,8 +26,14 @@ function DashboardPage() {
   const [schemeName, setSchemeName] = useState<string>("");
   const [groupTally, setGroupTally] = useState<GroupTally[]>([]);
 
+  const roles = user?.roles ?? [];
+  const isStaff = roles.some((r) => STAFF_ROLES.includes(r));
+  const isAdmin = roles.some((r) => ADMIN_ROLES.includes(r));
+
   useEffect(() => {
+    if (!isStaff) return;
     void (async () => {
+
       const [m, p, c, b] = await Promise.all([
         supabase.from("members").select("id", { count: "exact", head: true }),
         supabase.from("member_registrations").select("id", { count: "exact", head: true }).eq("status", "pending"),
@@ -62,7 +70,7 @@ function DashboardPage() {
         setGroupTally(((grps ?? []) as Omit<GroupTally, "count">[]).map((g) => ({ ...g, count: counts[g.id] ?? 0 })));
       }
     })();
-  }, []);
+  }, [isStaff]);
 
   const handleLogout = async () => {
     await logout();
@@ -75,8 +83,9 @@ function DashboardPage() {
       breadcrumb={[{ label: "Home", href: "/dashboard" }, { label: "Dashboard" }]}
       navItems={[
         { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-        { label: "Members", href: "/members", icon: Users },
+        ...(isStaff ? [{ label: "Members", href: "/members", icon: Users }] : []),
       ]}
+
       userProfile={{
         name: user?.profile?.full_name ?? user?.email ?? "User",
         email: user?.email ?? "",
@@ -94,13 +103,25 @@ function DashboardPage() {
           <Button variant="secondary" onClick={handleLogout}><LogOut size={16} /> Sign out</Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Total Members" value={stats.members} icon={<Users size={20} />} />
-          <StatCard label="Pending Registrations" value={stats.pending} icon={<UserPlus size={20} />} glowColor="amber" />
-          <StatCard label="House Fellowship Centres" value={stats.cellGroups} icon={<HeartHandshake size={20} />} glowColor="green" />
-          <StatCard label="Branches" value={stats.branches} icon={<Building2 size={20} />} />
-        </div>
+        {!isStaff && (
+          <Card title="Your account" subtitle="Member access">
+            <p className="text-sm text-slate-400">
+              You&apos;re signed in as a member. Church-wide records and administration tools are
+              only available to church staff.
+            </p>
+          </Card>
+        )}
 
+        {isStaff && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard label="Total Members" value={stats.members} icon={<Users size={20} />} />
+            <StatCard label="Pending Registrations" value={stats.pending} icon={<UserPlus size={20} />} glowColor="amber" />
+            <StatCard label="House Fellowship Centres" value={stats.cellGroups} icon={<HeartHandshake size={20} />} glowColor="green" />
+            <StatCard label="Branches" value={stats.branches} icon={<Building2 size={20} />} />
+          </div>
+        )}
+
+        {isStaff && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
           <Card
             title="Family Groups"
@@ -130,12 +151,14 @@ function DashboardPage() {
                     </span>
                   )}
                 </div>
-                <button
-                  onClick={() => navigate({ to: "/admin/family-groups" })}
-                  className="text-xs text-violet-400 hover:text-violet-300 inline-flex items-center gap-1"
-                >
-                  Manage Groups <ArrowRight size={12} />
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => navigate({ to: "/admin/family-groups" })}
+                    className="text-xs text-violet-400 hover:text-violet-300 inline-flex items-center gap-1"
+                  >
+                    Manage Groups <ArrowRight size={12} />
+                  </button>
+                )}
               </>
             )}
           </Card>
@@ -144,12 +167,16 @@ function DashboardPage() {
               <Button variant="secondary" onClick={() => navigate({ to: "/members" })}>
                 <Users size={16} /> View members
               </Button>
-              <Button variant="secondary" onClick={() => navigate({ to: "/admin/family-groups" })}>
-                <Users2 size={16} /> Manage Family Groups
-              </Button>
+              {isAdmin && (
+                <Button variant="secondary" onClick={() => navigate({ to: "/admin/family-groups" })}>
+                  <Users2 size={16} /> Manage Family Groups
+                </Button>
+              )}
             </div>
           </Card>
         </div>
+        )}
+
       </PageWrapper>
     </AppLayout>
   );
