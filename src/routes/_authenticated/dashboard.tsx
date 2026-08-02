@@ -70,7 +70,7 @@ function DashboardPage() {
         setGroupTally(((grps ?? []) as Omit<GroupTally, "count">[]).map((g) => ({ ...g, count: counts[g.id] ?? 0 })));
       }
     })();
-  }, []);
+  }, [isStaff]);
 
   const handleLogout = async () => {
     await logout();
@@ -83,8 +83,9 @@ function DashboardPage() {
       breadcrumb={[{ label: "Home", href: "/dashboard" }, { label: "Dashboard" }]}
       navItems={[
         { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-        { label: "Members", href: "/members", icon: Users },
+        ...(isStaff ? [{ label: "Members", href: "/members", icon: Users }] : []),
       ]}
+
       userProfile={{
         name: user?.profile?.full_name ?? user?.email ?? "User",
         email: user?.email ?? "",
