@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Users, UserPlus, Building2, HeartHandshake, LogOut, LayoutDashboard, ArrowRight, Users2 } from "lucide-react";
+import { Users, UserPlus, Building2, HeartHandshake, LogOut, LayoutDashboard, ArrowRight, ArrowLeft, Users2 } from "lucide-react";
 import { AppLayout, Card, StatCard, PageWrapper, Button, Badge } from "@/components/ds";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
