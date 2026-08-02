@@ -6,9 +6,11 @@ import { AppLayout, PageWrapper, Card, Button, Badge, Spinner, Modal, Input } fr
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToastContext } from "@/components/ds/Toast";
+import { requireRoles, ADMIN_ROLES } from "@/lib/routeGuards";
 
 export const Route = createFileRoute("/_authenticated/admin/family-groups")({
   ssr: false,
+  beforeLoad: () => requireRoles(ADMIN_ROLES),
   component: FamilyGroupsAdmin,
 });
 

@@ -11,9 +11,11 @@ import { ReviewPanel } from "@/features/admin/ReviewPanel";
 import { RejectModal } from "@/features/admin/RejectModal";
 import { approveSubmission } from "@/lib/approveSubmission";
 import type { Submission } from "@/features/admin/types";
+import { requireRoles, ADMIN_ROLES } from "@/lib/routeGuards";
 
 export const Route = createFileRoute("/_authenticated/admin/verifications")({
   ssr: false,
+  beforeLoad: () => requireRoles(ADMIN_ROLES),
   component: VerificationsPage,
 });
 

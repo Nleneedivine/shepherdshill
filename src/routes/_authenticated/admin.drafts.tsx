@@ -5,9 +5,11 @@ import { AppLayout, PageWrapper, Card, Button, Badge, EmptyState, StatCard, Spin
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToastContext } from "@/components/ds/Toast";
+import { requireRoles, ADMIN_ROLES } from "@/lib/routeGuards";
 
 export const Route = createFileRoute("/_authenticated/admin/drafts")({
   ssr: false,
+  beforeLoad: () => requireRoles(ADMIN_ROLES),
   component: DraftsPage,
 });
 
