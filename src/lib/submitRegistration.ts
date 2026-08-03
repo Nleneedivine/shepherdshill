@@ -249,6 +249,7 @@ export async function submitRegistration(
 
   console.log('[REG] Step 4 - Submission object built:', submission)
 
+ 
   // Step 5 — Submit via Edge Function (handles CAPTCHA verification + rate limiting + insert)
   try {
     console.log('[REG] Step 5 - Submitting via Edge Function...')
@@ -261,10 +262,23 @@ export async function submitRegistration(
     console.log('[REG] Step 5 - Edge Function response:', { result, error })
 
     if (error || result?.error) {
-      const message = result?.error || error?.message || 'Unknown error'
+      // supabase-js doesn't auto-parse the JSON body on non-2xx responses —
+      // the real error message/code lives in error.context (the raw Response)
+      let parsedBody: { error?: string; code?: string } | null = null
+      if (error && 'context' in error && error.context instanceof Response) {
+        try {
+          parsedBody = await error.context.json()
+        } catch {
+          // context body wasn't valid JSON — fall through to generic message
+        }
+      }
+
+      const message = parsedBody?.error || result?.error || error?.message || 'Unknown error'
+      const code = parsedBody?.code || result?.code
+
       console.error('[REG] Submission error:', message)
 
-      if (result?.code === '23505') {
+      if (code === '23505') {
         if (String(message).includes('phone')) {
           return {
             success: false,
@@ -282,7 +296,7 @@ export async function submitRegistration(
       }
 
       if (
-        result?.code === '42501' ||
+        code === '42501' ||
         String(message).includes('permission') ||
         String(message).includes('policy')
       ) {
@@ -291,6 +305,20 @@ export async function submitRegistration(
           error:
             'Registration is temporarily unavailable. ' +
             'Please speak to an usher or try again in a few minutes.',
+        }
+      }
+
+      if (String(message).includes('CAPTCHA')) {
+        return {
+          success: false,
+          error: 'Verification failed. Please complete the human verification check and try again.',
+        }
+      }
+
+      if (String(message).includes('Too many attempts')) {
+        return {
+          success: false,
+          error: 'Too many registration attempts from this location. Please try again later or speak to an usher.',
         }
       }
 
