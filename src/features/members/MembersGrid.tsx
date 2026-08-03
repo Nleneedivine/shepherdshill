@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
 import { Eye, MessageSquare } from "lucide-react";
 import { Avatar, Badge, Button } from "@/components/ds";
 import type { MemberListItem } from "./useMembers";
