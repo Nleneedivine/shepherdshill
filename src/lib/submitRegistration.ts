@@ -130,7 +130,7 @@ export async function submitRegistration(
   if (data.personal.photoFile) {
     try {
       const file = data.personal.photoFile
-      const ext = file.name.split('.').pop() || 'jpg'
+      const ext = file?.name?.split('.').pop() || 'jpg'
       const fileName = `onboarding/${Date.now()}-${Math.random()
         .toString(36)
         .slice(2)}.${ext}`
