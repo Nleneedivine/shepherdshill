@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, MoreVertical } from "lucide-react";
 import { Avatar, Badge } from "@/components/ds";
 import type { MemberListItem, MemberFilterState } from "./useMembers";
@@ -67,11 +68,12 @@ export function MembersTable({ items, selected, onToggle, onToggleAll, sort, dir
                 />
               </td>
               <td className="px-4 py-3">
-                <div className="flex items-center gap-3">
+                <Link to="/members/$id" params={{ id: m.id }} className="flex items-center gap-3 group">
                   <Avatar name={`${m.first_name} ${m.last_name}`} src={m.profile_photo_url ?? undefined} size="sm" />
-                  <div className="text-white truncate">{m.first_name} {m.last_name}</div>
-                </div>
+                  <div className="text-white truncate group-hover:text-violet-300">{m.first_name} {m.last_name}</div>
+                </Link>
               </td>
+
               <td className="px-4 py-3 text-slate-300 font-mono text-xs">{m.member_code ?? "—"}</td>
               <td className="px-4 py-3 text-slate-300">{m.phone_primary ?? "—"}</td>
               <td className="px-4 py-3">

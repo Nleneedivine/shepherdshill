@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
 import { Eye, MessageSquare } from "lucide-react";
 import { Avatar, Badge, Button } from "@/components/ds";
 import type { MemberListItem } from "./useMembers";
@@ -37,9 +38,12 @@ export function MembersGrid({ items, selected, onToggle }: Props) {
             </div>
             <div className="mt-2 text-xs text-slate-400 truncate max-w-full">{m.cell_group_name ?? "No House Fellowship Centre"}</div>
             <div className="mt-4 flex gap-2 w-full">
-              <Button size="sm" variant="secondary" className="flex-1"><Eye size={14} /> View</Button>
+              <Link to="/members/$id" params={{ id: m.id }} className="flex-1">
+                <Button size="sm" variant="secondary" className="w-full"><Eye size={14} /> View</Button>
+              </Link>
               <Button size="sm" variant="ghost" className="flex-1"><MessageSquare size={14} /> Message</Button>
             </div>
+
           </div>
         </motion.div>
       ))}
