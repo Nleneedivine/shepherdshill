@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, MoreVertical } from "lucide-react";
 import { Avatar, Badge } from "@/components/ds";
 import type { MemberListItem, MemberFilterState } from "./useMembers";
