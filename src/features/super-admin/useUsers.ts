@@ -10,6 +10,7 @@ export interface UserRow {
   is_super_admin: boolean;
   branch_id: string | null;
   branch_name: string | null;
+  is_anonymous: boolean;
   roles: AppRole[];
   primary_role: AppRole;
   created_at: string;
@@ -17,6 +18,7 @@ export interface UserRow {
 
 export type RoleFilter = "all" | "member" | "admin" | "super_admin" | "custom";
 export type StatusFilter = "all" | "active" | "suspended";
+export type AudienceFilter = "real" | "anonymous";
 
 const ROLE_PRIORITY: AppRole[] = [
   "super_admin",
@@ -28,20 +30,35 @@ const ROLE_PRIORITY: AppRole[] = [
   "first_timer",
 ];
 
-function primaryRoleOf(roles: AppRole[], isSuperAdmin: boolean): AppRole {
-  if (isSuperAdmin) return "super_admin";
+/** user_roles is the single source of truth for access. */
+function primaryRoleOf(roles: AppRole[]): AppRole {
   for (const r of ROLE_PRIORITY) if (roles.includes(r)) return r;
-  return "member";
+  return roles[0] ?? "member";
+}
+
+interface RpcRow {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  is_super_admin: boolean;
+  branch_id: string | null;
+  branch_name: string | null;
+  is_anonymous: boolean;
+  created_at: string;
+  roles: string[] | null;
+  total_count: number;
 }
 
 export function useUsers(params: {
   search: string;
   roleFilter: RoleFilter;
   statusFilter: StatusFilter;
+  audience?: AudienceFilter;
   page: number;
   pageSize: number;
 }) {
-  const { search, roleFilter, statusFilter, page, pageSize } = params;
+  const { search, roleFilter, statusFilter, audience = "real", page, pageSize } = params;
   const [rows, setRows] = useState<UserRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -51,82 +68,53 @@ export function useUsers(params: {
     setLoading(true);
     setError(null);
     try {
-      // Fetch profiles + branch join, then user_roles separately.
-      let q = supabase
-        .from("profiles")
-        .select("id, full_name, email, phone, is_super_admin, branch_id, created_at, branches(name)", {
-          count: "exact",
-        })
-        .order("created_at", { ascending: false })
-        .range(page * pageSize, page * pageSize + pageSize - 1);
-      if (search.trim()) {
-        const s = search.replace(/[,%]/g, "").trim();
-        q = q.or(`full_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%`);
-      }
-      const { data: profiles, count, error: pErr } = await q;
-      if (pErr) throw pErr;
+      const { data, error: rpcErr } = await supabase.rpc("admin_list_users", {
+        p_search: search.trim(),
+        p_anonymous: audience === "anonymous",
+        p_limit: pageSize,
+        p_offset: page * pageSize,
+      } as never);
+      if (rpcErr) throw rpcErr;
 
-      const ids = (profiles ?? []).map((p) => (p as { id: string }).id);
-      const rolesById = new Map<string, AppRole[]>();
-      if (ids.length) {
-        const { data: rRows } = await supabase
-          .from("user_roles")
-          .select("user_id, role")
-          .in("user_id", ids);
-        for (const r of (rRows ?? []) as { user_id: string; role: AppRole }[]) {
-          const list = rolesById.get(r.user_id) ?? [];
-          list.push(r.role);
-          rolesById.set(r.user_id, list);
-        }
-      }
+      const raw = (data ?? []) as unknown as RpcRow[];
 
-      let assembled: UserRow[] = (profiles ?? []).map((p) => {
-        const prof = p as unknown as {
-          id: string;
-          full_name: string | null;
-          email: string | null;
-          phone: string | null;
-          is_super_admin: boolean;
-          branch_id: string | null;
-          created_at: string;
-          branches: { name: string } | null;
-        };
-        const roles = rolesById.get(prof.id) ?? [];
+      let assembled: UserRow[] = raw.map((r) => {
+        const roles = ((r.roles ?? []) as AppRole[]).filter(Boolean);
         return {
-          id: prof.id,
-          full_name: prof.full_name,
-          email: prof.email,
-          phone: prof.phone,
-          is_super_admin: prof.is_super_admin,
-          branch_id: prof.branch_id,
-          branch_name: prof.branches?.name ?? null,
+          id: r.id,
+          full_name: r.full_name,
+          email: r.email,
+          phone: r.phone,
+          is_super_admin: r.is_super_admin,
+          branch_id: r.branch_id,
+          branch_name: r.branch_name,
+          is_anonymous: r.is_anonymous,
           roles,
-          primary_role: primaryRoleOf(roles, prof.is_super_admin),
-          created_at: prof.created_at,
+          primary_role: primaryRoleOf(roles),
+          created_at: r.created_at,
         };
       });
 
-      // Client-side role filter (small dataset per page)
+      const count = raw[0]?.total_count ?? 0;
+
       if (roleFilter !== "all") {
         assembled = assembled.filter((r) => {
           if (roleFilter === "super_admin") return r.primary_role === "super_admin";
           if (roleFilter === "admin") return r.primary_role === "admin";
           if (roleFilter === "member") return r.primary_role === "member" || r.primary_role === "first_timer";
-          // custom = anything else (worker / pastoral_team / senior_pastor)
           return ["worker", "pastoral_team", "senior_pastor"].includes(r.primary_role);
         });
       }
-      // Status filter — for now we treat every profile as active; suspended is placeholder.
       if (statusFilter === "suspended") assembled = [];
 
       setRows(assembled);
-      setTotal(count ?? 0);
+      setTotal(Number(count) || 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load users");
     } finally {
       setLoading(false);
     }
-  }, [search, roleFilter, statusFilter, page, pageSize]);
+  }, [search, roleFilter, statusFilter, audience, page, pageSize]);
 
   useEffect(() => {
     void load();
