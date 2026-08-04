@@ -802,6 +802,33 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permissions: {
+        Row: {
+          allowed: boolean
+          created_at: string
+          id: string
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          allowed?: boolean
+          created_at?: string
+          id?: string
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          allowed?: boolean
+          created_at?: string
+          id?: string
+          permission_key?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       spiritual_journey: {
         Row: {
           id: string
@@ -907,6 +934,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_users: {
+        Args: {
+          p_anonymous?: boolean
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+        }
+        Returns: {
+          branch_id: string
+          branch_name: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_anonymous: boolean
+          is_super_admin: boolean
+          phone: string
+          roles: string[]
+          total_count: number
+        }[]
+      }
       approve_member_submission: {
         Args: {
           p_confirmed_cell_group_id?: string
