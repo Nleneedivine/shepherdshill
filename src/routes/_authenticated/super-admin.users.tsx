@@ -4,7 +4,7 @@ import { Eye, Shield, Users as UsersIcon } from "lucide-react";
 import { SuperAdminShell } from "@/features/super-admin/SuperAdminShell";
 import { Card, Input, Select, Button, Avatar, Badge, EmptyState, Spinner } from "@/components/ds";
 import { RoleModal } from "@/features/super-admin/RoleModal";
-import { useUsers, type RoleFilter, type StatusFilter, type UserRow } from "@/features/super-admin/useUsers";
+import { useUsers, type AudienceFilter, type RoleFilter, type StatusFilter, type UserRow } from "@/features/super-admin/useUsers";
 import { useAuth } from "@/hooks/useAuth";
 import { useToastContext } from "@/components/ds/Toast";
 
@@ -18,13 +18,14 @@ const PAGE_SIZE = 20;
 function UsersPage() {
   const { user } = useAuth();
   const { showToast } = useToastContext();
-  const callerIsSuperAdmin = !!user?.profile?.is_super_admin || (user?.roles ?? []).includes("super_admin");
+  const callerIsSuperAdmin = (user?.roles ?? []).includes("super_admin");
 
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [page, setPage] = useState(0);
+  const [audience, setAudience] = useState<AudienceFilter>("real");
   const [managing, setManaging] = useState<UserRow | null>(null);
 
   useEffect(() => {
@@ -36,6 +37,7 @@ function UsersPage() {
     search: debounced,
     roleFilter,
     statusFilter,
+    audience,
     page,
     pageSize: PAGE_SIZE,
   });
@@ -47,6 +49,20 @@ function UsersPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">User Management</h1>
         <p className="text-sm text-slate-400 mt-1">Manage system access and roles for all registered users</p>
+      </div>
+
+      <div className="mb-4 inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+        {(["real", "anonymous"] as AudienceFilter[]).map((a) => (
+          <button
+            key={a}
+            onClick={() => { setAudience(a); setPage(0); }}
+            className={`rounded-lg px-4 py-2 text-sm transition-colors ${
+              audience === a ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
+            }`}
+          >
+            {a === "real" ? "Registered users" : "Anonymous visitors"}
+          </button>
+        ))}
       </div>
 
       <Card className="mb-6">
@@ -92,8 +108,8 @@ function UsersPage() {
                 <tr key={r.id} className="border-b border-white/5 hover:bg-white/5">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <Avatar name={r.full_name ?? r.email ?? "?"} size="sm" />
-                      <div className="text-white">{r.full_name ?? "—"}</div>
+                      <Avatar name={r.full_name ?? r.email ?? "Anonymous"} size="sm" />
+                      <div className="text-white">{r.full_name ?? (r.is_anonymous ? "Anonymous visitor" : "—")}</div>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-slate-300">{r.email ?? "—"}</td>
