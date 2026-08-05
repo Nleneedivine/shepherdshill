@@ -165,11 +165,20 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
     >
       <PageWrapper>
         <button
-          onClick={() => navigate({ to: "/members" })}
+          onClick={() => {
+            if (hasUnsaved && !window.confirm("You have unsaved changes. Leave without saving?")) return;
+            void navigate({ to: "/members" });
+          }}
           className="mb-4 inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
         >
           <ArrowLeft size={14} /> Back to Members
         </button>
+
+        {hasUnsaved && (
+          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-200">
+            You have unsaved changes in one or more sections.
+          </div>
+        )}
 
         {loading ? <ProfileSkeleton /> : !member ? (
           <EmptyState icon={<User size={40} className="text-slate-400" />} title="Member not found" description="This profile may have been removed" />
