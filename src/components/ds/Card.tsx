@@ -9,6 +9,8 @@ export interface CardProps {
   className?: string;
   title?: string;
   subtitle?: string;
+  /** Optional controls rendered on the right of the header row. */
+  action?: ReactNode;
   glow?: CardGlow;
   onClick?: () => void;
 }
