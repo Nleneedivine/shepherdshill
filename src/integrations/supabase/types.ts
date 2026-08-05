@@ -986,9 +986,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_role_or_higher: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_pastoral: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      my_roles: { Args: never; Returns: string[] }
       reassign_all_members_to_scheme: {
         Args: { p_branch_id: string; p_scheme_id: string }
+        Returns: number
+      }
+      role_rank: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: number
       }
       switch_family_grouping_scheme: {
