@@ -27,8 +27,8 @@ function DashboardPage() {
   const [groupTally, setGroupTally] = useState<GroupTally[]>([]);
 
   const roles = user?.roles ?? [];
-  const isStaff = roles.some((r) => STAFF_ROLES.includes(r));
-  const isAdmin = roles.some((r) => ADMIN_ROLES.includes(r));
+  const isStaff = isPastoral(roles);
+  const isAdmin = roleIsAdmin(roles);
 
   useEffect(() => {
     if (!isStaff) return;
