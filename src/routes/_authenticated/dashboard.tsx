@@ -4,7 +4,7 @@ import { Users, UserPlus, Building2, HeartHandshake, LogOut, LayoutDashboard, Ar
 import { AppLayout, Card, StatCard, PageWrapper, Button, Badge } from "@/components/ds";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ADMIN_ROLES, STAFF_ROLES } from "@/lib/routeGuards";
+import { isAdmin as roleIsAdmin, isPastoral } from "@/lib/roles";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
