@@ -1,27 +1,11 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { requireRoles, SUPER_ADMIN_ROLES } from "@/lib/routeGuards";
 
 export const Route = createFileRoute("/_authenticated/super-admin")({
   ssr: false,
-  beforeLoad: async () => {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData.user) {
-      throw redirect({ to: "/auth" });
-    }
-
-    // user_roles is the single source of truth for access
-    const { data: roles, error: rolesError } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userData.user.id);
-
-    const isSuperAdmin = ((roles ?? []) as { role: string }[]).some(
-      (r) => r.role === "super_admin",
-    );
-
-    if (rolesError || !isSuperAdmin) {
-      throw redirect({ to: "/dashboard" });
-    }
-  },
+  // user_roles is the single source of truth for access; the guard is
+  // hierarchy-aware and reads roles through a security-definer RPC so it can
+  // never be blocked by row-level read policies.
+  beforeLoad: () => requireRoles(SUPER_ADMIN_ROLES, "/unauthorized"),
   component: () => <Outlet />,
 });
