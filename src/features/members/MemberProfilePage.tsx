@@ -72,6 +72,19 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
   const [dirtySections, setDirtySections] = useState<Record<string, boolean>>({});
   const hasUnsaved = Object.values(dirtySections).some(Boolean);
 
+  // Warn before leaving the page with unsaved section edits
+  useEffect(() => {
+    if (!hasUnsaved) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasUnsaved]);
+
+
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
