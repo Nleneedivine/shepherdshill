@@ -10,6 +10,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { FamilyGroupBadge } from "@/components/FamilyGroupBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { useToastContext } from "@/components/ds/Toast";
+import { EditableSection } from "./EditableSection";
+import { MemberDepartments } from "./MemberDepartments";
+import { TERMS } from "@/constants/terminology";
+import { MEMBERSHIP_STAGES } from "@/constants/membershipStages";
+import { isAdmin as roleIsAdmin, isPastoral } from "@/lib/roles";
 
 interface MemberFull {
   id: string;
@@ -62,8 +67,10 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
   const [tab, setTab] = useState<Tab>("overview");
 
   const roles = user?.roles ?? [];
-  const canViewPastoral = roles.some((r) => ["admin", "super_admin", "senior_pastor", "pastoral_team"].includes(r));
-  const canEditNotes = roles.some((r) => ["admin", "super_admin"].includes(r));
+  const canViewPastoral = isPastoral(roles);
+  const canEdit = roleIsAdmin(roles);
+  const [dirtySections, setDirtySections] = useState<Record<string, boolean>>({});
+  const hasUnsaved = Object.values(dirtySections).some(Boolean);
 
   useEffect(() => {
     let cancelled = false;
@@ -198,7 +205,7 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
               </div>
 
               <div className="flex flex-wrap gap-2 mt-5">
-                <Button size="sm" variant="secondary" onClick={() => showToast("Edit arrives in Sprint 1D", "info")}><Edit size={14} /> Edit</Button>
+                <Button size="sm" variant="secondary" onClick={() => { setTab("overview"); showToast("Use the Edit button on each section below", "info"); }}><Edit size={14} /> Edit</Button>
                 <Button size="sm" variant="secondary" onClick={() => showToast("Messaging arrives in Sprint 2", "info")}><MessageSquare size={14} /> Message</Button>
                 <Button size="sm" variant="secondary" onClick={flagForCare}><Flag size={14} /> Flag for Care</Button>
                 <Button size="sm" variant="ghost"><MoreHorizontal size={14} /></Button>
@@ -224,7 +231,15 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
               ))}
             </div>
 
-            {tab === "overview" && <OverviewTab member={member} cellGroup={cellGroup} canEditNotes={canEditNotes} />}
+            {tab === "overview" && (
+              <OverviewTab
+                member={member}
+                cellGroup={cellGroup}
+                canEdit={canEdit}
+                onPatch={(patch) => setMember((prev) => (prev ? ({ ...prev, ...patch } as MemberFull) : prev))}
+                onDirtyChange={(section, d) => setDirtySections((prev) => ({ ...prev, [section]: d }))}
+              />
+            )}
             {tab === "spiritual" && <SpiritualTab journey={journey} />}
             {tab === "family" && <FamilyTab />}
             {tab === "biometrics" && <BiometricsTab bio={biometrics} memberCode={member.member_code ?? ""} name={`${member.first_name} ${member.last_name}`} />}
@@ -357,8 +372,8 @@ function OverviewTab({
         onSaved={onPatch}
         onDirtyChange={(d) => onDirtyChange("church", d)}
         fields={[
-          { key: "hfc_name", label: TERMS.cellGroup, readOnly: true },
-          { key: "coordinator", label: TERMS.cellLeader, readOnly: true },
+          { key: "hfc_name", label: TERMS.CELL_GROUP, readOnly: true },
+          { key: "coordinator", label: TERMS.CELL_LEADER, readOnly: true },
           {
             key: "membership_stage",
             label: "Membership stage",

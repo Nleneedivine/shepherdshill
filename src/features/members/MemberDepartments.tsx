@@ -47,7 +47,7 @@ export function MemberDepartments({ memberId, canEdit }: { memberId: string; can
       name: r.departments?.name ?? "Unknown",
     }));
     setRows(assigned);
-    setAll(((ds ?? []) as Dept[]) ?? []);
+    setAll((ds ?? []) as Dept[]);
     setLoading(false);
   }, [memberId]);
 
