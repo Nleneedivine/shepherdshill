@@ -10,6 +10,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { FamilyGroupBadge } from "@/components/FamilyGroupBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { useToastContext } from "@/components/ds/Toast";
+import { EditableSection } from "./EditableSection";
+import { MemberDepartments } from "./MemberDepartments";
+import { TERMS } from "@/constants/terminology";
+import { MEMBERSHIP_STAGES } from "@/constants/membershipStages";
+import { isAdmin as roleIsAdmin, isPastoral } from "@/lib/roles";
 
 interface MemberFull {
   id: string;
@@ -62,8 +67,23 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
   const [tab, setTab] = useState<Tab>("overview");
 
   const roles = user?.roles ?? [];
-  const canViewPastoral = roles.some((r) => ["admin", "super_admin", "senior_pastor", "pastoral_team"].includes(r));
-  const canEditNotes = roles.some((r) => ["admin", "super_admin"].includes(r));
+  const canViewPastoral = isPastoral(roles);
+  const canEdit = roleIsAdmin(roles);
+  const [dirtySections, setDirtySections] = useState<Record<string, boolean>>({});
+  const hasUnsaved = Object.values(dirtySections).some(Boolean);
+
+  // Warn before leaving the page with unsaved section edits
+  useEffect(() => {
+    if (!hasUnsaved) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasUnsaved]);
+
+
 
   useEffect(() => {
     let cancelled = false;
@@ -145,11 +165,20 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
     >
       <PageWrapper>
         <button
-          onClick={() => navigate({ to: "/members" })}
+          onClick={() => {
+            if (hasUnsaved && !window.confirm("You have unsaved changes. Leave without saving?")) return;
+            void navigate({ to: "/members" });
+          }}
           className="mb-4 inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
         >
           <ArrowLeft size={14} /> Back to Members
         </button>
+
+        {hasUnsaved && (
+          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-200">
+            You have unsaved changes in one or more sections.
+          </div>
+        )}
 
         {loading ? <ProfileSkeleton /> : !member ? (
           <EmptyState icon={<User size={40} className="text-slate-400" />} title="Member not found" description="This profile may have been removed" />
@@ -198,7 +227,7 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
               </div>
 
               <div className="flex flex-wrap gap-2 mt-5">
-                <Button size="sm" variant="secondary" onClick={() => showToast("Edit arrives in Sprint 1D", "info")}><Edit size={14} /> Edit</Button>
+                <Button size="sm" variant="secondary" onClick={() => { setTab("overview"); showToast("Use the Edit button on each section below", "info"); }}><Edit size={14} /> Edit</Button>
                 <Button size="sm" variant="secondary" onClick={() => showToast("Messaging arrives in Sprint 2", "info")}><MessageSquare size={14} /> Message</Button>
                 <Button size="sm" variant="secondary" onClick={flagForCare}><Flag size={14} /> Flag for Care</Button>
                 <Button size="sm" variant="ghost"><MoreHorizontal size={14} /></Button>
@@ -224,7 +253,15 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
               ))}
             </div>
 
-            {tab === "overview" && <OverviewTab member={member} cellGroup={cellGroup} canEditNotes={canEditNotes} />}
+            {tab === "overview" && (
+              <OverviewTab
+                member={member}
+                cellGroup={cellGroup}
+                canEdit={canEdit}
+                onPatch={(patch) => setMember((prev) => (prev ? ({ ...prev, ...patch } as MemberFull) : prev))}
+                onDirtyChange={(section, d) => setDirtySections((prev) => ({ ...prev, [section]: d }))}
+              />
+            )}
             {tab === "spiritual" && <SpiritualTab journey={journey} />}
             {tab === "family" && <FamilyTab />}
             {tab === "biometrics" && <BiometricsTab bio={biometrics} memberCode={member.member_code ?? ""} name={`${member.first_name} ${member.last_name}`} />}
@@ -263,41 +300,132 @@ function Row({ label, value }: { label: string; value: string | null | undefined
   );
 }
 
-function OverviewTab({ member, cellGroup, canEditNotes }: { member: MemberFull; cellGroup: { name: string; leader_name: string | null } | null; canEditNotes: boolean }) {
+function OverviewTab({
+  member,
+  cellGroup,
+  canEdit,
+  onPatch,
+  onDirtyChange,
+}: {
+  member: MemberFull;
+  cellGroup: { name: string; leader_name: string | null } | null;
+  canEdit: boolean;
+  onPatch: (patch: Record<string, unknown>) => void;
+  onDirtyChange: (section: string, dirty: boolean) => void;
+}) {
+  const values = member as unknown as Record<string, unknown>;
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <Card title="Personal details">
-        <div className="space-y-0.5">
-          <Row label="Full name" value={`${member.first_name} ${member.middle_name ?? ""} ${member.last_name}`.replace(/  +/g, " ")} />
-          <Row label="Preferred" value={member.preferred_name} />
-          <Row label="Date of birth" value={member.dob} />
-          <Row label="Gender" value={member.gender} />
-          <Row label="Marital status" value={member.marital_status} />
-          <Row label="Primary phone" value={member.phone_primary} />
-          <Row label="Secondary phone" value={member.phone_secondary} />
-          <Row label="Email" value={member.email} />
-          <Row label="Address" value={member.address} />
-          <Row label="City / State" value={[member.city, member.state].filter(Boolean).join(", ") || null} />
-          <Row label="Country" value={member.country} />
-        </div>
-      </Card>
-      <Card title="Church details">
-        <div className="space-y-0.5">
-          <Row label="House Fellowship Centre" value={cellGroup?.name} />
-          <Row label="Coordinator" value={cellGroup?.leader_name} />
-          <Row label="Membership stage" value={member.membership_stage?.replace("_", " ")} />
-          <Row label="Status" value={member.membership_status} />
-          <Row label="Joined" value={new Date(member.created_at).toLocaleDateString()} />
-          {canEditNotes && <Row label="Admin notes" value="—" />}
-        </div>
-      </Card>
+      <EditableSection
+        title="Personal"
+        memberId={member.id}
+        canEdit={canEdit}
+        values={values}
+        onSaved={onPatch}
+        onDirtyChange={(d) => onDirtyChange("personal", d)}
+        fields={[
+          { key: "first_name", label: "First name" },
+          { key: "middle_name", label: "Middle name" },
+          { key: "last_name", label: "Last name" },
+          { key: "preferred_name", label: "Preferred name" },
+          { key: "dob", label: "Date of birth", type: "date" },
+          {
+            key: "gender",
+            label: "Gender",
+            type: "select",
+            options: [
+              { value: "male", label: "Male" },
+              { value: "female", label: "Female" },
+            ],
+          },
+        ]}
+      />
+
+      <EditableSection
+        title="Contact"
+        memberId={member.id}
+        canEdit={canEdit}
+        values={values}
+        onSaved={onPatch}
+        onDirtyChange={(d) => onDirtyChange("contact", d)}
+        fields={[
+          { key: "phone_primary", label: "Primary phone", type: "tel" },
+          { key: "phone_secondary", label: "Secondary phone", type: "tel" },
+          { key: "email", label: "Email", type: "email" },
+          { key: "address", label: "Address" },
+          { key: "city", label: "City" },
+          { key: "state", label: "State" },
+          { key: "country", label: "Country" },
+        ]}
+      />
+
+      <EditableSection
+        title="Family"
+        memberId={member.id}
+        canEdit={canEdit}
+        values={values}
+        onSaved={onPatch}
+        onDirtyChange={(d) => onDirtyChange("family", d)}
+        fields={[
+          {
+            key: "marital_status",
+            label: "Marital status",
+            type: "select",
+            options: [
+              { value: "single", label: "Single" },
+              { value: "married", label: "Married" },
+              { value: "widowed", label: "Widowed" },
+              { value: "divorced", label: "Divorced" },
+            ],
+          },
+        ]}
+      />
+
+      <EditableSection
+        title="Church details"
+        memberId={member.id}
+        canEdit={canEdit}
+        values={{
+          ...values,
+          hfc_name: cellGroup?.name ?? "",
+          coordinator: cellGroup?.leader_name ?? "",
+          joined: new Date(member.created_at).toLocaleDateString(),
+        }}
+        onSaved={onPatch}
+        onDirtyChange={(d) => onDirtyChange("church", d)}
+        fields={[
+          { key: "hfc_name", label: TERMS.CELL_GROUP, readOnly: true },
+          { key: "coordinator", label: TERMS.CELL_LEADER, readOnly: true },
+          {
+            key: "membership_stage",
+            label: "Membership stage",
+            type: "select",
+            options: MEMBERSHIP_STAGES.map((s) => ({ value: s.key, label: s.label })),
+          },
+          {
+            key: "membership_status",
+            label: "Status",
+            type: "select",
+            options: [
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+              { value: "transferred", label: "Transferred" },
+            ],
+          },
+          { key: "joined", label: "Joined", readOnly: true },
+        ]}
+      />
+
       <Card title="Family Group">
         <div className="flex flex-col gap-3">
           <FamilyGroupBadge memberId={member.id} showScheme size="lg" />
           <MemberFamilyGroupAssign memberId={member.id} />
         </div>
       </Card>
+
+      <MemberDepartments memberId={member.id} canEdit={canEdit} />
     </div>
+
   );
 }
 

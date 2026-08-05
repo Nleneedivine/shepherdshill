@@ -88,7 +88,14 @@ function SystemOverview() {
               columns={[
                 { key: "action", header: "Action" },
                 { key: "performed_by_name", header: "By" },
-                { key: "created_at", header: "When", render: (v) => new Date(String(v)).toLocaleString() },
+                {
+                  key: "created_at",
+                  header: "When",
+                  render: (row) => {
+                    const d = new Date(row.created_at);
+                    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
+                  },
+                },
               ]}
               data={logs}
             />

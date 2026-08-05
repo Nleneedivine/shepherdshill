@@ -4,7 +4,7 @@ import { Users, UserPlus, Building2, HeartHandshake, LogOut, LayoutDashboard, Ar
 import { AppLayout, Card, StatCard, PageWrapper, Button, Badge } from "@/components/ds";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ADMIN_ROLES, STAFF_ROLES } from "@/lib/routeGuards";
+import { isAdmin as roleIsAdmin, isPastoral } from "@/lib/roles";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -27,8 +27,8 @@ function DashboardPage() {
   const [groupTally, setGroupTally] = useState<GroupTally[]>([]);
 
   const roles = user?.roles ?? [];
-  const isStaff = roles.some((r) => STAFF_ROLES.includes(r));
-  const isAdmin = roles.some((r) => ADMIN_ROLES.includes(r));
+  const isStaff = isPastoral(roles);
+  const isAdmin = roleIsAdmin(roles);
 
   useEffect(() => {
     if (!isStaff) return;

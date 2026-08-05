@@ -1,30 +1,42 @@
 import { redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppRole } from "@/types";
+import { satisfiesAny } from "@/lib/roles";
 
-export const STAFF_ROLES: AppRole[] = [
-  "super_admin",
-  "admin",
-  "senior_pastor",
-  "pastoral_team",
-];
+export const STAFF_ROLES: AppRole[] = ["pastoral_team"];
 
-export const ADMIN_ROLES: AppRole[] = ["super_admin", "admin"];
+export const ADMIN_ROLES: AppRole[] = ["admin"];
 
-/** Client-side role gate for `_authenticated` routes (ssr: false). */
-export async function requireRoles(allowed: AppRole[]) {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) throw redirect({ to: "/auth" });
+export const SUPER_ADMIN_ROLES: AppRole[] = ["super_admin"];
+
+/**
+ * Reads the caller's roles through the `my_roles()` security-definer RPC so the
+ * result never depends on row-level read policies. Falls back to a direct
+ * `user_roles` read if the RPC is unavailable.
+ */
+export async function fetchMyRoles(userId: string): Promise<AppRole[]> {
+  const { data, error } = await supabase.rpc("my_roles" as never);
+  if (!error && Array.isArray(data)) return data as AppRole[];
 
   const { data: rows } = await supabase
     .from("user_roles")
     .select("role")
-    .eq("user_id", data.user.id);
+    .eq("user_id", userId);
+  return ((rows ?? []) as { role: AppRole }[]).map((r) => r.role);
+}
 
-  const roles = ((rows ?? []) as { role: AppRole }[]).map((r) => r.role);
-  const permitted = roles.some((r) => allowed.includes(r));
+/**
+ * Client-side role gate for `_authenticated` routes (ssr: false).
+ * Hierarchy-aware: a higher-ranked role always satisfies a lower requirement,
+ * so `super_admin` passes every `admin`/staff gate.
+ */
+export async function requireRoles(allowed: AppRole[], redirectTo = "/unauthorized") {
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) throw redirect({ to: "/auth" });
 
-  if (!permitted) throw redirect({ to: "/unauthorized" });
+  const roles = await fetchMyRoles(data.user.id);
+
+  if (!satisfiesAny(roles, allowed)) throw redirect({ to: redirectTo });
 
   return { userId: data.user.id, roles };
 }
