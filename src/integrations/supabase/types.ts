@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      areas: {
+        Row: {
+          code: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          zone_id: string | null
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          zone_id?: string | null
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "areas_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branch_settings: {
         Row: {
           active_family_scheme_id: string | null
@@ -82,34 +120,46 @@ export type Database = {
       }
       cell_groups: {
         Row: {
+          address: string | null
           branch_id: string | null
+          capacity: number | null
           created_at: string
           id: string
           is_active: boolean
           leader_name: string | null
+          leader_phone: string | null
           meeting_day: string | null
           meeting_time: string | null
           name: string
+          parish_id: string | null
         }
         Insert: {
+          address?: string | null
           branch_id?: string | null
+          capacity?: number | null
           created_at?: string
           id?: string
           is_active?: boolean
           leader_name?: string | null
+          leader_phone?: string | null
           meeting_day?: string | null
           meeting_time?: string | null
           name: string
+          parish_id?: string | null
         }
         Update: {
+          address?: string | null
           branch_id?: string | null
+          capacity?: number | null
           created_at?: string
           id?: string
           is_active?: boolean
           leader_name?: string | null
+          leader_phone?: string | null
           meeting_day?: string | null
           meeting_time?: string | null
           name?: string
+          parish_id?: string | null
         }
         Relationships: [
           {
@@ -117,6 +167,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cell_groups_parish_id_fkey"
+            columns: ["parish_id"]
+            isOneToOne: false
+            referencedRelation: "parishes"
             referencedColumns: ["id"]
           },
         ]
@@ -621,6 +678,99 @@ export type Database = {
           },
         ]
       }
+      member_transfers: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_notes: string | null
+          from_branch_id: string | null
+          from_cell_group_id: string | null
+          id: string
+          member_id: string
+          reason: string | null
+          requested_at: string
+          requested_by: string | null
+          status: string
+          to_branch_id: string | null
+          to_cell_group_id: string | null
+          transfer_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_notes?: string | null
+          from_branch_id?: string | null
+          from_cell_group_id?: string | null
+          id?: string
+          member_id: string
+          reason?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          status?: string
+          to_branch_id?: string | null
+          to_cell_group_id?: string | null
+          transfer_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_notes?: string | null
+          from_branch_id?: string | null
+          from_cell_group_id?: string | null
+          id?: string
+          member_id?: string
+          reason?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          status?: string
+          to_branch_id?: string | null
+          to_cell_group_id?: string | null
+          transfer_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_transfers_from_branch_id_fkey"
+            columns: ["from_branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_transfers_from_cell_group_id_fkey"
+            columns: ["from_cell_group_id"]
+            isOneToOne: false
+            referencedRelation: "cell_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_transfers_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_transfers_to_branch_id_fkey"
+            columns: ["to_branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_transfers_to_cell_group_id_fkey"
+            columns: ["to_cell_group_id"]
+            isOneToOne: false
+            referencedRelation: "cell_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           address: string | null
@@ -727,6 +877,57 @@ export type Database = {
           },
         ]
       }
+      parishes: {
+        Row: {
+          area_id: string | null
+          branch_id: string | null
+          code: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          pastor_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_id?: string | null
+          branch_id?: string | null
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          pastor_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_id?: string | null
+          branch_id?: string | null
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          pastor_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parishes_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parishes_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           branch_id: string | null
@@ -783,6 +984,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      provinces: {
+        Row: {
+          code: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       registration_attempts: {
         Row: {
@@ -864,6 +1092,39 @@ export type Database = {
           },
         ]
       }
+      spiritual_journey_stages: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          key: string
+          name: string
+          sequence_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          key: string
+          name: string
+          sequence_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          key?: string
+          name?: string
+          sequence_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_logs: {
         Row: {
           action: string
@@ -929,6 +1190,44 @@ export type Database = {
           },
         ]
       }
+      zones: {
+        Row: {
+          code: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          province_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          province_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          province_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zones_province_id_fkey"
+            columns: ["province_id"]
+            isOneToOne: false
+            referencedRelation: "provinces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -976,6 +1275,10 @@ export type Database = {
           p_new_role: Database["public"]["Enums"]["app_role"]
           p_target_user_id: string
         }
+        Returns: undefined
+      }
+      decide_member_transfer: {
+        Args: { p_approve: boolean; p_notes?: string; p_transfer_id: string }
         Returns: undefined
       }
       grant_super_admin_by_email: { Args: { p_email: string }; Returns: string }
