@@ -263,41 +263,132 @@ function Row({ label, value }: { label: string; value: string | null | undefined
   );
 }
 
-function OverviewTab({ member, cellGroup, canEditNotes }: { member: MemberFull; cellGroup: { name: string; leader_name: string | null } | null; canEditNotes: boolean }) {
+function OverviewTab({
+  member,
+  cellGroup,
+  canEdit,
+  onPatch,
+  onDirtyChange,
+}: {
+  member: MemberFull;
+  cellGroup: { name: string; leader_name: string | null } | null;
+  canEdit: boolean;
+  onPatch: (patch: Record<string, unknown>) => void;
+  onDirtyChange: (section: string, dirty: boolean) => void;
+}) {
+  const values = member as unknown as Record<string, unknown>;
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <Card title="Personal details">
-        <div className="space-y-0.5">
-          <Row label="Full name" value={`${member.first_name} ${member.middle_name ?? ""} ${member.last_name}`.replace(/  +/g, " ")} />
-          <Row label="Preferred" value={member.preferred_name} />
-          <Row label="Date of birth" value={member.dob} />
-          <Row label="Gender" value={member.gender} />
-          <Row label="Marital status" value={member.marital_status} />
-          <Row label="Primary phone" value={member.phone_primary} />
-          <Row label="Secondary phone" value={member.phone_secondary} />
-          <Row label="Email" value={member.email} />
-          <Row label="Address" value={member.address} />
-          <Row label="City / State" value={[member.city, member.state].filter(Boolean).join(", ") || null} />
-          <Row label="Country" value={member.country} />
-        </div>
-      </Card>
-      <Card title="Church details">
-        <div className="space-y-0.5">
-          <Row label="House Fellowship Centre" value={cellGroup?.name} />
-          <Row label="Coordinator" value={cellGroup?.leader_name} />
-          <Row label="Membership stage" value={member.membership_stage?.replace("_", " ")} />
-          <Row label="Status" value={member.membership_status} />
-          <Row label="Joined" value={new Date(member.created_at).toLocaleDateString()} />
-          {canEditNotes && <Row label="Admin notes" value="—" />}
-        </div>
-      </Card>
+      <EditableSection
+        title="Personal"
+        memberId={member.id}
+        canEdit={canEdit}
+        values={values}
+        onSaved={onPatch}
+        onDirtyChange={(d) => onDirtyChange("personal", d)}
+        fields={[
+          { key: "first_name", label: "First name" },
+          { key: "middle_name", label: "Middle name" },
+          { key: "last_name", label: "Last name" },
+          { key: "preferred_name", label: "Preferred name" },
+          { key: "dob", label: "Date of birth", type: "date" },
+          {
+            key: "gender",
+            label: "Gender",
+            type: "select",
+            options: [
+              { value: "male", label: "Male" },
+              { value: "female", label: "Female" },
+            ],
+          },
+        ]}
+      />
+
+      <EditableSection
+        title="Contact"
+        memberId={member.id}
+        canEdit={canEdit}
+        values={values}
+        onSaved={onPatch}
+        onDirtyChange={(d) => onDirtyChange("contact", d)}
+        fields={[
+          { key: "phone_primary", label: "Primary phone", type: "tel" },
+          { key: "phone_secondary", label: "Secondary phone", type: "tel" },
+          { key: "email", label: "Email", type: "email" },
+          { key: "address", label: "Address" },
+          { key: "city", label: "City" },
+          { key: "state", label: "State" },
+          { key: "country", label: "Country" },
+        ]}
+      />
+
+      <EditableSection
+        title="Family"
+        memberId={member.id}
+        canEdit={canEdit}
+        values={values}
+        onSaved={onPatch}
+        onDirtyChange={(d) => onDirtyChange("family", d)}
+        fields={[
+          {
+            key: "marital_status",
+            label: "Marital status",
+            type: "select",
+            options: [
+              { value: "single", label: "Single" },
+              { value: "married", label: "Married" },
+              { value: "widowed", label: "Widowed" },
+              { value: "divorced", label: "Divorced" },
+            ],
+          },
+        ]}
+      />
+
+      <EditableSection
+        title="Church details"
+        memberId={member.id}
+        canEdit={canEdit}
+        values={{
+          ...values,
+          hfc_name: cellGroup?.name ?? "",
+          coordinator: cellGroup?.leader_name ?? "",
+          joined: new Date(member.created_at).toLocaleDateString(),
+        }}
+        onSaved={onPatch}
+        onDirtyChange={(d) => onDirtyChange("church", d)}
+        fields={[
+          { key: "hfc_name", label: TERMS.cellGroup, readOnly: true },
+          { key: "coordinator", label: TERMS.cellLeader, readOnly: true },
+          {
+            key: "membership_stage",
+            label: "Membership stage",
+            type: "select",
+            options: MEMBERSHIP_STAGES.map((s) => ({ value: s.key, label: s.label })),
+          },
+          {
+            key: "membership_status",
+            label: "Status",
+            type: "select",
+            options: [
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+              { value: "transferred", label: "Transferred" },
+            ],
+          },
+          { key: "joined", label: "Joined", readOnly: true },
+        ]}
+      />
+
       <Card title="Family Group">
         <div className="flex flex-col gap-3">
           <FamilyGroupBadge memberId={member.id} showScheme size="lg" />
           <MemberFamilyGroupAssign memberId={member.id} />
         </div>
       </Card>
+
+      <MemberDepartments memberId={member.id} canEdit={canEdit} />
     </div>
+
   );
 }
 
