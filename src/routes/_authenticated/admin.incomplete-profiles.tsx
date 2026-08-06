@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { UserCog, Search, ExternalLink } from "lucide-react";
+import { UserCog, ExternalLink } from "lucide-react";
 import { AdminShell } from "@/features/admin/AdminShell";
 import { Card, Button, Badge, Input, Spinner, EmptyState, StatCard } from "@/components/ds";
 import { supabase } from "@/integrations/supabase/client";
