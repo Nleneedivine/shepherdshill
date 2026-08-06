@@ -94,7 +94,7 @@ function IncompleteProfilesPage() {
       </div>
 
       <div className="mb-4 max-w-sm">
-        <Input placeholder="Search name or member code" value={q} onChange={(e) => setQ(e.target.value)} icon={<Search size={16} />} />
+        <Input placeholder="Search name or member code" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
 
       {loading ? (

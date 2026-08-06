@@ -29,6 +29,7 @@ import { Route as AuthenticatedSuperAdminAuditRouteImport } from './routes/_auth
 import { Route as AuthenticatedMembersIdRouteImport } from './routes/_authenticated/members.$id'
 import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
 import { Route as AuthenticatedAdminTransfersRouteImport } from './routes/_authenticated/admin.transfers'
+import { Route as AuthenticatedAdminIncompleteProfilesRouteImport } from './routes/_authenticated/admin.incomplete-profiles'
 import { Route as AuthenticatedAdminHouseFellowshipRouteImport } from './routes/_authenticated/admin.house-fellowship'
 import { Route as AuthenticatedAdminFamilyGroupsRouteImport } from './routes/_authenticated/admin.family-groups'
 import { Route as AuthenticatedAdminDraftsRouteImport } from './routes/_authenticated/admin.drafts'
@@ -145,6 +146,12 @@ const AuthenticatedAdminTransfersRoute =
     path: '/admin/transfers',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminIncompleteProfilesRoute =
+  AuthenticatedAdminIncompleteProfilesRouteImport.update({
+    id: '/admin/incomplete-profiles',
+    path: '/admin/incomplete-profiles',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminHouseFellowshipRoute =
   AuthenticatedAdminHouseFellowshipRouteImport.update({
     id: '/admin/house-fellowship',
@@ -188,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/admin/drafts': typeof AuthenticatedAdminDraftsRoute
   '/admin/family-groups': typeof AuthenticatedAdminFamilyGroupsRoute
   '/admin/house-fellowship': typeof AuthenticatedAdminHouseFellowshipRoute
+  '/admin/incomplete-profiles': typeof AuthenticatedAdminIncompleteProfilesRoute
   '/admin/transfers': typeof AuthenticatedAdminTransfersRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/members/$id': typeof AuthenticatedMembersIdRoute
@@ -213,6 +221,7 @@ export interface FileRoutesByTo {
   '/admin/drafts': typeof AuthenticatedAdminDraftsRoute
   '/admin/family-groups': typeof AuthenticatedAdminFamilyGroupsRoute
   '/admin/house-fellowship': typeof AuthenticatedAdminHouseFellowshipRoute
+  '/admin/incomplete-profiles': typeof AuthenticatedAdminIncompleteProfilesRoute
   '/admin/transfers': typeof AuthenticatedAdminTransfersRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/members/$id': typeof AuthenticatedMembersIdRoute
@@ -241,6 +250,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/drafts': typeof AuthenticatedAdminDraftsRoute
   '/_authenticated/admin/family-groups': typeof AuthenticatedAdminFamilyGroupsRoute
   '/_authenticated/admin/house-fellowship': typeof AuthenticatedAdminHouseFellowshipRoute
+  '/_authenticated/admin/incomplete-profiles': typeof AuthenticatedAdminIncompleteProfilesRoute
   '/_authenticated/admin/transfers': typeof AuthenticatedAdminTransfersRoute
   '/_authenticated/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/_authenticated/members/$id': typeof AuthenticatedMembersIdRoute
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/admin/drafts'
     | '/admin/family-groups'
     | '/admin/house-fellowship'
+    | '/admin/incomplete-profiles'
     | '/admin/transfers'
     | '/admin/verifications'
     | '/members/$id'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/admin/drafts'
     | '/admin/family-groups'
     | '/admin/house-fellowship'
+    | '/admin/incomplete-profiles'
     | '/admin/transfers'
     | '/admin/verifications'
     | '/members/$id'
@@ -321,6 +333,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/drafts'
     | '/_authenticated/admin/family-groups'
     | '/_authenticated/admin/house-fellowship'
+    | '/_authenticated/admin/incomplete-profiles'
     | '/_authenticated/admin/transfers'
     | '/_authenticated/admin/verifications'
     | '/_authenticated/members/$id'
@@ -487,6 +500,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTransfersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/incomplete-profiles': {
+      id: '/_authenticated/admin/incomplete-profiles'
+      path: '/admin/incomplete-profiles'
+      fullPath: '/admin/incomplete-profiles'
+      preLoaderRoute: typeof AuthenticatedAdminIncompleteProfilesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/house-fellowship': {
       id: '/_authenticated/admin/house-fellowship'
       path: '/admin/house-fellowship'
@@ -560,6 +580,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminDraftsRoute: typeof AuthenticatedAdminDraftsRoute
   AuthenticatedAdminFamilyGroupsRoute: typeof AuthenticatedAdminFamilyGroupsRoute
   AuthenticatedAdminHouseFellowshipRoute: typeof AuthenticatedAdminHouseFellowshipRoute
+  AuthenticatedAdminIncompleteProfilesRoute: typeof AuthenticatedAdminIncompleteProfilesRoute
   AuthenticatedAdminTransfersRoute: typeof AuthenticatedAdminTransfersRoute
   AuthenticatedAdminVerificationsRoute: typeof AuthenticatedAdminVerificationsRoute
   AuthenticatedMembersIdRoute: typeof AuthenticatedMembersIdRoute
@@ -575,6 +596,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminFamilyGroupsRoute: AuthenticatedAdminFamilyGroupsRoute,
   AuthenticatedAdminHouseFellowshipRoute:
     AuthenticatedAdminHouseFellowshipRoute,
+  AuthenticatedAdminIncompleteProfilesRoute:
+    AuthenticatedAdminIncompleteProfilesRoute,
   AuthenticatedAdminTransfersRoute: AuthenticatedAdminTransfersRoute,
   AuthenticatedAdminVerificationsRoute: AuthenticatedAdminVerificationsRoute,
   AuthenticatedMembersIdRoute: AuthenticatedMembersIdRoute,
