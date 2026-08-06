@@ -28,6 +28,7 @@ import { Route as AuthenticatedSuperAdminBranchesRouteImport } from './routes/_a
 import { Route as AuthenticatedSuperAdminAuditRouteImport } from './routes/_authenticated/super-admin.audit'
 import { Route as AuthenticatedMembersIdRouteImport } from './routes/_authenticated/members.$id'
 import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
+import { Route as AuthenticatedAdminHouseFellowshipRouteImport } from './routes/_authenticated/admin.house-fellowship'
 import { Route as AuthenticatedAdminFamilyGroupsRouteImport } from './routes/_authenticated/admin.family-groups'
 import { Route as AuthenticatedAdminDraftsRouteImport } from './routes/_authenticated/admin.drafts'
 import { Route as AuthenticatedAdminDepartmentsRouteImport } from './routes/_authenticated/admin.departments'
@@ -137,6 +138,12 @@ const AuthenticatedAdminVerificationsRoute =
     path: '/admin/verifications',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminHouseFellowshipRoute =
+  AuthenticatedAdminHouseFellowshipRouteImport.update({
+    id: '/admin/house-fellowship',
+    path: '/admin/house-fellowship',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminFamilyGroupsRoute =
   AuthenticatedAdminFamilyGroupsRouteImport.update({
     id: '/admin/family-groups',
@@ -173,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/drafts': typeof AuthenticatedAdminDraftsRoute
   '/admin/family-groups': typeof AuthenticatedAdminFamilyGroupsRoute
+  '/admin/house-fellowship': typeof AuthenticatedAdminHouseFellowshipRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/members/$id': typeof AuthenticatedMembersIdRoute
   '/super-admin/audit': typeof AuthenticatedSuperAdminAuditRoute
@@ -196,6 +204,7 @@ export interface FileRoutesByTo {
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/drafts': typeof AuthenticatedAdminDraftsRoute
   '/admin/family-groups': typeof AuthenticatedAdminFamilyGroupsRoute
+  '/admin/house-fellowship': typeof AuthenticatedAdminHouseFellowshipRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/members/$id': typeof AuthenticatedMembersIdRoute
   '/super-admin/audit': typeof AuthenticatedSuperAdminAuditRoute
@@ -222,6 +231,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/_authenticated/admin/drafts': typeof AuthenticatedAdminDraftsRoute
   '/_authenticated/admin/family-groups': typeof AuthenticatedAdminFamilyGroupsRoute
+  '/_authenticated/admin/house-fellowship': typeof AuthenticatedAdminHouseFellowshipRoute
   '/_authenticated/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/_authenticated/members/$id': typeof AuthenticatedMembersIdRoute
   '/_authenticated/super-admin/audit': typeof AuthenticatedSuperAdminAuditRoute
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/admin/departments'
     | '/admin/drafts'
     | '/admin/family-groups'
+    | '/admin/house-fellowship'
     | '/admin/verifications'
     | '/members/$id'
     | '/super-admin/audit'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/admin/departments'
     | '/admin/drafts'
     | '/admin/family-groups'
+    | '/admin/house-fellowship'
     | '/admin/verifications'
     | '/members/$id'
     | '/super-admin/audit'
@@ -296,6 +308,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/departments'
     | '/_authenticated/admin/drafts'
     | '/_authenticated/admin/family-groups'
+    | '/_authenticated/admin/house-fellowship'
     | '/_authenticated/admin/verifications'
     | '/_authenticated/members/$id'
     | '/_authenticated/super-admin/audit'
@@ -454,6 +467,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminVerificationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/house-fellowship': {
+      id: '/_authenticated/admin/house-fellowship'
+      path: '/admin/house-fellowship'
+      fullPath: '/admin/house-fellowship'
+      preLoaderRoute: typeof AuthenticatedAdminHouseFellowshipRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/family-groups': {
       id: '/_authenticated/admin/family-groups'
       path: '/admin/family-groups'
@@ -519,6 +539,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminDepartmentsRoute: typeof AuthenticatedAdminDepartmentsRoute
   AuthenticatedAdminDraftsRoute: typeof AuthenticatedAdminDraftsRoute
   AuthenticatedAdminFamilyGroupsRoute: typeof AuthenticatedAdminFamilyGroupsRoute
+  AuthenticatedAdminHouseFellowshipRoute: typeof AuthenticatedAdminHouseFellowshipRoute
   AuthenticatedAdminVerificationsRoute: typeof AuthenticatedAdminVerificationsRoute
   AuthenticatedMembersIdRoute: typeof AuthenticatedMembersIdRoute
   AuthenticatedMembersIndexRoute: typeof AuthenticatedMembersIndexRoute
@@ -531,6 +552,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminDepartmentsRoute: AuthenticatedAdminDepartmentsRoute,
   AuthenticatedAdminDraftsRoute: AuthenticatedAdminDraftsRoute,
   AuthenticatedAdminFamilyGroupsRoute: AuthenticatedAdminFamilyGroupsRoute,
+  AuthenticatedAdminHouseFellowshipRoute:
+    AuthenticatedAdminHouseFellowshipRoute,
   AuthenticatedAdminVerificationsRoute: AuthenticatedAdminVerificationsRoute,
   AuthenticatedMembersIdRoute: AuthenticatedMembersIdRoute,
   AuthenticatedMembersIndexRoute: AuthenticatedMembersIndexRoute,
@@ -552,13 +575,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
