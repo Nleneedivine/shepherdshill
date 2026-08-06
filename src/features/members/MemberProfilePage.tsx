@@ -230,8 +230,23 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
                 <Button size="sm" variant="secondary" onClick={() => { setTab("overview"); showToast("Use the Edit button on each section below", "info"); }}><Edit size={14} /> Edit</Button>
                 <Button size="sm" variant="secondary" onClick={() => showToast("Messaging arrives in Sprint 2", "info")}><MessageSquare size={14} /> Message</Button>
                 <Button size="sm" variant="secondary" onClick={flagForCare}><Flag size={14} /> Flag for Care</Button>
+                {canEdit && (
+                  <Button size="sm" variant="secondary" onClick={() => setTransferOpen(true)}>
+                    <ArrowLeftRight size={14} /> Transfer
+                  </Button>
+                )}
                 <Button size="sm" variant="ghost"><MoreHorizontal size={14} /></Button>
               </div>
+
+              <TransferModal
+                open={transferOpen}
+                onClose={() => setTransferOpen(false)}
+                memberId={member.id}
+                memberName={`${member.first_name} ${member.last_name}`}
+                currentBranchId={member.branch_id}
+                currentCellGroupId={member.cell_group_id}
+              />
+
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
