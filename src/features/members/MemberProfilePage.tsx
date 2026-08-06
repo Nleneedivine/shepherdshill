@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
-  ArrowLeft, Check, Copy, Edit, Fingerprint, Flag, Heart, LayoutDashboard,
+  ArrowLeft, ArrowLeftRight, Check, Copy, Edit, Fingerprint, Flag, Heart, LayoutDashboard,
   MessageSquare, MoreHorizontal, QrCode, ScanFace, ShieldCheck, User, Users,
 } from "lucide-react";
 import { AppLayout, PageWrapper, StatCard, Button, Card, Badge, EmptyState, Avatar } from "@/components/ds";
+import { TransferModal } from "@/features/members/TransferModal";
+
 import { supabase } from "@/integrations/supabase/client";
 import { FamilyGroupBadge } from "@/components/FamilyGroupBadge";
 import { useAuth } from "@/hooks/useAuth";
