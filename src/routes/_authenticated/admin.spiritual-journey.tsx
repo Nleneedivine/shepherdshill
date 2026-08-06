@@ -10,7 +10,7 @@ import { requireRoles, ADMIN_ROLES } from "@/lib/routeGuards";
 export const Route = createFileRoute("/_authenticated/admin/spiritual-journey")({
   ssr: false,
   beforeLoad: () => requireRoles(ADMIN_ROLES),
-  component: SpiritualJourneyPage;
+  component: SpiritualJourneyPage,
 });
 
 interface Stage {
