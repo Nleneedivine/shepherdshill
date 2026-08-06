@@ -7,6 +7,8 @@ import { useFormDraft } from "@/hooks/useFormDraft";
 import { supabase } from "@/integrations/supabase/client";
 import { formatNigerianPhone, isValidNigerianPhone, NIGERIAN_STATES } from "@/lib/nigeria";
 import { useToastContext } from "@/components/ds/Toast";
+import { nextMemberCode } from "@/lib/memberCode";
+
 
 interface Options {
   cellGroups: { id: string; name: string }[];
