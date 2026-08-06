@@ -67,6 +67,8 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
   const [biometrics, setBiometrics] = useState<{ has_face: boolean; has_fingerprint: boolean; has_qr: boolean; qr_code: string | null } | null>(null);
   const [incompleteness, setIncompleteness] = useState<{ score: number; missing: string[] } | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
+  const [transferOpen, setTransferOpen] = useState(false);
+
 
   const roles = user?.roles ?? [];
   const canViewPastoral = isPastoral(roles);
