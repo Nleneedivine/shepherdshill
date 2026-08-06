@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
-  ArrowLeft, Check, Copy, Edit, Fingerprint, Flag, Heart, LayoutDashboard,
+  ArrowLeft, ArrowLeftRight, Check, Copy, Edit, Fingerprint, Flag, Heart, LayoutDashboard,
   MessageSquare, MoreHorizontal, QrCode, ScanFace, ShieldCheck, User, Users,
 } from "lucide-react";
 import { AppLayout, PageWrapper, StatCard, Button, Card, Badge, EmptyState, Avatar } from "@/components/ds";
+import { TransferModal } from "@/features/members/TransferModal";
+
 import { supabase } from "@/integrations/supabase/client";
 import { FamilyGroupBadge } from "@/components/FamilyGroupBadge";
 import { useAuth } from "@/hooks/useAuth";
@@ -65,6 +67,8 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
   const [biometrics, setBiometrics] = useState<{ has_face: boolean; has_fingerprint: boolean; has_qr: boolean; qr_code: string | null } | null>(null);
   const [incompleteness, setIncompleteness] = useState<{ score: number; missing: string[] } | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
+  const [transferOpen, setTransferOpen] = useState(false);
+
 
   const roles = user?.roles ?? [];
   const canViewPastoral = isPastoral(roles);
@@ -230,8 +234,23 @@ export function MemberProfilePage({ memberId }: { memberId: string }) {
                 <Button size="sm" variant="secondary" onClick={() => { setTab("overview"); showToast("Use the Edit button on each section below", "info"); }}><Edit size={14} /> Edit</Button>
                 <Button size="sm" variant="secondary" onClick={() => showToast("Messaging arrives in Sprint 2", "info")}><MessageSquare size={14} /> Message</Button>
                 <Button size="sm" variant="secondary" onClick={flagForCare}><Flag size={14} /> Flag for Care</Button>
+                {canEdit && (
+                  <Button size="sm" variant="secondary" onClick={() => setTransferOpen(true)}>
+                    <ArrowLeftRight size={14} /> Transfer
+                  </Button>
+                )}
                 <Button size="sm" variant="ghost"><MoreHorizontal size={14} /></Button>
               </div>
+
+              <TransferModal
+                open={transferOpen}
+                onClose={() => setTransferOpen(false)}
+                memberId={member.id}
+                memberName={`${member.first_name} ${member.last_name}`}
+                currentBranchId={member.branch_id}
+                currentCellGroupId={member.cell_group_id}
+              />
+
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

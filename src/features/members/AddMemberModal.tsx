@@ -7,6 +7,8 @@ import { useFormDraft } from "@/hooks/useFormDraft";
 import { supabase } from "@/integrations/supabase/client";
 import { formatNigerianPhone, isValidNigerianPhone, NIGERIAN_STATES } from "@/lib/nigeria";
 import { useToastContext } from "@/components/ds/Toast";
+import { nextMemberCode } from "@/lib/memberCode";
+
 
 interface Options {
   cellGroups: { id: string; name: string }[];
@@ -137,27 +139,12 @@ export function AddMemberModal({ open, onClose, onCreated, branchId, branchCode 
 
   // Preview next member code
   useEffect(() => {
-    if (tab !== 2 || !branchId) return;
+    if (tab !== 2) return;
     void (async () => {
-      const year = new Date().getFullYear();
-      const prefix = `${branchCode}-${year}-`;
-      const { data: last } = await supabase
-        .from("members")
-        .select("member_code")
-        .eq("branch_id", branchId)
-        .like("member_code", `${prefix}%`)
-        .order("member_code", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      const lastCode = (last as { member_code?: string | null } | null)?.member_code;
-      let n = 1;
-      if (lastCode) {
-        const m = /(\d+)$/.exec(lastCode);
-        if (m) n = parseInt(m[1], 10) + 1;
-      }
-      setNextCode(`${prefix}${String(n).padStart(4, "0")}`);
+      setNextCode(await nextMemberCode());
     })();
-  }, [tab, branchId, branchCode]);
+  }, [tab]);
+
 
   // Auto-save
   useEffect(() => {
@@ -207,20 +194,8 @@ export function AddMemberModal({ open, onClose, onCreated, branchId, branchCode 
   const handleCreate = async () => {
     setSubmitting(true);
     try {
-      const year = new Date().getFullYear();
-      const prefix = `${branchCode}-${year}-`;
-      const { data: last } = await supabase
-        .from("members")
-        .select("member_code")
-        .eq("branch_id", branchId)
-        .like("member_code", `${prefix}%`)
-        .order("member_code", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      const lastCode = (last as { member_code?: string | null } | null)?.member_code;
-      let n = 1;
-      if (lastCode) { const m = /(\d+)$/.exec(lastCode); if (m) n = parseInt(m[1], 10) + 1; }
-      const memberCode = `${prefix}${String(n).padStart(4, "0")}`;
+      const memberCode = await nextMemberCode();
+
 
       const insertPayload = {
         member_code: memberCode,

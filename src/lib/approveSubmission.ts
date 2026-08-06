@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { nextMemberCode } from "@/lib/memberCode";
 
 export interface ApprovalInput {
   submissionId: string;
@@ -14,28 +15,11 @@ export interface ApprovalResult {
   error?: string;
 }
 
-export async function generateMemberCode(branchId: string, branchCode: string): Promise<string> {
-  const year = new Date().getFullYear();
-  const prefix = `${branchCode}-${year}-`;
-  try {
-    const { data } = await supabase
-      .from("members")
-      .select("member_code")
-      .eq("branch_id", branchId)
-      .like("member_code", `${prefix}%`)
-      .order("member_code", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    let next = 1;
-    if (data?.member_code) {
-      const m = /(\d+)$/.exec(data.member_code);
-      if (m) next = parseInt(m[1], 10) + 1;
-    }
-    return `${prefix}${String(next).padStart(4, "0")}`;
-  } catch {
-    return `${prefix}0001`;
-  }
+/** Member codes are church-wide: RCCG-SH-YYYY-NNNN. */
+export async function generateMemberCode(): Promise<string> {
+  return nextMemberCode();
 }
+
 
 export async function approveSubmission(input: ApprovalInput): Promise<ApprovalResult> {
   try {

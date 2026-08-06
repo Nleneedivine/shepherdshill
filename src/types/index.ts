@@ -3,9 +3,11 @@ export type AppRole =
   | "admin"
   | "senior_pastor"
   | "pastoral_team"
+  | "cell_leader"
   | "worker"
   | "member"
   | "first_timer";
+
 
 export interface Branch {
   id: string;
