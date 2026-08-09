@@ -21,8 +21,8 @@ function AuthPage() {
 
   useEffect(() => {
     void (async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data.user) navigate({ to: "/dashboard" });
+     const { data } = await supabase.auth.getUser();
+     if (data.user && !data.user.is_anonymous) navigate({ to: "/dashboard" });
     })();
   }, [navigate]);
 
