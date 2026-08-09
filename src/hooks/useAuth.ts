@@ -8,7 +8,7 @@ export function useAuth() {
 
   const loadUser = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
+    if (!session?.user || session.user.is_anonymous) {
       setUser(null);
       setLoading(false);
       return;
