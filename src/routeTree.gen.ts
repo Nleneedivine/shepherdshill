@@ -27,6 +27,7 @@ import { Route as AuthenticatedSuperAdminSettingsRouteImport } from './routes/_a
 import { Route as AuthenticatedSuperAdminRolesRouteImport } from './routes/_authenticated/super-admin.roles'
 import { Route as AuthenticatedSuperAdminHealthRouteImport } from './routes/_authenticated/super-admin.health'
 import { Route as AuthenticatedSuperAdminFeaturesRouteImport } from './routes/_authenticated/super-admin.features'
+import { Route as AuthenticatedSuperAdminContentRouteImport } from './routes/_authenticated/super-admin.content'
 import { Route as AuthenticatedSuperAdminBranchesRouteImport } from './routes/_authenticated/super-admin.branches'
 import { Route as AuthenticatedSuperAdminAuditRouteImport } from './routes/_authenticated/super-admin.audit'
 import { Route as AuthenticatedMembersIdRouteImport } from './routes/_authenticated/members.$id'
@@ -137,6 +138,12 @@ const AuthenticatedSuperAdminFeaturesRoute =
     path: '/features',
     getParentRoute: () => AuthenticatedSuperAdminRoute,
   } as any)
+const AuthenticatedSuperAdminContentRoute =
+  AuthenticatedSuperAdminContentRouteImport.update({
+    id: '/content',
+    path: '/content',
+    getParentRoute: () => AuthenticatedSuperAdminRoute,
+  } as any)
 const AuthenticatedSuperAdminBranchesRoute =
   AuthenticatedSuperAdminBranchesRouteImport.update({
     id: '/branches',
@@ -238,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/members/$id': typeof AuthenticatedMembersIdRoute
   '/super-admin/audit': typeof AuthenticatedSuperAdminAuditRoute
   '/super-admin/branches': typeof AuthenticatedSuperAdminBranchesRoute
+  '/super-admin/content': typeof AuthenticatedSuperAdminContentRoute
   '/super-admin/features': typeof AuthenticatedSuperAdminFeaturesRoute
   '/super-admin/health': typeof AuthenticatedSuperAdminHealthRoute
   '/super-admin/roles': typeof AuthenticatedSuperAdminRolesRoute
@@ -269,6 +277,7 @@ export interface FileRoutesByTo {
   '/members/$id': typeof AuthenticatedMembersIdRoute
   '/super-admin/audit': typeof AuthenticatedSuperAdminAuditRoute
   '/super-admin/branches': typeof AuthenticatedSuperAdminBranchesRoute
+  '/super-admin/content': typeof AuthenticatedSuperAdminContentRoute
   '/super-admin/features': typeof AuthenticatedSuperAdminFeaturesRoute
   '/super-admin/health': typeof AuthenticatedSuperAdminHealthRoute
   '/super-admin/roles': typeof AuthenticatedSuperAdminRolesRoute
@@ -303,6 +312,7 @@ export interface FileRoutesById {
   '/_authenticated/members/$id': typeof AuthenticatedMembersIdRoute
   '/_authenticated/super-admin/audit': typeof AuthenticatedSuperAdminAuditRoute
   '/_authenticated/super-admin/branches': typeof AuthenticatedSuperAdminBranchesRoute
+  '/_authenticated/super-admin/content': typeof AuthenticatedSuperAdminContentRoute
   '/_authenticated/super-admin/features': typeof AuthenticatedSuperAdminFeaturesRoute
   '/_authenticated/super-admin/health': typeof AuthenticatedSuperAdminHealthRoute
   '/_authenticated/super-admin/roles': typeof AuthenticatedSuperAdminRolesRoute
@@ -337,6 +347,7 @@ export interface FileRouteTypes {
     | '/members/$id'
     | '/super-admin/audit'
     | '/super-admin/branches'
+    | '/super-admin/content'
     | '/super-admin/features'
     | '/super-admin/health'
     | '/super-admin/roles'
@@ -368,6 +379,7 @@ export interface FileRouteTypes {
     | '/members/$id'
     | '/super-admin/audit'
     | '/super-admin/branches'
+    | '/super-admin/content'
     | '/super-admin/features'
     | '/super-admin/health'
     | '/super-admin/roles'
@@ -401,6 +413,7 @@ export interface FileRouteTypes {
     | '/_authenticated/members/$id'
     | '/_authenticated/super-admin/audit'
     | '/_authenticated/super-admin/branches'
+    | '/_authenticated/super-admin/content'
     | '/_authenticated/super-admin/features'
     | '/_authenticated/super-admin/health'
     | '/_authenticated/super-admin/roles'
@@ -551,6 +564,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSuperAdminFeaturesRouteImport
       parentRoute: typeof AuthenticatedSuperAdminRoute
     }
+    '/_authenticated/super-admin/content': {
+      id: '/_authenticated/super-admin/content'
+      path: '/content'
+      fullPath: '/super-admin/content'
+      preLoaderRoute: typeof AuthenticatedSuperAdminContentRouteImport
+      parentRoute: typeof AuthenticatedSuperAdminRoute
+    }
     '/_authenticated/super-admin/branches': {
       id: '/_authenticated/super-admin/branches'
       path: '/branches'
@@ -648,6 +668,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedSuperAdminRouteChildren {
   AuthenticatedSuperAdminAuditRoute: typeof AuthenticatedSuperAdminAuditRoute
   AuthenticatedSuperAdminBranchesRoute: typeof AuthenticatedSuperAdminBranchesRoute
+  AuthenticatedSuperAdminContentRoute: typeof AuthenticatedSuperAdminContentRoute
   AuthenticatedSuperAdminFeaturesRoute: typeof AuthenticatedSuperAdminFeaturesRoute
   AuthenticatedSuperAdminHealthRoute: typeof AuthenticatedSuperAdminHealthRoute
   AuthenticatedSuperAdminRolesRoute: typeof AuthenticatedSuperAdminRolesRoute
@@ -660,6 +681,7 @@ const AuthenticatedSuperAdminRouteChildren: AuthenticatedSuperAdminRouteChildren
   {
     AuthenticatedSuperAdminAuditRoute: AuthenticatedSuperAdminAuditRoute,
     AuthenticatedSuperAdminBranchesRoute: AuthenticatedSuperAdminBranchesRoute,
+    AuthenticatedSuperAdminContentRoute: AuthenticatedSuperAdminContentRoute,
     AuthenticatedSuperAdminFeaturesRoute: AuthenticatedSuperAdminFeaturesRoute,
     AuthenticatedSuperAdminHealthRoute: AuthenticatedSuperAdminHealthRoute,
     AuthenticatedSuperAdminRolesRoute: AuthenticatedSuperAdminRolesRoute,
