@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VisitRouteImport } from './routes/visit'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as KioskRouteImport } from './routes/kiosk'
@@ -38,6 +39,11 @@ import { Route as AuthenticatedAdminDraftsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminDepartmentsRouteImport } from './routes/_authenticated/admin.departments'
 import { Route as AuthenticatedAdminFormsRegistrationFormRouteImport } from './routes/_authenticated/admin.forms.registration-form'
 
+const VisitRoute = VisitRouteImport.update({
+  id: '/visit',
+  path: '/visit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
   path: '/unauthorized',
@@ -203,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/visit': typeof VisitRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/super-admin': typeof AuthenticatedSuperAdminRouteWithChildren
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
@@ -232,6 +239,7 @@ export interface FileRoutesByTo {
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/visit': typeof VisitRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/drafts': typeof AuthenticatedAdminDraftsRoute
@@ -262,6 +270,7 @@ export interface FileRoutesById {
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/visit': typeof VisitRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRouteWithChildren
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
@@ -293,6 +302,7 @@ export interface FileRouteTypes {
     | '/kiosk'
     | '/register'
     | '/unauthorized'
+    | '/visit'
     | '/dashboard'
     | '/super-admin'
     | '/admin/departments'
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/kiosk'
     | '/register'
     | '/unauthorized'
+    | '/visit'
     | '/dashboard'
     | '/admin/departments'
     | '/admin/drafts'
@@ -351,6 +362,7 @@ export interface FileRouteTypes {
     | '/kiosk'
     | '/register'
     | '/unauthorized'
+    | '/visit'
     | '/_authenticated/dashboard'
     | '/_authenticated/super-admin'
     | '/_authenticated/admin/departments'
@@ -382,10 +394,18 @@ export interface RootRouteChildren {
   KioskRoute: typeof KioskRoute
   RegisterRoute: typeof RegisterRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
+  VisitRoute: typeof VisitRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/visit': {
+      id: '/visit'
+      path: '/visit'
+      fullPath: '/visit'
+      preLoaderRoute: typeof VisitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/unauthorized': {
       id: '/unauthorized'
       path: '/unauthorized'
@@ -662,6 +682,7 @@ const rootRouteChildren: RootRouteChildren = {
   KioskRoute: KioskRoute,
   RegisterRoute: RegisterRoute,
   UnauthorizedRoute: UnauthorizedRoute,
+  VisitRoute: VisitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
