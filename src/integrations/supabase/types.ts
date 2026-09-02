@@ -1057,6 +1057,36 @@ export type Database = {
         }
         Relationships: []
       }
+      site_content: {
+        Row: {
+          content_type: string
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          url: string | null
+        }
+        Insert: {
+          content_type?: string
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          url?: string | null
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
       spiritual_journey: {
         Row: {
           id: string
