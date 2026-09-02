@@ -13,6 +13,7 @@ import { Route as VisitRouteImport } from './routes/visit'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as KioskRouteImport } from './routes/kiosk'
+import { Route as GiveRouteImport } from './routes/give'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -57,6 +58,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const KioskRoute = KioskRouteImport.update({
   id: '/kiosk',
   path: '/kiosk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GiveRoute = GiveRouteImport.update({
+  id: '/give',
+  path: '/give',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -206,6 +212,7 @@ const AuthenticatedAdminFormsRegistrationFormRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/give': typeof GiveRoute
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
   '/unauthorized': typeof UnauthorizedRoute
@@ -236,6 +243,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/give': typeof GiveRoute
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
   '/unauthorized': typeof UnauthorizedRoute
@@ -267,6 +275,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/give': typeof GiveRoute
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
   '/unauthorized': typeof UnauthorizedRoute
@@ -299,6 +308,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/give'
     | '/kiosk'
     | '/register'
     | '/unauthorized'
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/give'
     | '/kiosk'
     | '/register'
     | '/unauthorized'
@@ -359,6 +370,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/give'
     | '/kiosk'
     | '/register'
     | '/unauthorized'
@@ -391,6 +403,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  GiveRoute: typeof GiveRoute
   KioskRoute: typeof KioskRoute
   RegisterRoute: typeof RegisterRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
@@ -425,6 +438,13 @@ declare module '@tanstack/react-router' {
       path: '/kiosk'
       fullPath: '/kiosk'
       preLoaderRoute: typeof KioskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/give': {
+      id: '/give'
+      path: '/give'
+      fullPath: '/give'
+      preLoaderRoute: typeof GiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -679,6 +699,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  GiveRoute: GiveRoute,
   KioskRoute: KioskRoute,
   RegisterRoute: RegisterRoute,
   UnauthorizedRoute: UnauthorizedRoute,
