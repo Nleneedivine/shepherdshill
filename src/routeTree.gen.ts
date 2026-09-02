@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VisitRouteImport } from './routes/visit'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
+import { Route as SermonsRouteImport } from './routes/sermons'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as KioskRouteImport } from './routes/kiosk'
 import { Route as GiveRouteImport } from './routes/give'
@@ -48,6 +49,11 @@ const VisitRoute = VisitRouteImport.update({
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
   path: '/unauthorized',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SermonsRoute = SermonsRouteImport.update({
+  id: '/sermons',
+  path: '/sermons',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/give': typeof GiveRoute
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
+  '/sermons': typeof SermonsRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/visit': typeof VisitRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -246,6 +253,7 @@ export interface FileRoutesByTo {
   '/give': typeof GiveRoute
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
+  '/sermons': typeof SermonsRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/visit': typeof VisitRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/give': typeof GiveRoute
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
+  '/sermons': typeof SermonsRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/visit': typeof VisitRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -311,6 +320,7 @@ export interface FileRouteTypes {
     | '/give'
     | '/kiosk'
     | '/register'
+    | '/sermons'
     | '/unauthorized'
     | '/visit'
     | '/dashboard'
@@ -342,6 +352,7 @@ export interface FileRouteTypes {
     | '/give'
     | '/kiosk'
     | '/register'
+    | '/sermons'
     | '/unauthorized'
     | '/visit'
     | '/dashboard'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/give'
     | '/kiosk'
     | '/register'
+    | '/sermons'
     | '/unauthorized'
     | '/visit'
     | '/_authenticated/dashboard'
@@ -406,6 +418,7 @@ export interface RootRouteChildren {
   GiveRoute: typeof GiveRoute
   KioskRoute: typeof KioskRoute
   RegisterRoute: typeof RegisterRoute
+  SermonsRoute: typeof SermonsRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
   VisitRoute: typeof VisitRoute
 }
@@ -424,6 +437,13 @@ declare module '@tanstack/react-router' {
       path: '/unauthorized'
       fullPath: '/unauthorized'
       preLoaderRoute: typeof UnauthorizedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sermons': {
+      id: '/sermons'
+      path: '/sermons'
+      fullPath: '/sermons'
+      preLoaderRoute: typeof SermonsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -702,6 +722,7 @@ const rootRouteChildren: RootRouteChildren = {
   GiveRoute: GiveRoute,
   KioskRoute: KioskRoute,
   RegisterRoute: RegisterRoute,
+  SermonsRoute: SermonsRoute,
   UnauthorizedRoute: UnauthorizedRoute,
   VisitRoute: VisitRoute,
 }
