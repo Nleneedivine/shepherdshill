@@ -50,7 +50,7 @@ function BlockEditor({
   current: string | null;
 }) {
   const qc = useQueryClient();
-  const toast = useToast();
+  const { showToast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [linkValue, setLinkValue] = useState("");
@@ -66,9 +66,9 @@ function BlockEditor({
       const url = await uploadSiteMedia(block.key, file);
       await saveSiteContent(block.key, block.contentType, url);
       refresh();
-      toast.success(`${block.label} updated`);
+      showToast(`${block.label} updated`, "success");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Upload failed");
+      showToast(e instanceof Error ? e.message : "Upload failed", "error");
     } finally {
       setBusy(false);
     }
@@ -81,9 +81,9 @@ function BlockEditor({
       await saveSiteContent(block.key, block.contentType, linkValue.trim());
       setLinkValue("");
       refresh();
-      toast.success(`${block.label} updated`);
+      showToast(`${block.label} updated`, "success");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save link");
+      showToast(e instanceof Error ? e.message : "Could not save link", "error");
     } finally {
       setBusy(false);
     }
@@ -94,9 +94,9 @@ function BlockEditor({
     try {
       await saveSiteContent(block.key, block.contentType, null);
       refresh();
-      toast.success(`${block.label} cleared`);
+      showToast(`${block.label} cleared`, "success");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not clear");
+      showToast(e instanceof Error ? e.message : "Could not clear", "error");
     } finally {
       setBusy(false);
     }
