@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import type { ComponentType, ReactNode } from "react";
 import {
-  Database, GitBranch, LayoutDashboard, LogOut, ScrollText, Settings, Shield,
+  Database, GitBranch, Image as ImageIcon, LayoutDashboard, LogOut, ScrollText, Settings, Shield,
   ShieldAlert, ToggleRight, Users,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
