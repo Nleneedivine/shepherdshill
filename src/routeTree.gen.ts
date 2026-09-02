@@ -9,9 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VisitRouteImport } from './routes/visit'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
+import { Route as SermonsRouteImport } from './routes/sermons'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as KioskRouteImport } from './routes/kiosk'
+import { Route as GiveRouteImport } from './routes/give'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -24,6 +27,7 @@ import { Route as AuthenticatedSuperAdminSettingsRouteImport } from './routes/_a
 import { Route as AuthenticatedSuperAdminRolesRouteImport } from './routes/_authenticated/super-admin.roles'
 import { Route as AuthenticatedSuperAdminHealthRouteImport } from './routes/_authenticated/super-admin.health'
 import { Route as AuthenticatedSuperAdminFeaturesRouteImport } from './routes/_authenticated/super-admin.features'
+import { Route as AuthenticatedSuperAdminContentRouteImport } from './routes/_authenticated/super-admin.content'
 import { Route as AuthenticatedSuperAdminBranchesRouteImport } from './routes/_authenticated/super-admin.branches'
 import { Route as AuthenticatedSuperAdminAuditRouteImport } from './routes/_authenticated/super-admin.audit'
 import { Route as AuthenticatedMembersIdRouteImport } from './routes/_authenticated/members.$id'
@@ -38,9 +42,19 @@ import { Route as AuthenticatedAdminDraftsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminDepartmentsRouteImport } from './routes/_authenticated/admin.departments'
 import { Route as AuthenticatedAdminFormsRegistrationFormRouteImport } from './routes/_authenticated/admin.forms.registration-form'
 
+const VisitRoute = VisitRouteImport.update({
+  id: '/visit',
+  path: '/visit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
   path: '/unauthorized',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SermonsRoute = SermonsRouteImport.update({
+  id: '/sermons',
+  path: '/sermons',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -51,6 +65,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const KioskRoute = KioskRouteImport.update({
   id: '/kiosk',
   path: '/kiosk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GiveRoute = GiveRouteImport.update({
+  id: '/give',
+  path: '/give',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -117,6 +136,12 @@ const AuthenticatedSuperAdminFeaturesRoute =
   AuthenticatedSuperAdminFeaturesRouteImport.update({
     id: '/features',
     path: '/features',
+    getParentRoute: () => AuthenticatedSuperAdminRoute,
+  } as any)
+const AuthenticatedSuperAdminContentRoute =
+  AuthenticatedSuperAdminContentRouteImport.update({
+    id: '/content',
+    path: '/content',
     getParentRoute: () => AuthenticatedSuperAdminRoute,
   } as any)
 const AuthenticatedSuperAdminBranchesRoute =
@@ -200,9 +225,12 @@ const AuthenticatedAdminFormsRegistrationFormRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/give': typeof GiveRoute
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
+  '/sermons': typeof SermonsRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/visit': typeof VisitRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/super-admin': typeof AuthenticatedSuperAdminRouteWithChildren
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
@@ -217,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/members/$id': typeof AuthenticatedMembersIdRoute
   '/super-admin/audit': typeof AuthenticatedSuperAdminAuditRoute
   '/super-admin/branches': typeof AuthenticatedSuperAdminBranchesRoute
+  '/super-admin/content': typeof AuthenticatedSuperAdminContentRoute
   '/super-admin/features': typeof AuthenticatedSuperAdminFeaturesRoute
   '/super-admin/health': typeof AuthenticatedSuperAdminHealthRoute
   '/super-admin/roles': typeof AuthenticatedSuperAdminRolesRoute
@@ -229,9 +258,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/give': typeof GiveRoute
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
+  '/sermons': typeof SermonsRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/visit': typeof VisitRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/drafts': typeof AuthenticatedAdminDraftsRoute
@@ -245,6 +277,7 @@ export interface FileRoutesByTo {
   '/members/$id': typeof AuthenticatedMembersIdRoute
   '/super-admin/audit': typeof AuthenticatedSuperAdminAuditRoute
   '/super-admin/branches': typeof AuthenticatedSuperAdminBranchesRoute
+  '/super-admin/content': typeof AuthenticatedSuperAdminContentRoute
   '/super-admin/features': typeof AuthenticatedSuperAdminFeaturesRoute
   '/super-admin/health': typeof AuthenticatedSuperAdminHealthRoute
   '/super-admin/roles': typeof AuthenticatedSuperAdminRolesRoute
@@ -259,9 +292,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/give': typeof GiveRoute
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
+  '/sermons': typeof SermonsRoute
   '/unauthorized': typeof UnauthorizedRoute
+  '/visit': typeof VisitRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRouteWithChildren
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
@@ -276,6 +312,7 @@ export interface FileRoutesById {
   '/_authenticated/members/$id': typeof AuthenticatedMembersIdRoute
   '/_authenticated/super-admin/audit': typeof AuthenticatedSuperAdminAuditRoute
   '/_authenticated/super-admin/branches': typeof AuthenticatedSuperAdminBranchesRoute
+  '/_authenticated/super-admin/content': typeof AuthenticatedSuperAdminContentRoute
   '/_authenticated/super-admin/features': typeof AuthenticatedSuperAdminFeaturesRoute
   '/_authenticated/super-admin/health': typeof AuthenticatedSuperAdminHealthRoute
   '/_authenticated/super-admin/roles': typeof AuthenticatedSuperAdminRolesRoute
@@ -290,9 +327,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/give'
     | '/kiosk'
     | '/register'
+    | '/sermons'
     | '/unauthorized'
+    | '/visit'
     | '/dashboard'
     | '/super-admin'
     | '/admin/departments'
@@ -307,6 +347,7 @@ export interface FileRouteTypes {
     | '/members/$id'
     | '/super-admin/audit'
     | '/super-admin/branches'
+    | '/super-admin/content'
     | '/super-admin/features'
     | '/super-admin/health'
     | '/super-admin/roles'
@@ -319,9 +360,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/give'
     | '/kiosk'
     | '/register'
+    | '/sermons'
     | '/unauthorized'
+    | '/visit'
     | '/dashboard'
     | '/admin/departments'
     | '/admin/drafts'
@@ -335,6 +379,7 @@ export interface FileRouteTypes {
     | '/members/$id'
     | '/super-admin/audit'
     | '/super-admin/branches'
+    | '/super-admin/content'
     | '/super-admin/features'
     | '/super-admin/health'
     | '/super-admin/roles'
@@ -348,9 +393,12 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/give'
     | '/kiosk'
     | '/register'
+    | '/sermons'
     | '/unauthorized'
+    | '/visit'
     | '/_authenticated/dashboard'
     | '/_authenticated/super-admin'
     | '/_authenticated/admin/departments'
@@ -365,6 +413,7 @@ export interface FileRouteTypes {
     | '/_authenticated/members/$id'
     | '/_authenticated/super-admin/audit'
     | '/_authenticated/super-admin/branches'
+    | '/_authenticated/super-admin/content'
     | '/_authenticated/super-admin/features'
     | '/_authenticated/super-admin/health'
     | '/_authenticated/super-admin/roles'
@@ -379,18 +428,35 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  GiveRoute: typeof GiveRoute
   KioskRoute: typeof KioskRoute
   RegisterRoute: typeof RegisterRoute
+  SermonsRoute: typeof SermonsRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
+  VisitRoute: typeof VisitRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/visit': {
+      id: '/visit'
+      path: '/visit'
+      fullPath: '/visit'
+      preLoaderRoute: typeof VisitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/unauthorized': {
       id: '/unauthorized'
       path: '/unauthorized'
       fullPath: '/unauthorized'
       preLoaderRoute: typeof UnauthorizedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sermons': {
+      id: '/sermons'
+      path: '/sermons'
+      fullPath: '/sermons'
+      preLoaderRoute: typeof SermonsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -405,6 +471,13 @@ declare module '@tanstack/react-router' {
       path: '/kiosk'
       fullPath: '/kiosk'
       preLoaderRoute: typeof KioskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/give': {
+      id: '/give'
+      path: '/give'
+      fullPath: '/give'
+      preLoaderRoute: typeof GiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -489,6 +562,13 @@ declare module '@tanstack/react-router' {
       path: '/features'
       fullPath: '/super-admin/features'
       preLoaderRoute: typeof AuthenticatedSuperAdminFeaturesRouteImport
+      parentRoute: typeof AuthenticatedSuperAdminRoute
+    }
+    '/_authenticated/super-admin/content': {
+      id: '/_authenticated/super-admin/content'
+      path: '/content'
+      fullPath: '/super-admin/content'
+      preLoaderRoute: typeof AuthenticatedSuperAdminContentRouteImport
       parentRoute: typeof AuthenticatedSuperAdminRoute
     }
     '/_authenticated/super-admin/branches': {
@@ -588,6 +668,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedSuperAdminRouteChildren {
   AuthenticatedSuperAdminAuditRoute: typeof AuthenticatedSuperAdminAuditRoute
   AuthenticatedSuperAdminBranchesRoute: typeof AuthenticatedSuperAdminBranchesRoute
+  AuthenticatedSuperAdminContentRoute: typeof AuthenticatedSuperAdminContentRoute
   AuthenticatedSuperAdminFeaturesRoute: typeof AuthenticatedSuperAdminFeaturesRoute
   AuthenticatedSuperAdminHealthRoute: typeof AuthenticatedSuperAdminHealthRoute
   AuthenticatedSuperAdminRolesRoute: typeof AuthenticatedSuperAdminRolesRoute
@@ -600,6 +681,7 @@ const AuthenticatedSuperAdminRouteChildren: AuthenticatedSuperAdminRouteChildren
   {
     AuthenticatedSuperAdminAuditRoute: AuthenticatedSuperAdminAuditRoute,
     AuthenticatedSuperAdminBranchesRoute: AuthenticatedSuperAdminBranchesRoute,
+    AuthenticatedSuperAdminContentRoute: AuthenticatedSuperAdminContentRoute,
     AuthenticatedSuperAdminFeaturesRoute: AuthenticatedSuperAdminFeaturesRoute,
     AuthenticatedSuperAdminHealthRoute: AuthenticatedSuperAdminHealthRoute,
     AuthenticatedSuperAdminRolesRoute: AuthenticatedSuperAdminRolesRoute,
@@ -659,10 +741,23 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  GiveRoute: GiveRoute,
   KioskRoute: KioskRoute,
   RegisterRoute: RegisterRoute,
+  SermonsRoute: SermonsRoute,
   UnauthorizedRoute: UnauthorizedRoute,
+  VisitRoute: VisitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

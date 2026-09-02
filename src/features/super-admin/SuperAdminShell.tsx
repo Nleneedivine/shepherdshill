@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import type { ComponentType, ReactNode } from "react";
 import {
-  Database, GitBranch, LayoutDashboard, LogOut, ScrollText, Settings, Shield,
+  Database, GitBranch, Image as ImageIcon, LayoutDashboard, LogOut, ScrollText, Settings, Shield,
   ShieldAlert, ToggleRight, Users,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +16,7 @@ const NAV: NavItem[] = [
   { label: "Role Management", to: "/super-admin/roles", icon: Shield },
   { label: "User Management", to: "/super-admin/users", icon: Users },
   { label: "Feature Toggles", to: "/super-admin/features", icon: ToggleRight },
+  { label: "Landing Page Content", to: "/super-admin/content", icon: ImageIcon },
   { label: "Audit Logs", to: "/super-admin/audit", icon: ScrollText },
   { label: "System Health", to: "/super-admin/health", icon: Database },
   { label: "System Settings", to: "/super-admin/settings", icon: Settings },
