@@ -1,19 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { motion, useInView, useScroll, useTransform, useReducedMotion, animate as fmAnimate } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
-  ChevronDown,
   Facebook,
   Fingerprint,
   Flame,
   Globe2,
   Heart,
   Instagram,
+  MapPin,
   Mic2,
   Twitter,
-  UserPlus,
   Users2,
   Wrench,
   Youtube,
@@ -21,6 +19,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { LogoHero } from "@/components/LogoHero";
+import { MobileTabBar } from "@/components/MobileTabBar";
+import { SERVICE_TIMES, CHURCH_ADDRESS } from "@/constants/serviceTimes";
+import { fetchSiteContent, toEmbedUrl, type SiteContentMap } from "@/lib/siteContent";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -45,17 +46,6 @@ async function fetchStats(): Promise<Stats> {
   };
 }
 
-function useIsMobileClient() {
-  const [is, setIs] = useState(false);
-  useEffect(() => {
-    const check = () => setIs(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-  return is;
-}
-
 function LandingPage() {
   const { user, loading } = useAuth();
   const isAuthed = !!user && !loading;
@@ -66,13 +56,22 @@ function LandingPage() {
     staleTime: 60_000,
   });
 
+  const { data: content } = useQuery({
+    queryKey: ["site-content"],
+    queryFn: fetchSiteContent,
+    staleTime: 300_000,
+  });
+
   return (
-    <div className="relative bg-[#080C16] text-white min-h-screen overflow-x-hidden">
+    <div className="relative bg-[#080C16] text-white min-h-screen overflow-x-hidden pb-16 md:pb-0">
       <Navbar isAuthed={isAuthed} />
-      <Hero isAuthed={isAuthed} stats={stats} />
+      <Hero isAuthed={isAuthed} content={content} />
+      <WelcomeVideo content={content} />
       <Features />
-      <CTA stats={stats} />
+      <CommunityNote stats={stats} />
+      <CTA isAuthed={isAuthed} />
       <Footer />
+      <MobileTabBar isAuthed={isAuthed} />
     </div>
   );
 }
@@ -81,69 +80,54 @@ function LandingPage() {
 
 function Navbar({ isAuthed }: { isAuthed: boolean }) {
   return (
-    <motion.nav
-      initial={{ y: -72, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="fixed top-0 left-0 right-0 z-50 h-[72px] backdrop-blur-xl border-b border-white/[0.08]"
-      style={{ background: "rgba(8, 12, 22, 0.8)" }}
-    >
-      <div className="h-full max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between">
+    <nav className="fixed top-0 left-0 right-0 z-40 h-[68px] border-b border-white/[0.07] bg-[#080C16]/90 backdrop-blur-md">
+      <div className="h-full max-w-6xl mx-auto px-4 md:px-6 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
           <img
             src="/logo.png"
-            alt="Shepherd's Hill RCCG Logo"
-            className="h-10 w-10 object-contain mix-blend-screen"
+            alt="RCCG Shepherd's Hill logo"
+            className="h-9 w-9 object-contain"
             style={{ mixBlendMode: "screen" }}
           />
           <div className="flex flex-col leading-tight">
-            <span className="font-bold text-base md:text-lg text-white tracking-wider">
-              SHEPHERD'S HILL
-            </span>
-            <span className="text-[10px] text-[#2EAD3F] font-semibold tracking-widest">
-              RCCG
-            </span>
+            <span className="font-bold text-sm md:text-base tracking-wider">SHEPHERD'S HILL</span>
+            <span className="text-[10px] text-[#2EAD3F] font-semibold tracking-widest">RCCG</span>
           </div>
         </Link>
 
-                <div className="flex items-center gap-2 md:gap-3">
-          <a
-            href="https://shills.lovable.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden sm:inline-flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl font-semibold text-white text-sm transition-transform hover:scale-[1.03] active:scale-[0.98]"
-            style={{
-              background: "linear-gradient(135deg, #0EA5E9, #0284C7)",
-            }}
+        <div className="flex items-center gap-2 md:gap-4">
+          <Link
+            to="/visit"
+            className="hidden sm:inline text-sm text-slate-300 hover:text-white transition-colors"
           >
-            <Wrench size={16} />
-            <span className="hidden md:inline">Join the IT Project</span>
-          </a>
-
+            Plan your visit
+          </Link>
+          <Link
+            to="/sermons"
+            className="hidden md:inline text-sm text-slate-300 hover:text-white transition-colors"
+          >
+            Sermons
+          </Link>
           {isAuthed ? (
             <Link
               to="/dashboard"
-              className="inline-flex items-center gap-2 px-4 md:px-5 py-2 rounded-xl font-semibold text-white text-sm md:text-base transition-transform hover:scale-[1.03] active:scale-[0.98]"
-              style={{
-                background: "linear-gradient(135deg, #2D1B8E, #CC0000)",
-              }}
+              className="rounded-xl px-4 py-2 text-sm font-semibold text-white"
+              style={{ background: "linear-gradient(135deg, #2D1B8E, #CC0000)" }}
             >
-              Go to Dashboard <ArrowRight size={16} />
+              Dashboard
             </Link>
           ) : (
             <>
               <Link
                 to="/auth"
-                className="hidden sm:inline-flex text-slate-300 hover:text-white px-4 py-2 text-sm font-medium transition-colors"
+                className="hidden sm:inline text-sm text-slate-300 hover:text-white transition-colors"
               >
-                Sign In
+                Sign in
               </Link>
               <Link
                 to="/register"
-                className="inline-flex items-center px-4 md:px-5 py-2 rounded-xl font-semibold text-white text-sm md:text-base transition-transform hover:scale-[1.03] active:scale-[0.98]"
-                style={{
-                  background: "linear-gradient(135deg, #2D1B8E, #CC0000)",
-                }}
+                className="rounded-xl px-4 py-2 text-sm font-semibold text-white"
+                style={{ background: "linear-gradient(135deg, #2D1B8E, #CC0000)" }}
               >
                 Register
               </Link>
@@ -151,7 +135,7 @@ function Navbar({ isAuthed }: { isAuthed: boolean }) {
           )}
         </div>
       </div>
-    </motion.nav>
+    </nav>
   );
 }
 
@@ -159,341 +143,149 @@ function Navbar({ isAuthed }: { isAuthed: boolean }) {
 
 function Hero({
   isAuthed,
-  stats,
+  content,
 }: {
   isAuthed: boolean;
-  stats: Stats | undefined;
+  content: SiteContentMap | undefined;
 }) {
-  const isMobile = useIsMobileClient();
-  const reduce = useReducedMotion();
-  const { scrollY } = useScroll();
-  const scrollOpacity = useTransform(scrollY, [0, 100], [1, 0]);
-
-  const particles = useMemo(() => {
-    const count = isMobile ? 25 : 50;
-    const colors = [
-      "rgba(196,181,253,",
-      "rgba(252,165,165,",
-      "rgba(134,239,172,",
-      "rgba(255,255,255,",
-    ];
-    return Array.from({ length: count }).map((_, i) => {
-      const color = colors[i % colors.length];
-      const opacity = 0.2 + Math.random() * 0.3;
-      const size = 2 + Math.random() * 4;
-      return {
-        id: i,
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        size,
-        color: `${color}${opacity})`,
-        duration: 4 + Math.random() * 6,
-        delay: Math.random() * 8,
-        rise: 100 + Math.random() * 200,
-        peak: 0.3 + Math.random() * 0.4,
-      };
-    });
-  }, [isMobile]);
-
-  const church = "SHEPHERD'S HILL";
+  const heroImage = content?.["hero_background_image"]?.url ?? null;
 
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 pt-28 pb-16 overflow-hidden">
-      {/* Orbs */}
-      <div aria-hidden="true" className="absolute inset-0 pointer-events-none">
-        <div
-          className="absolute"
-          style={{
-            top: -150,
-            left: -100,
-            width: 700,
-            height: 700,
-            background:
-              "radial-gradient(circle, rgba(45,27,142,0.25) 0%, transparent 70%)",
-            filter: `blur(${isMobile ? 60 : 80}px)`,
-            animation: "orbFloat1 12s ease-in-out infinite alternate",
-          }}
-        />
-        <div
-          className="absolute"
-          style={{
-            bottom: -100,
-            right: -100,
-            width: 600,
-            height: 600,
-            background:
-              "radial-gradient(circle, rgba(204,0,0,0.15) 0%, transparent 70%)",
-            filter: `blur(${isMobile ? 60 : 80}px)`,
-            animation: "orbFloat2 10s ease-in-out infinite alternate",
-          }}
-        />
-        <div
-          className="absolute"
-          style={{
-            top: "33%",
-            right: "25%",
-            width: 400,
-            height: 400,
-            background:
-              "radial-gradient(circle, rgba(26,122,42,0.1) 0%, transparent 70%)",
-            filter: `blur(${isMobile ? 50 : 60}px)`,
-            animation: "orbFloat3 14s ease-in-out infinite alternate",
-          }}
-        />
-        <div
-          className="absolute"
-          style={{
-            bottom: "33%",
-            left: "25%",
-            width: 350,
-            height: 350,
-            background:
-              "radial-gradient(circle, rgba(74,46,212,0.2) 0%, transparent 70%)",
-            filter: `blur(${isMobile ? 55 : 70}px)`,
-            animation: "orbFloat4 11s ease-in-out infinite alternate",
-          }}
-        />
+    <section className="relative px-5 pt-24 pb-14 md:pt-32 md:pb-20 overflow-hidden">
+      {/* Background media or tasteful default */}
+      <div aria-hidden="true" className="absolute inset-0">
+        {heroImage ? (
+          <>
+            <img src={heroImage} alt="" className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-[#080C16]/85" />
+          </>
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(1000px 600px at 50% -10%, rgba(45,27,142,0.28) 0%, transparent 70%)",
+            }}
+          />
+        )}
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-[#080C16]" />
       </div>
 
-      {/* Dot grid */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 pointer-events-none z-0"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
-      {/* Particles */}
-      {!reduce && (
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 pointer-events-none overflow-hidden"
-        >
-          {particles.map((p) => (
-            <motion.div
-              key={p.id}
-              className="absolute rounded-full"
-              style={{
-                left: `${p.left}%`,
-                top: `${p.top}%`,
-                width: p.size,
-                height: p.size,
-                backgroundColor: p.color,
-              }}
-              animate={{
-                y: [0, -p.rise],
-                opacity: [0, p.peak, 0],
-              }}
-              transition={{
-                duration: p.duration,
-                delay: p.delay,
-                repeat: Infinity,
-                ease: "easeOut",
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center">
+      <div className="relative max-w-3xl mx-auto flex flex-col items-center text-center">
         <LogoHero />
 
         <motion.h1
-          className="mt-8 font-black tracking-widest text-4xl md:text-7xl lg:text-8xl bg-clip-text text-transparent"
-          style={{
-            backgroundImage:
-              "linear-gradient(135deg, #FFFFFF 0%, #C4B5FD 30%, #FFFFFF 60%, #FCA5A5 100%)",
-          }}
-          aria-label={church}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="mt-7 text-3xl md:text-6xl font-black tracking-[0.12em] text-white"
         >
-          {church.split("").map((ch, i) => (
-            <motion.span
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.2 + i * 0.04, duration: 0.4 }}
-              className="inline-block"
-            >
-              {ch === " " ? "\u00A0" : ch}
-            </motion.span>
-          ))}
+          SHEPHERD'S HILL
         </motion.h1>
 
-        <motion.div
-          className="mt-6 flex items-center gap-4 max-w-xl w-full"
+        <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 2, duration: 0.6 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+          className="mt-3 text-[11px] md:text-xs font-semibold uppercase tracking-[0.3em] text-[#2EAD3F]"
         >
-          <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[#1A7A2A]/50" />
-          <span className="text-[10px] md:text-sm font-semibold tracking-[0.3em] uppercase text-[#2EAD3F] whitespace-nowrap">
-            The Redeemed Christian Church of God
-          </span>
-          <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[#1A7A2A]/50" />
+          The Redeemed Christian Church of God
+        </motion.p>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.35 }}
+          className="mt-5 text-base md:text-lg text-slate-300 max-w-lg leading-relaxed"
+        >
+          A church family in the heart of the city — worship with us this week, and stay connected
+          all week long.
+        </motion.p>
+
+        {/* Service times, above the fold */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.45 }}
+          className="mt-8 w-full rounded-2xl border border-white/10 bg-[#0D1117] p-5 text-left"
+        >
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            Service times
+          </h2>
+          <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
+            {SERVICE_TIMES.map((s) => (
+              <li
+                key={`${s.day}-${s.time}`}
+                className="flex items-baseline justify-between gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5"
+              >
+                <span className="text-sm text-white font-medium">
+                  {s.day}
+                  {s.name ? <span className="block text-xs text-slate-400 font-normal">{s.name}</span> : null}
+                </span>
+                <span className="text-sm text-slate-300 tabular-nums">{s.time}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-4 flex items-start gap-2 border-t border-white/10 pt-3.5 text-xs text-slate-400">
+            <MapPin size={14} className="mt-0.5 shrink-0 text-slate-500" />
+            <span>{CHURCH_ADDRESS}</span>
+          </div>
         </motion.div>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2.5, duration: 0.6 }}
-          className="text-xl md:text-2xl text-slate-300 mt-6 font-light italic"
-        >
-          Where Faith Meets Community
-        </motion.p>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 3, duration: 0.6 }}
-          className="text-sm md:text-base text-slate-500 mt-3 max-w-xl leading-relaxed px-4"
-        >
-          Your complete digital church platform — membership, giving, sermons,
-          prayer, and community in one place.
-        </motion.p>
-
-        <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              delay: 3.2,
-              type: "spring",
-              stiffness: 120,
-              damping: 12,
-            }}
+        {/* CTAs */}
+        <div className="mt-7 flex w-full flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            to={isAuthed ? "/dashboard" : "/register"}
+            className="group inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-3.5 text-base font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.99]"
+            style={{ background: "linear-gradient(135deg, #2D1B8E, #CC0000)" }}
           >
-            <Link
-              to={isAuthed ? "/dashboard" : "/register"}
-              className="group inline-flex items-center justify-center gap-2 w-full sm:w-auto font-bold text-white text-lg rounded-2xl transition-all"
-              style={{
-                background: "linear-gradient(135deg, #2D1B8E, #CC0000)",
-                padding: "16px 40px",
-                border: "1px solid rgba(255,255,255,0.1)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 0 40px rgba(45,27,142,0.5), 0 0 20px rgba(204,0,0,0.3)";
-                e.currentTarget.style.transform = "scale(1.05)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = "none";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              {isAuthed ? "Go to Dashboard" : "Register Now"}
-              <ArrowRight
-                size={20}
-                className="transition-transform group-hover:translate-x-1"
-              />
-            </Link>
-          </motion.div>
-
+            {isAuthed ? "Go to dashboard" : "Register"}
+            <ArrowRight size={18} className="transition-transform group-hover:translate-x-0.5" />
+          </Link>
           {!isAuthed && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                delay: 3.4,
-                type: "spring",
-                stiffness: 120,
-                damping: 12,
-              }}
+            <Link
+              to="/auth"
+              className="inline-flex items-center justify-center rounded-2xl border border-white/15 px-8 py-3.5 text-base font-semibold text-white hover:bg-white/5 transition-colors"
             >
-              <Link
-                to="/auth"
-                className="inline-flex items-center justify-center w-full sm:w-auto bg-white/[0.08] border border-white/20 text-white font-semibold px-10 py-4 rounded-2xl text-lg backdrop-blur-sm hover:bg-white/[0.12] hover:border-white/30 transition-colors"
-              >
-                Sign In
-              </Link>
-            </motion.div>
+              Sign in
+            </Link>
           )}
         </div>
 
-        {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 3.5, duration: 0.6 }}
-          className="mt-14 grid grid-cols-3 sm:flex gap-6 md:gap-16 justify-center items-center"
-        >
-          <StatItem value={stats?.members ?? 0} label="Members" delay={3.5} />
-          <div className="hidden sm:block w-px h-10 bg-white/10" />
-          <StatItem
-            value={stats?.cellGroups ?? 0}
-            label="House Fellowship Centres"
-            delay={3.7}
-          />
-          <div className="hidden sm:block w-px h-10 bg-white/10" />
-          <StatItem
-            value={stats?.departments ?? 0}
-            label="Departments"
-            delay={3.9}
-          />
-        </motion.div>
+        <Link to="/visit" className="mt-5 text-sm text-slate-400 underline-offset-4 hover:text-white hover:underline">
+          New here? Plan your visit →
+        </Link>
       </div>
-
-      {/* Scroll indicator */}
-      <motion.div
-        style={{ opacity: scrollOpacity }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-10"
-        aria-hidden="true"
-      >
-        <span className="text-xs text-slate-600">Discover more</span>
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <ChevronDown className="text-slate-600" size={20} />
-        </motion.div>
-      </motion.div>
     </section>
   );
 }
 
-function StatItem({
-  value,
-  label,
-  delay,
-  color,
-  large,
-}: {
-  value: number;
-  label: string;
-  delay?: number;
-  color?: string;
-  large?: boolean;
-}) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.5 });
-  const [display, setDisplay] = useState(0);
+/* ---------------- Welcome video ---------------- */
 
-  useEffect(() => {
-    if (!inView) return;
-    const controls = fmAnimate(0, value, {
-      duration: 1.5,
-      delay: delay ?? 0,
-      ease: "easeOut",
-      onUpdate: (v) => setDisplay(Math.round(v)),
-    });
-    return () => controls.stop();
-  }, [inView, value, delay]);
+function WelcomeVideo({ content }: { content: SiteContentMap | undefined }) {
+  const video = content?.["welcome_video"]?.url;
+  if (!video) return null;
+  const embed = toEmbedUrl(video);
 
   return (
-    <div className="flex flex-col items-center">
-      <span
-        ref={ref}
-        className={`${large ? "text-4xl md:text-5xl font-black" : "text-2xl md:text-3xl font-bold"} ${color ?? "text-white"}`}
-      >
-        {display.toLocaleString()}
-      </span>
-      <span className="text-[10px] md:text-xs text-slate-500 uppercase tracking-widest mt-1">
-        {label}
-      </span>
-    </div>
+    <section className="px-5 py-12 md:py-16">
+      <div className="max-w-3xl mx-auto">
+        <h2 className="text-xl md:text-2xl font-bold text-white">A word of welcome</h2>
+        <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-black aspect-video">
+          {embed ? (
+            <iframe
+              src={embed}
+              title="Welcome video"
+              className="h-full w-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <video src={video} controls playsInline className="h-full w-full" />
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -502,108 +294,69 @@ function StatItem({
 const FEATURES = [
   {
     icon: Users2,
-    gradient: "linear-gradient(135deg, #2D1B8E, #4A2ED4)",
-    glow: "rgba(45,27,142,0.5)",
+    tint: "#4A2ED4",
     title: "Member Portal",
-    desc: "Your profile, spiritual journey, family records, and complete church history — always with you.",
+    desc: "Your profile, spiritual journey, family records, and church history — always with you.",
   },
   {
     icon: Fingerprint,
-    gradient: "linear-gradient(135deg, #CC0000, #FF6B6B)",
-    glow: "rgba(204,0,0,0.5)",
+    tint: "#CC0000",
     title: "Smart Attendance",
-    desc: "Check in with your face, fingerprint, QR code, or voice. Seamless, fast, and always secure.",
+    desc: "Check in with your face, fingerprint or QR code. Seamless, fast and secure.",
   },
   {
     icon: Heart,
-    gradient: "linear-gradient(135deg, #1A7A2A, #2EAD3F)",
-    glow: "rgba(26,122,42,0.5)",
+    tint: "#2EAD3F",
     title: "Online Giving",
-    desc: "Tithes, offerings, and seeds — give from anywhere in the world, in any currency.",
+    desc: "Tithes, offerings and seeds — give from anywhere, in any currency.",
   },
   {
     icon: Flame,
-    gradient: "linear-gradient(135deg, #9333EA, #C026D3)",
-    glow: "rgba(147,51,234,0.5)",
+    tint: "#9333EA",
     title: "Prayer Wall",
-    desc: "Submit requests, join intercession chains, and celebrate every answered prayer together.",
+    desc: "Submit requests, join intercession, and celebrate answered prayer together.",
   },
   {
     icon: Mic2,
-    gradient: "linear-gradient(135deg, #0284C7, #0EA5E9)",
-    glow: "rgba(2,132,199,0.5)",
+    tint: "#0EA5E9",
     title: "Sermon Archive",
-    desc: "Every message from Shepherd's Hill — searchable, streamable, and shareable. Forever.",
+    desc: "Every message from Shepherd's Hill — searchable, streamable and shareable.",
   },
   {
     icon: Globe2,
-    gradient: "linear-gradient(135deg, #B45309, #D97706)",
-    glow: "rgba(180,83,9,0.5)",
-    title: "House Fellowship Centres & Community",
-    desc: "Stay connected to your House Fellowship Centre, zone, and parish. The church that prays together stays together.",
+    tint: "#D97706",
+    title: "House Fellowship Centres",
+    desc: "Stay connected to your centre, zone and parish through the week.",
   },
 ];
 
 function Features() {
   return (
-    <section
-      className="relative py-24 md:py-32 px-6"
-      style={{
-        background: "linear-gradient(180deg, #080C16 0%, #0A0D1A 100%)",
-      }}
-    >
-      <div className="max-w-6xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.5 }}
-          className="text-center"
-        >
-          <span
-            className="inline-block text-xs font-semibold tracking-widest px-4 py-1.5 rounded-full bg-clip-text text-transparent"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(45,27,142,0.3), rgba(204,0,0,0.2))",
-              border: "1px solid rgba(45,27,142,0.4)",
-              color: "#C4B5FD",
-              WebkitBackgroundClip: "padding-box",
-              backgroundClip: "padding-box",
-            }}
-          >
-            THE PLATFORM
-          </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mt-4">
-            Everything Your Church Life Needs
-          </h2>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto mt-4">
-            One platform. Your entire church family — connected, growing, and
-            thriving together.
-          </p>
-        </motion.div>
+    <section className="px-5 py-14 md:py-20 border-t border-white/[0.06]">
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-2xl md:text-3xl font-bold text-white">Everything your church life needs</h2>
+        <p className="mt-3 text-slate-400 max-w-xl">
+          One platform for the whole church family — connected, growing and thriving together.
+        </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-14">
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f, i) => (
             <motion.div
               key={f.title}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.4, delay: i * 0.1 }}
-              whileHover={{ y: -4 }}
-              className="group bg-white/5 backdrop-blur-xl border border-white/10 hover:border-white/25 rounded-2xl p-6 transition-all duration-300"
+              transition={{ duration: 0.35, delay: Math.min(i, 3) * 0.06 }}
+              className="rounded-2xl border border-white/10 bg-[#0D1117] p-5 hover:border-white/20 transition-colors"
             >
               <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-all duration-300"
-                style={{
-                  background: f.gradient,
-                  boxShadow: `0 8px 20px ${f.glow.replace("0.5", "0.3")}`,
-                }}
+                className="flex h-11 w-11 items-center justify-center rounded-xl"
+                style={{ background: `${f.tint}1F`, border: `1px solid ${f.tint}59` }}
               >
-                <f.icon className="text-white" size={24} aria-hidden="true" />
+                <f.icon size={20} style={{ color: f.tint }} aria-hidden="true" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">{f.title}</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">{f.desc}</p>
+              <h3 className="mt-4 font-semibold text-white">{f.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-400">{f.desc}</p>
             </motion.div>
           ))}
         </div>
@@ -612,140 +365,77 @@ function Features() {
   );
 }
 
-/* ---------------- CTA ---------------- */
+/* ---------------- Community note (stats only when real) ---------------- */
 
-function CTA({ stats }: { stats: Stats | undefined }) {
+function CommunityNote({ stats }: { stats: Stats | undefined }) {
+  const hasRealStats =
+    !!stats && stats.members > 0 && stats.cellGroups > 0 && stats.departments > 0;
+
   return (
-    <section className="relative overflow-hidden py-24 md:py-28 px-6">
-      <div
-        className="absolute inset-0"
-        style={{ background: "#0A0D1A" }}
-        aria-hidden="true"
-      />
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(circle at center, rgba(45,27,142,0.2) 0%, transparent 60%)",
-        }}
-        aria-hidden="true"
-      />
-      {/* Dove silhouette */}
-      <svg
-        aria-hidden="true"
-        className="absolute right-0 top-1/2 -translate-y-1/2 w-96 h-96 rotate-12 pointer-events-none"
-        viewBox="0 0 100 100"
-        fill="white"
-        style={{ opacity: 0.04 }}
-      >
-        <path d="M50 20 C 30 25, 15 40, 20 55 C 25 45, 35 42, 45 45 L 40 60 C 35 65, 30 68, 25 72 C 35 70, 45 68, 52 62 C 60 68, 70 72, 82 72 C 72 65, 65 58, 60 50 C 68 45, 78 42, 88 45 C 82 35, 70 25, 55 22 Z" />
-      </svg>
-
-      <div className="relative max-w-3xl mx-auto text-center">
-        <div className="flex gap-3 justify-center flex-wrap">
-          <Pill bg="#2D1B8E" text="#C4B5FD" label="🕊️ RCCG" />
-          <Pill bg="#CC0000" text="#FCA5A5" label="✝️ FAITH" />
-          <Pill bg="#1A7A2A" text="#86EFAC" label="🌿 COMMUNITY" />
-        </div>
-
-        <motion.h2
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.5 }}
-          className="text-4xl md:text-5xl font-bold text-white mt-6"
-        >
-          Join the Shepherd's Hill Digital Family
-        </motion.h2>
-
-        <p className="text-lg text-slate-300 mt-4">
-          Registration takes less than 5 minutes.
-          <br />
-          Your cell leader or an usher is always ready to help you.
-        </p>
-
-        <div className="flex gap-6 md:gap-12 justify-center flex-wrap mt-10 items-center">
-          <StatItem
-            value={stats?.members ?? 0}
-            label="Members"
-            color="text-[#C4B5FD]"
-            large
-          />
-          <div className="hidden md:block w-px h-12 bg-white/10" />
-          <StatItem
-            value={stats?.cellGroups ?? 0}
-            label="House Fellowship Centres"
-            color="text-[#FCA5A5]"
-            large
-          />
-          <div className="hidden md:block w-px h-12 bg-white/10" />
-          <StatItem
-            value={stats?.departments ?? 0}
-            label="Departments"
-            color="text-[#86EFAC]"
-            large
-          />
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ type: "spring", stiffness: 140, damping: 12 }}
-          className="mt-12 inline-block"
-        >
-          <Link
-            to="/register"
-            className="inline-flex items-center justify-center gap-3 font-bold text-white text-xl rounded-2xl transition-all"
-            style={{
-              background: "linear-gradient(135deg, #2D1B8E, #CC0000)",
-              padding: "20px 64px",
-              border: "1px solid rgba(255,255,255,0.1)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow =
-                "0 0 30px rgba(45,27,142,0.5), 0 0 60px rgba(204,0,0,0.2)";
-              e.currentTarget.style.transform = "scale(1.05)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = "none";
-              e.currentTarget.style.transform = "scale(1)";
-            }}
-          >
-            <UserPlus size={22} />
-            Register Now — It's Free
-          </Link>
-        </motion.div>
-
-        <p className="text-slate-500 mt-6">
-          Already a member?{" "}
-          <Link
-            to="/auth"
-            className="font-semibold bg-clip-text text-transparent"
-            style={{
-              backgroundImage: "linear-gradient(135deg, #C4B5FD, #FCA5A5)",
-            }}
-          >
-            Sign In
-          </Link>
-        </p>
+    <section className="px-5 py-14 md:py-20 border-t border-white/[0.06]">
+      <div className="max-w-3xl mx-auto text-center">
+        {hasRealStats ? (
+          <div className="grid grid-cols-3 gap-4">
+            <StatItem value={stats!.members} label="Members" />
+            <StatItem value={stats!.cellGroups} label="House Fellowship Centres" />
+            <StatItem value={stats!.departments} label="Departments" />
+          </div>
+        ) : (
+          <p className="text-lg md:text-xl text-slate-300 leading-relaxed">
+            A growing family of worshippers, house fellowship centres and serving teams — and there
+            is a place here for you.
+          </p>
+        )}
       </div>
     </section>
   );
 }
 
-function Pill({ bg, text, label }: { bg: string; text: string; label: string }) {
+function StatItem({ value, label }: { value: number; label: string }) {
   return (
-    <span
-      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold"
-      style={{
-        background: `${bg}33`,
-        border: `1px solid ${bg}80`,
-        color: text,
-      }}
-    >
-      {label}
-    </span>
+    <div className="flex flex-col items-center">
+      <span className="text-3xl md:text-4xl font-black text-white tabular-nums">
+        {value.toLocaleString()}
+      </span>
+      <span className="mt-1 text-[10px] md:text-xs uppercase tracking-widest text-slate-500">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+/* ---------------- CTA ---------------- */
+
+function CTA({ isAuthed }: { isAuthed: boolean }) {
+  return (
+    <section className="px-5 py-14 md:py-20 border-t border-white/[0.06]">
+      <div className="max-w-2xl mx-auto rounded-2xl border border-white/10 bg-[#0D1117] p-8 text-center">
+        <h2 className="text-2xl md:text-3xl font-bold text-white">
+          Join the Shepherd's Hill family
+        </h2>
+        <p className="mt-3 text-slate-400">
+          Registration takes less than five minutes. An usher or your house fellowship coordinator
+          is always ready to help.
+        </p>
+        <div className="mt-7 flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            to={isAuthed ? "/dashboard" : "/register"}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-3.5 font-bold text-white"
+            style={{ background: "linear-gradient(135deg, #2D1B8E, #CC0000)" }}
+          >
+            {isAuthed ? "Go to dashboard" : "Register"}
+          </Link>
+          {!isAuthed && (
+            <Link
+              to="/auth"
+              className="inline-flex items-center justify-center rounded-2xl border border-white/15 px-8 py-3.5 font-semibold text-white hover:bg-white/5"
+            >
+              Sign in
+            </Link>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -753,121 +443,70 @@ function Pill({ bg, text, label }: { bg: string; text: string; label: string }) 
 
 function Footer() {
   return (
-    <footer
-      className="relative pt-16 pb-10 px-6"
-      style={{
-        background: "rgba(0,0,0,0.4)",
-        borderTop: "1px solid rgba(255,255,255,0.06)",
-      }}
-    >
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
+    <footer className="border-t border-white/[0.06] px-5 pt-12 pb-10">
+      <div className="max-w-5xl mx-auto grid gap-10 md:grid-cols-3">
         <div>
           <div className="flex items-center gap-3">
             <img
               src="/logo.png"
-              alt="Shepherd's Hill RCCG Logo"
-              className="h-14 w-14 object-contain mix-blend-screen"
+              alt="RCCG Shepherd's Hill logo"
+              className="h-12 w-12 object-contain"
               style={{ mixBlendMode: "screen" }}
             />
             <div>
-              <div className="font-bold text-white text-lg tracking-wider">
-                SHEPHERD'S HILL
-              </div>
-              <div className="text-xs text-[#2EAD3F] mt-1">
+              <div className="font-bold tracking-wider text-white">SHEPHERD'S HILL</div>
+              <div className="text-xs text-[#2EAD3F] mt-0.5">
                 The Redeemed Christian Church of God
               </div>
             </div>
           </div>
-          <div className="w-16 h-0.5 bg-[#1A7A2A] mt-3" />
-          <p className="text-xs text-slate-600 mt-6">
-            © 2024 Shepherd's Hill. All rights reserved.
+          <p className="mt-6 text-xs text-slate-600">
+            © {new Date().getFullYear()} RCCG Shepherd's Hill. All rights reserved.
           </p>
         </div>
 
         <div>
-          <h4 className="uppercase tracking-widest text-xs text-slate-600 mb-4">
-            Platform
-          </h4>
-          <ul className="flex flex-col gap-3 text-sm">
+          <h3 className="text-xs uppercase tracking-widest text-slate-600">Visit</h3>
+          <ul className="mt-4 space-y-3 text-sm">
             <li>
-              <Link
-                to="/register"
-                className="text-slate-400 hover:text-white transition-colors"
-              >
-                Register
-              </Link>
+              <Link to="/visit" className="text-slate-400 hover:text-white">Plan your visit</Link>
             </li>
             <li>
-              <Link
-                to="/auth"
-                className="text-slate-400 hover:text-white transition-colors"
-              >
-                Sign In
-              </Link>
+              <Link to="/sermons" className="text-slate-400 hover:text-white">Sermon archive</Link>
             </li>
             <li>
-              <Link
-                to="/auth"
-                className="text-slate-400 hover:text-white transition-colors"
-              >
-                Member Portal
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/register"
-                className="text-slate-400 hover:text-white transition-colors"
-              >
-                Give Online
-              </Link>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-slate-400 hover:text-white transition-colors"
-              >
-                Prayer Wall
-              </a>
+              <Link to="/give" className="text-slate-400 hover:text-white">Giving</Link>
             </li>
           </ul>
         </div>
 
         <div>
-          <h4 className="uppercase tracking-widest text-xs text-slate-600 mb-4">
-            Connect
-          </h4>
-          <p className="text-slate-400 text-sm">
-            Shepherd's Hill Parish
-            <br />
-            Address coming soon
-          </p>
-          <div className="text-slate-500 text-xs mt-2 leading-relaxed">
-            <div>Sunday: 8:00 AM & 10:00 AM</div>
-            <div>Tuesday (Digging Deep): 6:00 PM</div>
-            <div>Thursday (Faith Clinic): 6:00 PM</div>
-          </div>
-          <div className="flex gap-2 mt-4">
-            {[
-              { Icon: Youtube, label: "YouTube" },
-              { Icon: Facebook, label: "Facebook" },
-              { Icon: Instagram, label: "Instagram" },
-              { Icon: Twitter, label: "Twitter" },
-            ].map(({ Icon, label }) => (
+          <h3 className="text-xs uppercase tracking-widest text-slate-600">Platform</h3>
+          <ul className="mt-4 space-y-3 text-sm">
+            <li>
+              <Link to="/register" className="text-slate-400 hover:text-white">Register</Link>
+            </li>
+            <li>
+              <Link to="/auth" className="text-slate-400 hover:text-white">Sign in</Link>
+            </li>
+            <li>
               <a
-                key={label}
-                href="#"
-                aria-label={label}
-                className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-[#2D1B8E]/60 hover:bg-[#2D1B8E]/20 transition-all"
+                href="https://shills.lovable.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-slate-400 hover:text-white"
               >
-                <Icon size={16} />
+                <Wrench size={14} /> Join the IT project
               </a>
-            ))}
+            </li>
+          </ul>
+          <div className="mt-6 flex gap-4 text-slate-500">
+            <a href="#" aria-label="Facebook" className="hover:text-white"><Facebook size={18} /></a>
+            <a href="#" aria-label="Instagram" className="hover:text-white"><Instagram size={18} /></a>
+            <a href="#" aria-label="X" className="hover:text-white"><Twitter size={18} /></a>
+            <a href="#" aria-label="YouTube" className="hover:text-white"><Youtube size={18} /></a>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto mt-10 pt-6 border-t border-white/5 text-center text-xs text-slate-700">
-        Built with love for the body of Christ 🕊️
       </div>
     </footer>
   );
