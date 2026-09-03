@@ -1057,6 +1057,51 @@ export type Database = {
         }
         Relationships: []
       }
+      sermons: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_published: boolean
+          preacher: string
+          sermon_date: string
+          service_type: string
+          title: string
+          updated_at: string
+          youtube_url: string
+          youtube_video_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          preacher: string
+          sermon_date?: string
+          service_type?: string
+          title: string
+          updated_at?: string
+          youtube_url: string
+          youtube_video_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          preacher?: string
+          sermon_date?: string
+          service_type?: string
+          title?: string
+          updated_at?: string
+          youtube_url?: string
+          youtube_video_id?: string | null
+        }
+        Relationships: []
+      }
       site_content: {
         Row: {
           content_type: string
@@ -1307,6 +1352,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      can_manage_sermons: { Args: { _user_id: string }; Returns: boolean }
       decide_member_transfer: {
         Args: { p_approve: boolean; p_notes?: string; p_transfer_id: string }
         Returns: undefined
