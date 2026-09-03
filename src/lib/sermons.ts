@@ -80,11 +80,11 @@ export async function createSermon(input: SermonInput): Promise<void> {
 }
 
 export async function updateSermon(id: string, input: Partial<SermonInput>): Promise<void> {
-  const patch: Record<string, unknown> = { ...input };
+  const patch: Partial<SermonInput> & { youtube_video_id?: string } = { ...input };
   if (input.youtube_url) {
     const videoId = extractYouTubeId(input.youtube_url);
     if (!videoId) throw new Error("That doesn't look like a valid YouTube link.");
-    patch['youtube_video_id'] = videoId;
+    patch.youtube_video_id = videoId;
   }
   const { error } = await supabase.from("sermons").update(patch).eq("id", id);
   if (error) throw error;
