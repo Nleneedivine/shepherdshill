@@ -105,7 +105,7 @@ function VisitPage() {
           <p className="text-muted-foreground">Planning to join us? Let us know you're coming.</p>
           <Link
             to="/register"
-            className="mt-4 inline-flex items-center justify-center rounded-xl px-6 py-3 font-semibold text-foreground"
+            className="mt-4 inline-flex items-center justify-center rounded-xl px-6 py-3 font-semibold text-white"
             style={{ background: "linear-gradient(135deg, #2D1B8E, #CC0000)" }}
           >
             Register

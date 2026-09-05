@@ -111,7 +111,7 @@ function Navbar({ isAuthed }: { isAuthed: boolean }) {
           {isAuthed ? (
             <Link
               to="/dashboard"
-              className="rounded-xl px-4 py-2 text-sm font-semibold text-foreground"
+              className="rounded-xl px-4 py-2 text-sm font-semibold text-white"
               style={{ background: "linear-gradient(135deg, #2D1B8E, #CC0000)" }}
             >
               Dashboard
@@ -126,7 +126,7 @@ function Navbar({ isAuthed }: { isAuthed: boolean }) {
               </Link>
               <Link
                 to="/register"
-                className="rounded-xl px-4 py-2 text-sm font-semibold text-foreground"
+                className="rounded-xl px-4 py-2 text-sm font-semibold text-white"
                 style={{ background: "linear-gradient(135deg, #2D1B8E, #CC0000)" }}
               >
                 Register
@@ -236,7 +236,7 @@ function Hero({
         <div className="mt-7 flex w-full flex-col sm:flex-row gap-3 justify-center">
           <Link
             to={isAuthed ? "/dashboard" : "/register"}
-            className="group inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-3.5 text-base font-bold text-foreground transition-transform hover:scale-[1.02] active:scale-[0.99]"
+            className="group inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-3.5 text-base font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.99]"
             style={{ background: "linear-gradient(135deg, #2D1B8E, #CC0000)" }}
           >
             {isAuthed ? "Go to dashboard" : "Register"}
@@ -420,7 +420,7 @@ function CTA({ isAuthed }: { isAuthed: boolean }) {
         <div className="mt-7 flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             to={isAuthed ? "/dashboard" : "/register"}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-3.5 font-bold text-foreground"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-3.5 font-bold text-white"
             style={{ background: "linear-gradient(135deg, #2D1B8E, #CC0000)" }}
           >
             {isAuthed ? "Go to dashboard" : "Register"}

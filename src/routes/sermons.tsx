@@ -73,7 +73,7 @@ function SermonsPage() {
             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
             style={{ background: "linear-gradient(135deg, #2D1B8E, #CC0000)" }}
           >
-            <Mic2 size={22} className="text-foreground" />
+            <Mic2 size={22} className="text-white" />
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Sermon archive</h1>
@@ -152,7 +152,7 @@ function SermonsPage() {
                     />
                   )}
                   <div className="absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 transition-opacity group-hover:opacity-100">
-                    <Play size={30} className="text-foreground" />
+                    <Play size={30} className="text-white" />
                   </div>
                 </div>
                 <div className="p-4">

@@ -38,7 +38,7 @@ function GivePage() {
             className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
             style={{ background: "linear-gradient(135deg, #1A7A2A, #2EAD3F)" }}
           >
-            <Heart size={24} className="text-foreground" />
+            <Heart size={24} className="text-white" />
           </div>
           <h1 className="mt-5 text-2xl font-bold">Online giving is on the way</h1>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
