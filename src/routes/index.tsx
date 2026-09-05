@@ -86,8 +86,8 @@ function Navbar({ isAuthed }: { isAuthed: boolean }) {
           <img
             src="/logo.png"
             alt="RCCG Shepherd's Hill logo"
-            className="h-9 w-9 object-contain"
-            style={{ mixBlendMode: "screen" }}
+            className="h-9 w-9 object-contain dark:mix-blend-screen"
+            
           />
           <div className="flex flex-col leading-tight">
             <span className="font-bold text-sm md:text-base tracking-wider">SHEPHERD'S HILL</span>
@@ -450,8 +450,8 @@ function Footer() {
             <img
               src="/logo.png"
               alt="RCCG Shepherd's Hill logo"
-              className="h-12 w-12 object-contain"
-              style={{ mixBlendMode: "screen" }}
+              className="h-12 w-12 object-contain dark:mix-blend-screen"
+              
             />
             <div>
               <div className="font-bold tracking-wider text-foreground">SHEPHERD'S HILL</div>

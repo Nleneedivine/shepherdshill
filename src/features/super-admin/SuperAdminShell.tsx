@@ -28,7 +28,7 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen text-white relative" style={{ backgroundColor: "#080c16" }}>
+    <div className="dark min-h-screen text-white relative" style={{ backgroundColor: "#080c16" }}>
       <div className="fixed top-0 inset-x-0 h-0.5 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-blue-500 z-50" />
 
       <aside className="hidden md:flex fixed inset-y-0 left-0 w-64 flex-col bg-black/50 backdrop-blur-xl border-r border-violet-500/20 z-40">
