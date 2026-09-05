@@ -18,6 +18,7 @@ import { Route as GiveRouteImport } from './routes/give'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SermonsIdRouteImport } from './routes/sermons_.$id'
 import { Route as AuthenticatedSuperAdminRouteImport } from './routes/_authenticated/super-admin'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSuperAdminIndexRouteImport } from './routes/_authenticated/super-admin.index'
@@ -34,6 +35,7 @@ import { Route as AuthenticatedMembersIdRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
 import { Route as AuthenticatedAdminTransfersRouteImport } from './routes/_authenticated/admin.transfers'
 import { Route as AuthenticatedAdminSpiritualJourneyRouteImport } from './routes/_authenticated/admin.spiritual-journey'
+import { Route as AuthenticatedAdminSermonsRouteImport } from './routes/_authenticated/admin.sermons'
 import { Route as AuthenticatedAdminMembershipStagesRouteImport } from './routes/_authenticated/admin.membership-stages'
 import { Route as AuthenticatedAdminIncompleteProfilesRouteImport } from './routes/_authenticated/admin.incomplete-profiles'
 import { Route as AuthenticatedAdminHouseFellowshipRouteImport } from './routes/_authenticated/admin.house-fellowship'
@@ -84,6 +86,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SermonsIdRoute = SermonsIdRouteImport.update({
+  id: '/sermons_/$id',
+  path: '/sermons/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSuperAdminRoute = AuthenticatedSuperAdminRouteImport.update({
@@ -179,6 +186,12 @@ const AuthenticatedAdminSpiritualJourneyRoute =
     path: '/admin/spiritual-journey',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminSermonsRoute =
+  AuthenticatedAdminSermonsRouteImport.update({
+    id: '/admin/sermons',
+    path: '/admin/sermons',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminMembershipStagesRoute =
   AuthenticatedAdminMembershipStagesRouteImport.update({
     id: '/admin/membership-stages',
@@ -233,12 +246,14 @@ export interface FileRoutesByFullPath {
   '/visit': typeof VisitRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/super-admin': typeof AuthenticatedSuperAdminRouteWithChildren
+  '/sermons/$id': typeof SermonsIdRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/drafts': typeof AuthenticatedAdminDraftsRoute
   '/admin/family-groups': typeof AuthenticatedAdminFamilyGroupsRoute
   '/admin/house-fellowship': typeof AuthenticatedAdminHouseFellowshipRoute
   '/admin/incomplete-profiles': typeof AuthenticatedAdminIncompleteProfilesRoute
   '/admin/membership-stages': typeof AuthenticatedAdminMembershipStagesRoute
+  '/admin/sermons': typeof AuthenticatedAdminSermonsRoute
   '/admin/spiritual-journey': typeof AuthenticatedAdminSpiritualJourneyRoute
   '/admin/transfers': typeof AuthenticatedAdminTransfersRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
@@ -265,12 +280,14 @@ export interface FileRoutesByTo {
   '/unauthorized': typeof UnauthorizedRoute
   '/visit': typeof VisitRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/sermons/$id': typeof SermonsIdRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/drafts': typeof AuthenticatedAdminDraftsRoute
   '/admin/family-groups': typeof AuthenticatedAdminFamilyGroupsRoute
   '/admin/house-fellowship': typeof AuthenticatedAdminHouseFellowshipRoute
   '/admin/incomplete-profiles': typeof AuthenticatedAdminIncompleteProfilesRoute
   '/admin/membership-stages': typeof AuthenticatedAdminMembershipStagesRoute
+  '/admin/sermons': typeof AuthenticatedAdminSermonsRoute
   '/admin/spiritual-journey': typeof AuthenticatedAdminSpiritualJourneyRoute
   '/admin/transfers': typeof AuthenticatedAdminTransfersRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
@@ -300,12 +317,14 @@ export interface FileRoutesById {
   '/visit': typeof VisitRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRouteWithChildren
+  '/sermons_/$id': typeof SermonsIdRoute
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/_authenticated/admin/drafts': typeof AuthenticatedAdminDraftsRoute
   '/_authenticated/admin/family-groups': typeof AuthenticatedAdminFamilyGroupsRoute
   '/_authenticated/admin/house-fellowship': typeof AuthenticatedAdminHouseFellowshipRoute
   '/_authenticated/admin/incomplete-profiles': typeof AuthenticatedAdminIncompleteProfilesRoute
   '/_authenticated/admin/membership-stages': typeof AuthenticatedAdminMembershipStagesRoute
+  '/_authenticated/admin/sermons': typeof AuthenticatedAdminSermonsRoute
   '/_authenticated/admin/spiritual-journey': typeof AuthenticatedAdminSpiritualJourneyRoute
   '/_authenticated/admin/transfers': typeof AuthenticatedAdminTransfersRoute
   '/_authenticated/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
@@ -335,12 +354,14 @@ export interface FileRouteTypes {
     | '/visit'
     | '/dashboard'
     | '/super-admin'
+    | '/sermons/$id'
     | '/admin/departments'
     | '/admin/drafts'
     | '/admin/family-groups'
     | '/admin/house-fellowship'
     | '/admin/incomplete-profiles'
     | '/admin/membership-stages'
+    | '/admin/sermons'
     | '/admin/spiritual-journey'
     | '/admin/transfers'
     | '/admin/verifications'
@@ -367,12 +388,14 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/visit'
     | '/dashboard'
+    | '/sermons/$id'
     | '/admin/departments'
     | '/admin/drafts'
     | '/admin/family-groups'
     | '/admin/house-fellowship'
     | '/admin/incomplete-profiles'
     | '/admin/membership-stages'
+    | '/admin/sermons'
     | '/admin/spiritual-journey'
     | '/admin/transfers'
     | '/admin/verifications'
@@ -401,12 +424,14 @@ export interface FileRouteTypes {
     | '/visit'
     | '/_authenticated/dashboard'
     | '/_authenticated/super-admin'
+    | '/sermons_/$id'
     | '/_authenticated/admin/departments'
     | '/_authenticated/admin/drafts'
     | '/_authenticated/admin/family-groups'
     | '/_authenticated/admin/house-fellowship'
     | '/_authenticated/admin/incomplete-profiles'
     | '/_authenticated/admin/membership-stages'
+    | '/_authenticated/admin/sermons'
     | '/_authenticated/admin/spiritual-journey'
     | '/_authenticated/admin/transfers'
     | '/_authenticated/admin/verifications'
@@ -434,6 +459,7 @@ export interface RootRouteChildren {
   SermonsRoute: typeof SermonsRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
   VisitRoute: typeof VisitRoute
+  SermonsIdRoute: typeof SermonsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -499,6 +525,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sermons_/$id': {
+      id: '/sermons_/$id'
+      path: '/sermons/$id'
+      fullPath: '/sermons/$id'
+      preLoaderRoute: typeof SermonsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/super-admin': {
@@ -613,6 +646,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSpiritualJourneyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/sermons': {
+      id: '/_authenticated/admin/sermons'
+      path: '/admin/sermons'
+      fullPath: '/admin/sermons'
+      preLoaderRoute: typeof AuthenticatedAdminSermonsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/membership-stages': {
       id: '/_authenticated/admin/membership-stages'
       path: '/admin/membership-stages'
@@ -704,6 +744,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminHouseFellowshipRoute: typeof AuthenticatedAdminHouseFellowshipRoute
   AuthenticatedAdminIncompleteProfilesRoute: typeof AuthenticatedAdminIncompleteProfilesRoute
   AuthenticatedAdminMembershipStagesRoute: typeof AuthenticatedAdminMembershipStagesRoute
+  AuthenticatedAdminSermonsRoute: typeof AuthenticatedAdminSermonsRoute
   AuthenticatedAdminSpiritualJourneyRoute: typeof AuthenticatedAdminSpiritualJourneyRoute
   AuthenticatedAdminTransfersRoute: typeof AuthenticatedAdminTransfersRoute
   AuthenticatedAdminVerificationsRoute: typeof AuthenticatedAdminVerificationsRoute
@@ -724,6 +765,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedAdminIncompleteProfilesRoute,
   AuthenticatedAdminMembershipStagesRoute:
     AuthenticatedAdminMembershipStagesRoute,
+  AuthenticatedAdminSermonsRoute: AuthenticatedAdminSermonsRoute,
   AuthenticatedAdminSpiritualJourneyRoute:
     AuthenticatedAdminSpiritualJourneyRoute,
   AuthenticatedAdminTransfersRoute: AuthenticatedAdminTransfersRoute,
@@ -747,6 +789,7 @@ const rootRouteChildren: RootRouteChildren = {
   SermonsRoute: SermonsRoute,
   UnauthorizedRoute: UnauthorizedRoute,
   VisitRoute: VisitRoute,
+  SermonsIdRoute: SermonsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
