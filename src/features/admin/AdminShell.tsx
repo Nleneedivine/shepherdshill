@@ -12,6 +12,7 @@ import {
   GitBranch,
   Sparkles,
   FileText,
+  Mic2,
 } from "lucide-react";
 import { AppLayout, PageWrapper } from "@/components/ds";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +29,7 @@ const NAV = [
   { label: "Incomplete Profiles", href: "/admin/incomplete-profiles", icon: UserCog },
   { label: "Membership Stages", href: "/admin/membership-stages", icon: GitBranch },
   { label: "Spiritual Journey", href: "/admin/spiritual-journey", icon: Sparkles },
+  { label: "Sermons", href: "/admin/sermons", icon: Mic2 },
   { label: "Drafts", href: "/admin/drafts", icon: FileText },
 ];
 
