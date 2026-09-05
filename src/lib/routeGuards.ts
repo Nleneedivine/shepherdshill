@@ -40,3 +40,18 @@ export async function requireRoles(allowed: AppRole[], redirectTo = "/unauthoriz
 
   return { userId: data.user.id, roles };
 }
+
+/** Sermon portal: IT team, media team, admins and super admins only. */
+export async function requireSermonManager(redirectTo = "/unauthorized") {
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) throw redirect({ to: "/auth" });
+
+  const roles = await fetchMyRoles(data.user.id);
+  const allowed =
+    roles.includes("it_team" as AppRole) ||
+    roles.includes("media_team" as AppRole) ||
+    satisfiesAny(roles, ADMIN_ROLES);
+
+  if (!allowed) throw redirect({ to: redirectTo });
+  return { userId: data.user.id, roles };
+}
