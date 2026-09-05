@@ -22,7 +22,7 @@ export function MobileTabBar({ isAuthed }: { isAuthed: boolean }) {
   return (
     <nav
       aria-label="Primary"
-      className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-white/10 bg-[#0A0E19]/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]"
+      className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-border bg-[#0A0E19]/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="grid grid-cols-5">
         {tabs.map((t) => {
@@ -34,7 +34,7 @@ export function MobileTabBar({ isAuthed }: { isAuthed: boolean }) {
                 to={t.to}
                 className={cn(
                   "flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors",
-                  active ? "text-white" : "text-slate-500",
+                  active ? "text-foreground" : "text-subtle",
                 )}
               >
                 <Icon size={20} strokeWidth={active ? 2.4 : 1.8} />

@@ -28,26 +28,26 @@ export const Route = createFileRoute("/give")({
 function GivePage() {
   const { user, loading } = useAuth();
   return (
-    <div className="min-h-screen bg-[#080C16] text-white pb-24 md:pb-0">
+    <div className="min-h-screen bg-background text-foreground pb-24 md:pb-0">
       <div className="max-w-xl mx-auto px-5 pt-10">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white">
+        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft size={16} /> Back home
         </Link>
-        <div className="mt-10 rounded-2xl border border-white/10 bg-[#0D1117] p-8 text-center">
+        <div className="mt-10 rounded-2xl border border-border bg-surface p-8 text-center">
           <div
             className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
             style={{ background: "linear-gradient(135deg, #1A7A2A, #2EAD3F)" }}
           >
-            <Heart size={24} className="text-white" />
+            <Heart size={24} className="text-foreground" />
           </div>
           <h1 className="mt-5 text-2xl font-bold">Online giving is on the way</h1>
-          <p className="mt-3 text-sm leading-relaxed text-slate-400">
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             We're setting up secure digital giving for tithes, offerings and seeds. Until then,
             please give at any service or speak with the finance team at the welcome desk.
           </p>
           <Link
             to="/visit"
-            className="mt-6 inline-flex rounded-xl border border-white/15 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/5"
+            className="mt-6 inline-flex rounded-xl border border-border px-5 py-2.5 text-sm font-semibold text-foreground hover:bg-surface-soft"
           >
             Plan your visit
           </Link>
