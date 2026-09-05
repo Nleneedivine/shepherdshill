@@ -23,7 +23,7 @@ export function AppLayout({
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden" style={{ backgroundColor: "#080c16" }}>
+    <div className="dark relative min-h-screen w-full overflow-hidden" style={{ backgroundColor: "#080c16" }}>
       {/* Ambient orbs */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="orb-1 absolute top-0 left-64 h-96 w-96 rounded-full bg-violet-600 opacity-20 blur-3xl" />

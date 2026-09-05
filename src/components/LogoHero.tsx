@@ -85,9 +85,8 @@ export function LogoHero() {
       <motion.img
         src="/logo.png"
         alt="Shepherd's Hill RCCG Logo"
-        className="relative z-10 w-full h-full object-contain mix-blend-screen"
+        className="relative z-10 w-full h-full object-contain dark:mix-blend-screen"
         style={{
-          mixBlendMode: "screen",
           filter:
             "drop-shadow(0 0 20px rgba(45,27,142,0.8)) drop-shadow(0 0 40px rgba(204,0,0,0.4))",
         }}
