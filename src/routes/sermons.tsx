@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, CalendarDays, Mic2, Play, Search, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { MobileTabBar } from "@/components/MobileTabBar";
+import { SitePhoto } from "@/components/SitePhoto";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { fetchSermons, youtubeThumbnail } from "@/lib/sermons";
 
 export const Route = createFileRoute("/sermons")({
@@ -62,11 +64,14 @@ function SermonsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#080C16] text-white pb-24 md:pb-12">
+    <div className="min-h-screen bg-background text-foreground pb-24 md:pb-12">
       <div className="max-w-5xl mx-auto px-5 pt-10">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white">
+        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft size={16} /> Back home
         </Link>
+
+        <div className="float-right"><ThemeToggle /></div>
+        <SitePhoto contentKey="sermons_banner" alt="Preaching at RCCG Shepherd's Hill" className="mt-6 aspect-[16/6]" />
 
         <header className="mt-8 flex items-start gap-4">
           <div
@@ -77,7 +82,7 @@ function SermonsPage() {
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Sermon archive</h1>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-muted-foreground">
               Messages preached at Shepherd's Hill — search by title, preacher or service.
             </p>
           </div>
@@ -86,20 +91,20 @@ function SermonsPage() {
         {/* Filters */}
         <div className="mt-8 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search sermons"
               aria-label="Search sermons"
-              className="w-full rounded-xl border border-white/10 bg-[#0D1117] py-3 pl-9 pr-4 text-sm text-white placeholder:text-slate-500 outline-none focus:border-violet-500"
+              className="w-full rounded-xl border border-border bg-surface py-3 pl-9 pr-4 text-sm text-foreground placeholder:text-subtle outline-none focus:border-violet-500"
             />
           </div>
           <select
             value={type}
             onChange={(e) => setType(e.target.value)}
             aria-label="Filter by service type"
-            className="rounded-xl border border-white/10 bg-[#0D1117] px-4 py-3 text-sm text-white outline-none focus:border-violet-500"
+            className="rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none focus:border-violet-500"
           >
             <option value="all">All services</option>
             {types.map((t) => (
@@ -110,7 +115,7 @@ function SermonsPage() {
             value={year}
             onChange={(e) => setYear(e.target.value)}
             aria-label="Filter by year"
-            className="rounded-xl border border-white/10 bg-[#0D1117] px-4 py-3 text-sm text-white outline-none focus:border-violet-500"
+            className="rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none focus:border-violet-500"
           >
             <option value="all">All years</option>
             {years.map((y) => (
@@ -121,12 +126,12 @@ function SermonsPage() {
 
         {/* List */}
         <div className="mt-8">
-          {isLoading && <p className="text-sm text-slate-500">Loading sermons…</p>}
+          {isLoading && <p className="text-sm text-subtle">Loading sermons…</p>}
 
           {!isLoading && filtered.length === 0 && (
-            <div className="rounded-2xl border border-white/10 bg-[#0D1117] p-10 text-center">
-              <Mic2 size={26} className="mx-auto text-slate-600" />
-              <p className="mt-3 text-sm text-slate-400">
+            <div className="rounded-2xl border border-border bg-surface p-10 text-center">
+              <Mic2 size={26} className="mx-auto text-subtle" />
+              <p className="mt-3 text-sm text-muted-foreground">
                 {sermons && sermons.length > 0
                   ? "No sermons match those filters."
                   : "No sermons have been published yet. Check back soon."}
@@ -140,7 +145,7 @@ function SermonsPage() {
                 key={s.id}
                 to="/sermons/$id"
                 params={{ id: s.id }}
-                className="group rounded-2xl border border-white/10 bg-[#0D1117] overflow-hidden transition-colors hover:border-white/25"
+                className="group rounded-2xl border border-border bg-surface overflow-hidden transition-colors hover:border-border"
               >
                 <div className="relative aspect-video bg-black/40">
                   {s.youtube_video_id && (
@@ -160,7 +165,7 @@ function SermonsPage() {
                     {s.service_type}
                   </span>
                   <h2 className="mt-1 font-semibold leading-snug line-clamp-2">{s.title}</h2>
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
                       <User size={12} /> {s.preacher}
                     </span>

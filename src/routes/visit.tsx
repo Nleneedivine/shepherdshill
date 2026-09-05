@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Car, Baby, Shirt, Clock, MapPin, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { MobileTabBar } from "@/components/MobileTabBar";
+import { SitePhoto } from "@/components/SitePhoto";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { SERVICE_TIMES, CHURCH_ADDRESS } from "@/constants/serviceTimes";
 
 export const Route = createFileRoute("/visit")({
@@ -55,54 +57,57 @@ function VisitPage() {
   const isAuthed = !!user && !loading;
 
   return (
-    <div className="min-h-screen bg-[#080C16] text-white pb-24 md:pb-0">
+    <div className="min-h-screen bg-background text-foreground pb-24 md:pb-0">
       <div className="max-w-3xl mx-auto px-5 pt-10">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft size={16} /> Back home
         </Link>
+        <div className="float-right"><ThemeToggle /></div>
+
+        <SitePhoto contentKey="visit_image" alt="Worship at RCCG Shepherd's Hill" className="mt-6 aspect-[16/7]" />
 
         <h1 className="mt-8 text-3xl md:text-4xl font-bold tracking-tight">New here?</h1>
-        <p className="mt-3 text-slate-400 leading-relaxed">
+        <p className="mt-3 text-muted-foreground leading-relaxed">
           We'd love to meet you. Here's everything you need to know before your first visit to
           RCCG Shepherd's Hill.
         </p>
 
-        <div className="mt-8 rounded-2xl border border-white/10 bg-[#0D1117] p-5">
+        <div className="mt-8 rounded-2xl border border-border bg-surface p-5">
           <h2 className="text-sm font-semibold uppercase tracking-widest text-[#2EAD3F]">
             Service times
           </h2>
           <ul className="mt-4 space-y-3">
             {SERVICE_TIMES.map((s) => (
               <li key={s.time + s.day} className="flex items-baseline justify-between gap-4">
-                <span className="text-white font-medium">
+                <span className="text-foreground font-medium">
                   {s.day}
-                  {s.name ? <span className="text-slate-400 font-normal"> · {s.name}</span> : null}
+                  {s.name ? <span className="text-muted-foreground font-normal"> · {s.name}</span> : null}
                 </span>
-                <span className="text-slate-300 tabular-nums">{s.time}</span>
+                <span className="text-muted-foreground tabular-nums">{s.time}</span>
               </li>
             ))}
           </ul>
-          <div className="mt-5 flex items-start gap-2 border-t border-white/10 pt-4 text-sm text-slate-400">
-            <MapPin size={16} className="mt-0.5 shrink-0 text-slate-500" />
+          <div className="mt-5 flex items-start gap-2 border-t border-border pt-4 text-sm text-muted-foreground">
+            <MapPin size={16} className="mt-0.5 shrink-0 text-subtle" />
             <span>{CHURCH_ADDRESS}</span>
           </div>
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           {BLOCKS.map((b) => (
-            <div key={b.title} className="rounded-2xl border border-white/10 bg-[#0D1117] p-5">
-              <b.icon size={20} className="text-slate-400" aria-hidden="true" />
-              <h3 className="mt-3 font-semibold text-white">{b.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-400">{b.body}</p>
+            <div key={b.title} className="rounded-2xl border border-border bg-surface p-5">
+              <b.icon size={20} className="text-muted-foreground" aria-hidden="true" />
+              <h3 className="mt-3 font-semibold text-foreground">{b.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{b.body}</p>
             </div>
           ))}
         </div>
 
-        <div className="mt-8 rounded-2xl border border-white/10 bg-[#0D1117] p-5 text-center">
-          <p className="text-slate-300">Planning to join us? Let us know you're coming.</p>
+        <div className="mt-8 rounded-2xl border border-border bg-surface p-5 text-center">
+          <p className="text-muted-foreground">Planning to join us? Let us know you're coming.</p>
           <Link
             to="/register"
             className="mt-4 inline-flex items-center justify-center rounded-xl px-6 py-3 font-semibold text-white"

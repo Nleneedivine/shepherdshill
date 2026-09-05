@@ -35,26 +35,26 @@ function SermonDetailPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#080C16] text-white pb-24 md:pb-12">
+    <div className="min-h-screen bg-background text-foreground pb-24 md:pb-12">
       <div className="max-w-4xl mx-auto px-5 pt-10">
         <Link
           to="/sermons"
-          className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft size={16} /> All sermons
         </Link>
 
-        {isLoading && <p className="mt-10 text-sm text-slate-500">Loading…</p>}
+        {isLoading && <p className="mt-10 text-sm text-subtle">Loading…</p>}
 
         {!isLoading && !sermon && (
-          <div className="mt-10 rounded-2xl border border-white/10 bg-[#0D1117] p-10 text-center text-sm text-slate-400">
+          <div className="mt-10 rounded-2xl border border-border bg-surface p-10 text-center text-sm text-muted-foreground">
             That sermon could not be found.
           </div>
         )}
 
         {sermon && (
           <article className="mt-8">
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-black aspect-video">
+            <div className="overflow-hidden rounded-2xl border border-border bg-black aspect-video">
               {sermon.youtube_video_id ? (
                 <iframe
                   src={youtubeEmbedUrl(sermon.youtube_video_id)}
@@ -64,7 +64,7 @@ function SermonDetailPage() {
                   allowFullScreen
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                <div className="flex h-full items-center justify-center text-sm text-subtle">
                   Video unavailable
                 </div>
               )}
@@ -75,7 +75,7 @@ function SermonDetailPage() {
             </span>
             <h1 className="mt-2 text-2xl md:text-3xl font-bold">{sermon.title}</h1>
 
-            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-400">
+            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <User size={14} /> {sermon.preacher}
               </span>
@@ -91,14 +91,14 @@ function SermonDetailPage() {
                 href={sermon.youtube_url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 hover:text-white"
+                className="inline-flex items-center gap-1.5 hover:text-foreground"
               >
                 <ExternalLink size={14} /> Watch on YouTube
               </a>
             </div>
 
             {sermon.description && (
-              <p className="mt-6 whitespace-pre-line text-sm leading-relaxed text-slate-300">
+              <p className="mt-6 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
                 {sermon.description}
               </p>
             )}
