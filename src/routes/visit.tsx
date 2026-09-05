@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Car, Baby, Shirt, Clock, MapPin, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { MobileTabBar } from "@/components/MobileTabBar";
+import { SitePhoto } from "@/components/SitePhoto";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { SERVICE_TIMES, CHURCH_ADDRESS } from "@/constants/serviceTimes";
 
 export const Route = createFileRoute("/visit")({
@@ -63,6 +65,9 @@ function VisitPage() {
         >
           <ArrowLeft size={16} /> Back home
         </Link>
+        <div className="float-right"><ThemeToggle /></div>
+
+        <SitePhoto contentKey="visit_image" alt="Worship at RCCG Shepherd's Hill" className="mt-6 aspect-[16/7]" />
 
         <h1 className="mt-8 text-3xl md:text-4xl font-bold tracking-tight">New here?</h1>
         <p className="mt-3 text-muted-foreground leading-relaxed">

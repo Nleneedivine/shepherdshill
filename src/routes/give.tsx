@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { MobileTabBar } from "@/components/MobileTabBar";
+import { SitePhoto } from "@/components/SitePhoto";
 
 export const Route = createFileRoute("/give")({
   ssr: false,
@@ -33,7 +34,8 @@ function GivePage() {
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft size={16} /> Back home
         </Link>
-        <div className="mt-10 rounded-2xl border border-border bg-surface p-8 text-center">
+        <SitePhoto contentKey="give_image" alt="Giving at RCCG Shepherd's Hill" className="mt-6 aspect-[16/7]" />
+        <div className="mt-6 rounded-2xl border border-border bg-surface p-8 text-center">
           <div
             className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
             style={{ background: "linear-gradient(135deg, #1A7A2A, #2EAD3F)" }}

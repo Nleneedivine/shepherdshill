@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { LogoHero } from "@/components/LogoHero";
 import { MobileTabBar } from "@/components/MobileTabBar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { SERVICE_TIMES, CHURCH_ADDRESS } from "@/constants/serviceTimes";
 import { fetchSiteContent, toEmbedUrl, type SiteContentMap } from "@/lib/siteContent";
 
@@ -67,6 +68,7 @@ function LandingPage() {
       <Navbar isAuthed={isAuthed} />
       <Hero isAuthed={isAuthed} content={content} />
       <WelcomeVideo content={content} />
+      <Gallery content={content} />
       <Features />
       <CommunityNote stats={stats} />
       <CTA isAuthed={isAuthed} />
@@ -96,6 +98,7 @@ function Navbar({ isAuthed }: { isAuthed: boolean }) {
         </Link>
 
         <div className="flex items-center gap-2 md:gap-4">
+          <ThemeToggle />
           <Link
             to="/visit"
             className="hidden sm:inline text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -283,6 +286,35 @@ function WelcomeVideo({ content }: { content: SiteContentMap | undefined }) {
           ) : (
             <video src={video} controls playsInline className="h-full w-full" />
           )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Photo strip ---------------- */
+
+function Gallery({ content }: { content: SiteContentMap | undefined }) {
+  const photos = ["gallery_image_1", "gallery_image_2", "gallery_image_3"]
+    .map((k) => content?.[k]?.url)
+    .filter((u): u is string => !!u);
+
+  if (photos.length === 0) return null;
+
+  return (
+    <section className="px-5 py-12 md:py-16 border-t border-border">
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-xl md:text-2xl font-bold">Life at Shepherd's Hill</h2>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {photos.map((src, i) => (
+            <img
+              key={src}
+              src={src}
+              alt={`Church life photo ${i + 1}`}
+              loading="lazy"
+              className="aspect-[4/3] w-full rounded-2xl border border-border object-cover"
+            />
+          ))}
         </div>
       </div>
     </section>

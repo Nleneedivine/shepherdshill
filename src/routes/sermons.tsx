@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, CalendarDays, Mic2, Play, Search, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { MobileTabBar } from "@/components/MobileTabBar";
+import { SitePhoto } from "@/components/SitePhoto";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { fetchSermons, youtubeThumbnail } from "@/lib/sermons";
 
 export const Route = createFileRoute("/sermons")({
@@ -67,6 +69,9 @@ function SermonsPage() {
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft size={16} /> Back home
         </Link>
+
+        <div className="float-right"><ThemeToggle /></div>
+        <SitePhoto contentKey="sermons_banner" alt="Preaching at RCCG Shepherd's Hill" className="mt-6 aspect-[16/6]" />
 
         <header className="mt-8 flex items-start gap-4">
           <div
