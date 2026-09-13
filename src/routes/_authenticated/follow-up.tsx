@@ -209,9 +209,11 @@ function CallLogModal({
     setSaving(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
+      const calledBy = userData.user?.id;
+      if (!calledBy) throw new Error("You must be signed in to log a call");
       const { error } = await supabase.from("follow_up_calls").insert({
         member_id: member.member_id,
-        called_by: userData.user?.id,
+        called_by: calledBy,
         outcome,
         status,
         notes: notes || null,
