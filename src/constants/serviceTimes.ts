@@ -11,4 +11,5 @@ export const SERVICE_TIMES: ServiceTime[] = [
 ];
 
 export const CHURCH_ADDRESS =
-  "RCCG Shepherd's Hill Parish. 54 NTA/Choba Road, Mgbuoba, Port Harcourt, Rivers State, Nigeria. 
+  "RCCG Shepherd's Hill Parish. 54 NTA/Choba Road, Mgbuoba, Port Harcourt, Rivers State, Nigeria.";
+
