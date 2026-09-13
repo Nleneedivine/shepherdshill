@@ -163,11 +163,23 @@ export async function submitRegistration(
   const completenessScore = calculateCompletenessScore(data)
   console.log('[REG] Step 3 - Completeness score:', completenessScore)
 
-  // Step 4 — Build submission object
+   // Step 4 — Build submission object
   // IMPORTANT: This table stores data as JSONB blobs
   // The structure matches exactly what the table columns expect
+  
+  // Get current user ID for security policy
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) {
+    return {
+      success: false,
+      error: 'You must be logged in to submit a registration.',
+    }
+  }
+
   const submission = {
     // Top level fields (actual columns in the table)
+    user_id: user.id,
     first_name: data.personal.firstName,
     last_name: data.personal.lastName,
     phone_primary: data.contact.phonePrimary
