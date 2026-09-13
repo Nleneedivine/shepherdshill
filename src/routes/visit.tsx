@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Car, Baby, Shirt, Clock, MapPin, ArrowLeft } from "lucide-react";
+import { Car, Baby, Shirt, Clock, MapPin, ArrowLeft, ExternalLink } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { MobileTabBar } from "@/components/MobileTabBar";
 import { SitePhoto } from "@/components/SitePhoto";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SERVICE_TIMES, CHURCH_ADDRESS } from "@/constants/serviceTimes";
+
+const CHURCH_MAPS_URL =
+  "https://www.google.com/maps/place/R.C.C.G.+Shepherd's+Hill+Parish/@4.846115,6.980563,17z/data=!3m1!4b1!4m6!3m5!1s0x1069ce3ca3559359:0xdfcb50b799248904!8m2!3d4.846115!4d6.980563!16s%2Fg%2F11xh8zxy_?entry=ttu";
 
 export const Route = createFileRoute("/visit")({
   ssr: false,
