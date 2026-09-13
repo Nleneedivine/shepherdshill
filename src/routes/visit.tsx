@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Car, Baby, Shirt, Clock, MapPin, ArrowLeft } from "lucide-react";
+import { Car, Baby, Shirt, Clock, MapPin, ArrowLeft, ExternalLink } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { MobileTabBar } from "@/components/MobileTabBar";
 import { SitePhoto } from "@/components/SitePhoto";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SERVICE_TIMES, CHURCH_ADDRESS } from "@/constants/serviceTimes";
+
+const CHURCH_MAPS_URL =
+  "https://www.google.com/maps/place/R.C.C.G.+Shepherd's+Hill+Parish/@4.846115,6.980563,17z/data=!3m1!4b1!4m6!3m5!1s0x1069ce3ca3559359:0xdfcb50b799248904!8m2!3d4.846115!4d6.980563!16s%2Fg%2F11xh8zxy_?entry=ttu";
 
 export const Route = createFileRoute("/visit")({
   ssr: false,
@@ -76,7 +79,7 @@ function VisitPage() {
         </p>
 
         <div className="mt-8 rounded-2xl border border-border bg-surface p-5">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-[#2EAD3F]">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-brand-green">
             Service times
           </h2>
           <ul className="mt-4 space-y-3">
@@ -90,10 +93,27 @@ function VisitPage() {
               </li>
             ))}
           </ul>
-          <div className="mt-5 flex items-start gap-2 border-t border-border pt-4 text-sm text-muted-foreground">
-            <MapPin size={16} className="mt-0.5 shrink-0 text-subtle" />
-            <span>{CHURCH_ADDRESS}</span>
-          </div>
+          <a
+            href={CHURCH_MAPS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 flex items-start gap-2 border-t border-border pt-4 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+          >
+            <MapPin size={16} className="mt-0.5 shrink-0 text-subtle group-hover:text-brand-green transition-colors" />
+            <span className="flex-1">{CHURCH_ADDRESS}</span>
+            <ExternalLink size={14} className="mt-0.5 shrink-0 opacity-60" />
+          </a>
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-border bg-surface overflow-hidden">
+          <iframe
+            title="RCCG Shepherd's Hill Parish location"
+            src="https://maps.google.com/maps?q=4.846115,6.980563&z=17&ie=UTF8&iwloc=&output=embed"
+            className="w-full h-80 border-0"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
+          />
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -110,8 +130,7 @@ function VisitPage() {
           <p className="text-muted-foreground">Planning to join us? Let us know you're coming.</p>
           <Link
             to="/register"
-            className="mt-4 inline-flex items-center justify-center rounded-xl px-6 py-3 font-semibold text-white"
-            style={{ background: "linear-gradient(135deg, #2D1B8E, #CC0000)" }}
+            className="mt-4 inline-flex items-center justify-center rounded-xl px-6 py-3 font-semibold text-white bg-rccg-gradient"
           >
             Register
           </Link>
