@@ -19,6 +19,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SermonsIdRouteImport } from './routes/sermons_.$id'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthenticatedSuperAdminRouteImport } from './routes/_authenticated/super-admin'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSuperAdminIndexRouteImport } from './routes/_authenticated/super-admin.index'
@@ -92,6 +93,11 @@ const SermonsIdRoute = SermonsIdRouteImport.update({
   id: '/sermons_/$id',
   path: '/sermons/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthenticatedSuperAdminRoute = AuthenticatedSuperAdminRouteImport.update({
   id: '/super-admin',
@@ -237,7 +243,7 @@ const AuthenticatedAdminFormsRegistrationFormRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/give': typeof GiveRoute
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/visit': typeof VisitRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/super-admin': typeof AuthenticatedSuperAdminRouteWithChildren
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/sermons/$id': typeof SermonsIdRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/drafts': typeof AuthenticatedAdminDraftsRoute
@@ -272,7 +279,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/give': typeof GiveRoute
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
@@ -280,6 +287,7 @@ export interface FileRoutesByTo {
   '/unauthorized': typeof UnauthorizedRoute
   '/visit': typeof VisitRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/sermons/$id': typeof SermonsIdRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/drafts': typeof AuthenticatedAdminDraftsRoute
@@ -308,7 +316,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/give': typeof GiveRoute
   '/kiosk': typeof KioskRoute
   '/register': typeof RegisterRoute
@@ -317,6 +325,7 @@ export interface FileRoutesById {
   '/visit': typeof VisitRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRouteWithChildren
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/sermons_/$id': typeof SermonsIdRoute
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/_authenticated/admin/drafts': typeof AuthenticatedAdminDraftsRoute
@@ -354,6 +363,7 @@ export interface FileRouteTypes {
     | '/visit'
     | '/dashboard'
     | '/super-admin'
+    | '/auth/reset-password'
     | '/sermons/$id'
     | '/admin/departments'
     | '/admin/drafts'
@@ -388,6 +398,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/visit'
     | '/dashboard'
+    | '/auth/reset-password'
     | '/sermons/$id'
     | '/admin/departments'
     | '/admin/drafts'
@@ -424,6 +435,7 @@ export interface FileRouteTypes {
     | '/visit'
     | '/_authenticated/dashboard'
     | '/_authenticated/super-admin'
+    | '/auth/reset-password'
     | '/sermons_/$id'
     | '/_authenticated/admin/departments'
     | '/_authenticated/admin/drafts'
@@ -452,7 +464,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   GiveRoute: typeof GiveRoute
   KioskRoute: typeof KioskRoute
   RegisterRoute: typeof RegisterRoute
@@ -533,6 +545,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/sermons/$id'
       preLoaderRoute: typeof SermonsIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_authenticated/super-admin': {
       id: '/_authenticated/super-admin'
@@ -779,10 +798,20 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuthRouteChildren {
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   GiveRoute: GiveRoute,
   KioskRoute: KioskRoute,
   RegisterRoute: RegisterRoute,
