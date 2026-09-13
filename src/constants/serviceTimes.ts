@@ -11,4 +11,4 @@ export const SERVICE_TIMES: ServiceTime[] = [
 ];
 
 export const CHURCH_ADDRESS =
-  "RCCG Shepherd's Hill Parish. 54 NTA/Choba Road, Mgbuoba, Port Harcourt, Rivers State, Nigeria. [view on map] (https://www.waze.com/live-map/directions/ng/rv/port-harcourt/r.c.c.g.-shepherds-hill-parish?to=place.ChIJWZNVozzOaRARBIkkmbdQy98), [view on map] (https://www.facebook.com/RccgShepherdsHillParish/) — see the welcome desk or contact us for directions.";
+  "RCCG Shepherd's Hill Parish. 54 NTA/Choba Road, Mgbuoba, Port Harcourt, Rivers State, Nigeria. 
