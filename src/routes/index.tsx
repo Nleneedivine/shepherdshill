@@ -231,7 +231,7 @@ function Hero({
           </ul>
           <div className="mt-4 flex items-start gap-2 border-t border-border pt-3.5 text-xs text-muted-foreground">
             <MapPin size={14} className="mt-0.5 shrink-0 text-subtle" />
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(CHURCH_ADDRESS)}`}
+            <a
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-foreground hover:underline underline-offset-2"
