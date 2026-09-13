@@ -79,7 +79,7 @@ function VisitPage() {
         </p>
 
         <div className="mt-8 rounded-2xl border border-border bg-surface p-5">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-[#2EAD3F]">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-brand-green">
             Service times
           </h2>
           <ul className="mt-4 space-y-3">
@@ -93,10 +93,27 @@ function VisitPage() {
               </li>
             ))}
           </ul>
-          <div className="mt-5 flex items-start gap-2 border-t border-border pt-4 text-sm text-muted-foreground">
-            <MapPin size={16} className="mt-0.5 shrink-0 text-subtle" />
-            <span>{CHURCH_ADDRESS}</span>
-          </div>
+          <a
+            href={CHURCH_MAPS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 flex items-start gap-2 border-t border-border pt-4 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+          >
+            <MapPin size={16} className="mt-0.5 shrink-0 text-subtle group-hover:text-brand-green transition-colors" />
+            <span className="flex-1">{CHURCH_ADDRESS}</span>
+            <ExternalLink size={14} className="mt-0.5 shrink-0 opacity-60" />
+          </a>
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-border bg-surface overflow-hidden">
+          <iframe
+            title="RCCG Shepherd's Hill Parish location"
+            src="https://maps.google.com/maps?q=4.846115,6.980563&z=17&ie=UTF8&iwloc=&output=embed"
+            className="w-full h-80 border-0"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
+          />
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
