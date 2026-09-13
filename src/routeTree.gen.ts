@@ -21,6 +21,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SermonsIdRouteImport } from './routes/sermons_.$id'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthenticatedSuperAdminRouteImport } from './routes/_authenticated/super-admin'
+import { Route as AuthenticatedFollowUpRouteImport } from './routes/_authenticated/follow-up'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSuperAdminIndexRouteImport } from './routes/_authenticated/super-admin.index'
 import { Route as AuthenticatedMembersIndexRouteImport } from './routes/_authenticated/members.index'
@@ -102,6 +103,11 @@ const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
 const AuthenticatedSuperAdminRoute = AuthenticatedSuperAdminRouteImport.update({
   id: '/super-admin',
   path: '/super-admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFollowUpRoute = AuthenticatedFollowUpRouteImport.update({
+  id: '/follow-up',
+  path: '/follow-up',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -251,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/unauthorized': typeof UnauthorizedRoute
   '/visit': typeof VisitRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/follow-up': typeof AuthenticatedFollowUpRoute
   '/super-admin': typeof AuthenticatedSuperAdminRouteWithChildren
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/sermons/$id': typeof SermonsIdRoute
@@ -287,6 +294,7 @@ export interface FileRoutesByTo {
   '/unauthorized': typeof UnauthorizedRoute
   '/visit': typeof VisitRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/follow-up': typeof AuthenticatedFollowUpRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/sermons/$id': typeof SermonsIdRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
@@ -324,6 +332,7 @@ export interface FileRoutesById {
   '/unauthorized': typeof UnauthorizedRoute
   '/visit': typeof VisitRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/follow-up': typeof AuthenticatedFollowUpRoute
   '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRouteWithChildren
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/sermons_/$id': typeof SermonsIdRoute
@@ -362,6 +371,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/visit'
     | '/dashboard'
+    | '/follow-up'
     | '/super-admin'
     | '/auth/reset-password'
     | '/sermons/$id'
@@ -398,6 +408,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/visit'
     | '/dashboard'
+    | '/follow-up'
     | '/auth/reset-password'
     | '/sermons/$id'
     | '/admin/departments'
@@ -434,6 +445,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/visit'
     | '/_authenticated/dashboard'
+    | '/_authenticated/follow-up'
     | '/_authenticated/super-admin'
     | '/auth/reset-password'
     | '/sermons_/$id'
@@ -558,6 +570,13 @@ declare module '@tanstack/react-router' {
       path: '/super-admin'
       fullPath: '/super-admin'
       preLoaderRoute: typeof AuthenticatedSuperAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/follow-up': {
+      id: '/_authenticated/follow-up'
+      path: '/follow-up'
+      fullPath: '/follow-up'
+      preLoaderRoute: typeof AuthenticatedFollowUpRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -756,6 +775,7 @@ const AuthenticatedSuperAdminRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFollowUpRoute: typeof AuthenticatedFollowUpRoute
   AuthenticatedSuperAdminRoute: typeof AuthenticatedSuperAdminRouteWithChildren
   AuthenticatedAdminDepartmentsRoute: typeof AuthenticatedAdminDepartmentsRoute
   AuthenticatedAdminDraftsRoute: typeof AuthenticatedAdminDraftsRoute
@@ -774,6 +794,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFollowUpRoute: AuthenticatedFollowUpRoute,
   AuthenticatedSuperAdminRoute: AuthenticatedSuperAdminRouteWithChildren,
   AuthenticatedAdminDepartmentsRoute: AuthenticatedAdminDepartmentsRoute,
   AuthenticatedAdminDraftsRoute: AuthenticatedAdminDraftsRoute,

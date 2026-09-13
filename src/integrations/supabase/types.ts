@@ -395,6 +395,77 @@ export type Database = {
         }
         Relationships: []
       }
+      follow_up_calls: {
+        Row: {
+          call_date: string
+          called_by: string
+          created_at: string
+          id: string
+          member_id: string
+          next_follow_up_date: string | null
+          notes: string | null
+          outcome: string
+          status: string
+        }
+        Insert: {
+          call_date?: string
+          called_by: string
+          created_at?: string
+          id?: string
+          member_id: string
+          next_follow_up_date?: string | null
+          notes?: string | null
+          outcome: string
+          status: string
+        }
+        Update: {
+          call_date?: string
+          called_by?: string
+          created_at?: string
+          id?: string
+          member_id?: string
+          next_follow_up_date?: string | null
+          notes?: string | null
+          outcome?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_up_calls_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follow_up_goals: {
+        Row: {
+          id: string
+          metric_key: string
+          period: string
+          set_by: string | null
+          target_value: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          metric_key: string
+          period?: string
+          set_by?: string | null
+          target_value: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          metric_key?: string
+          period?: string
+          set_by?: string | null
+          target_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       form_drafts: {
         Row: {
           completeness_score: number
@@ -674,6 +745,38 @@ export type Database = {
             columns: ["cell_group_id"]
             isOneToOne: false
             referencedRelation: "cell_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_stage_history: {
+        Row: {
+          changed_at: string
+          id: string
+          member_id: string
+          new_stage: string
+          old_stage: string | null
+        }
+        Insert: {
+          changed_at?: string
+          id?: string
+          member_id: string
+          new_stage: string
+          old_stage?: string | null
+        }
+        Update: {
+          changed_at?: string
+          id?: string
+          member_id?: string
+          new_stage?: string
+          old_stage?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_stage_history_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
             referencedColumns: ["id"]
           },
         ]
@@ -1357,6 +1460,22 @@ export type Database = {
         Args: { p_approve: boolean; p_notes?: string; p_transfer_id: string }
         Returns: undefined
       }
+      get_follow_up_queue: {
+        Args: never
+        Returns: {
+          address: string
+          cell_group_id: string
+          first_name: string
+          last_call_date: string
+          last_name: string
+          last_stage_change: string
+          member_created_at: string
+          member_id: string
+          membership_stage: string
+          no_answer_count: number
+          phone_primary: string
+        }[]
+      }
       grant_super_admin_by_email: { Args: { p_email: string }; Returns: string }
       has_role: {
         Args: {
@@ -1373,6 +1492,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_in_followup_department: {
+        Args: { check_user_id: string }
+        Returns: boolean
+      }
       is_pastoral: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       my_roles: { Args: never; Returns: string[] }
