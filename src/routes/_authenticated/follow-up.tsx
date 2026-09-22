@@ -498,6 +498,7 @@ function MemberProfileModal({
   onHistory: () => void;
   onStage: () => void;
 }) {
+  const { showToast } = useToastContext();
   const lastCall = member.last_call_date ? formatDateTime(member.last_call_date) : "No call logged";
   const { data: workers } = useQuery({
     queryKey: ["follow-up-workers"],
@@ -526,9 +527,9 @@ function MemberProfileModal({
       setAssignedTo("");
       setAssignmentDate("");
       setAssignmentNotes("");
-      alert("Follow-up assigned successfully.");
+      showToast("Follow-up assigned successfully", "success");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Could not assign follow-up");
+      showToast(err instanceof Error ? err.message : "Could not assign follow-up", "error");
     } finally {
       setAssigning(false);
     }
