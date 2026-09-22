@@ -287,10 +287,10 @@ function FollowUpHub() {
             type="text"
             placeholder="Search name or phone..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
             className="flex-1"
           />
-          <Select value={contactFilter} onValueChange={setContactFilter}>
+          <Select value={contactFilter} onValueChange={(value) => { setContactFilter(value); setPage(0); }}>
             <SelectTrigger className={selectTriggerClassName}>
               <SelectValue placeholder="All contact states" />
             </SelectTrigger>
@@ -302,7 +302,7 @@ function FollowUpHub() {
               <SelectItem value="overdue" className="text-white focus:bg-white/10 focus:text-white">Overdue</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={stageFilter} onValueChange={setStageFilter}>
+          <Select value={stageFilter} onValueChange={(value) => { setStageFilter(value); setPage(0); }}>
             <SelectTrigger className={selectTriggerClassName}>
               <SelectValue placeholder="All stages" />
             </SelectTrigger>
@@ -310,9 +310,9 @@ function FollowUpHub() {
               <SelectItem value="all" className="text-white focus:bg-white/10 focus:text-white">
                 All stages
               </SelectItem>
-              {stages.map((s) => (
-                <SelectItem key={s} value={s} className="text-white focus:bg-white/10 focus:text-white">
-                  {stageLabel(s)}
+              {stageCountEntries.map(([s, count]) => (
+                <SelectItem key={s} value={s} disabled={count === 0} className="text-white focus:bg-white/10 focus:text-white">
+                  {stageLabel(s)} ({count.toLocaleString()})
                 </SelectItem>
               ))}
             </SelectContent>
