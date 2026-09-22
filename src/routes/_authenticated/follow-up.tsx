@@ -18,7 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button, Input } from "@/components/ds";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToastContext } from "@/components/ds/Toast";
+import { useToastContext } from "@/components/ds/Toast";\nimport { FollowUpCommunicationPanel } from "@/features/follow-up/FollowUpCommunicationPanel";
 
 export const Route = createFileRoute("/_authenticated/follow-up")({
   ssr: false,
@@ -571,6 +571,8 @@ function MemberProfileModal({
             )}
           </div>
         </div>
+
+        <FollowUpCommunicationPanel memberId={member.member_id} phone={member.phone_primary} />
 
         <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
           <div className="text-xs uppercase tracking-wider text-slate-500">Assign follow-up</div>
