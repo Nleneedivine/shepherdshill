@@ -154,7 +154,9 @@ function FollowUpHub() {
     const matchesContact =
       contactFilter === "all" ||
       (contactFilter === "never_called" && !row.last_call_date) ||
-      (contactFilter === "missed" && row.no_answer_count > 0);
+      (contactFilter === "missed" && row.no_answer_count > 0) ||
+      (contactFilter === "due_today" && row.next_follow_up_date === new Date().toISOString().slice(0, 10)) ||
+      (contactFilter === "overdue" && row.is_overdue);
     return matchesSearch && matchesStage && matchesContact;
   });
 
@@ -279,6 +281,8 @@ function FollowUpHub() {
               <SelectItem value="all" className="text-white focus:bg-white/10 focus:text-white">All contact states</SelectItem>
               <SelectItem value="never_called" className="text-white focus:bg-white/10 focus:text-white">Never called</SelectItem>
               <SelectItem value="missed" className="text-white focus:bg-white/10 focus:text-white">Has missed calls</SelectItem>
+              <SelectItem value="due_today" className="text-white focus:bg-white/10 focus:text-white">Due today</SelectItem>
+              <SelectItem value="overdue" className="text-white focus:bg-white/10 focus:text-white">Overdue</SelectItem>
             </SelectContent>
           </Select>
           <Select value={stageFilter} onValueChange={setStageFilter}>
