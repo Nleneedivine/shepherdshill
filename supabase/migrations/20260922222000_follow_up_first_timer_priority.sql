@@ -3,6 +3,8 @@
 
 CREATE OR REPLACE FUNCTION public.get_follow_up_queue_page(
   p_stage text DEFAULT 'first_timer',
+  p_search text DEFAULT NULL,
+  p_contact_filter text DEFAULT 'all',
   p_limit integer DEFAULT 50,
   p_offset integer DEFAULT 0
 )
@@ -50,6 +52,10 @@ BEGIN
     'all'
   ) THEN
     RAISE EXCEPTION 'invalid follow-up stage';
+  END IF;
+
+  IF COALESCE(p_contact_filter, 'all') NOT IN ('all', 'never_called', 'missed', 'due_today', 'overdue') THEN
+    RAISE EXCEPTION 'invalid follow-up contact filter';
   END IF;
 
   RETURN QUERY
@@ -102,6 +108,18 @@ BEGIN
         p_stage = 'all'
         OR m.membership_stage = p_stage
       )
+      AND (
+        NULLIF(trim(COALESCE(p_search, '')), '') IS NULL
+        OR concat_ws(' ', m.first_name, m.last_name) ILIKE '%' || trim(p_search) || '%'
+        OR COALESCE(m.phone_primary, '') ILIKE '%' || trim(p_search) || '%'
+      )
+      AND (
+        COALESCE(p_contact_filter, 'all') = 'all'
+        OR (p_contact_filter = 'never_called' AND lc.call_date IS NULL)
+        OR (p_contact_filter = 'missed' AND COALESCE(na.count, 0) > 0)
+        OR (p_contact_filter = 'due_today' AND lc.next_follow_up_date = CURRENT_DATE)
+        OR (p_contact_filter = 'overdue' AND lc.next_follow_up_date < CURRENT_DATE)
+      )
   ),
   counted AS (
     SELECT base.*, count(*) OVER () AS total_count
@@ -139,8 +157,8 @@ BEGIN
 END;
 $function$;
 
-REVOKE ALL ON FUNCTION public.get_follow_up_queue_page(text, integer, integer) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.get_follow_up_queue_page(text, integer, integer) TO authenticated;
+REVOKE ALL ON FUNCTION public.get_follow_up_queue_page(text, text, text, integer, integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_follow_up_queue_page(text, text, text, integer, integer) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.get_follow_up_stage_counts()
 RETURNS TABLE(
