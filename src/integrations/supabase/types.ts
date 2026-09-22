@@ -395,55 +395,43 @@ export type Database = {
         }
         Relationships: []
       }
-      follow_up_messages: {
+      follow_up_assignments: {
         Row: {
-          automated: boolean
-          body: string
-          channel: string
+          assigned_by: string
+          assigned_to: string
+          completed_at: string | null
           created_at: string
-          created_by: string | null
-          error_message: string | null
+          due_date: string
           id: string
           member_id: string
-          message_type: string
-          provider_message_id: string | null
-          scheduled_for: string
-          sent_at: string | null
+          notes: string | null
           status: string
         }
         Insert: {
-          automated?: boolean
-          body: string
-          channel: string
+          assigned_by: string
+          assigned_to: string
+          completed_at?: string | null
           created_at?: string
-          created_by?: string | null
-          error_message?: string | null
+          due_date: string
           id?: string
           member_id: string
-          message_type?: string
-          provider_message_id?: string | null
-          scheduled_for?: string
-          sent_at?: string | null
+          notes?: string | null
           status?: string
         }
         Update: {
-          automated?: boolean
-          body?: string
-          channel?: string
+          assigned_by?: string
+          assigned_to?: string
+          completed_at?: string | null
           created_at?: string
-          created_by?: string | null
-          error_message?: string | null
+          due_date?: string
           id?: string
           member_id?: string
-          message_type?: string
-          provider_message_id?: string | null
-          scheduled_for?: string
-          sent_at?: string | null
+          notes?: string | null
           status?: string
         }
         Relationships: [
           {
-            foreignKeyName: "follow_up_messages_member_id_fkey"
+            foreignKeyName: "follow_up_assignments_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members"
@@ -521,6 +509,62 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      follow_up_messages: {
+        Row: {
+          automated: boolean
+          body: string
+          channel: string
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          member_id: string
+          message_type: string
+          provider_message_id: string | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          automated?: boolean
+          body: string
+          channel: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          member_id: string
+          message_type?: string
+          provider_message_id?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          automated?: boolean
+          body?: string
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          member_id?: string
+          message_type?: string
+          provider_message_id?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_up_messages_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       form_drafts: {
         Row: {
@@ -1467,6 +1511,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_first_timer: {
+        Args: {
+          p_address?: string
+          p_first_name: string
+          p_last_name: string
+          p_phone?: string
+        }
+        Returns: {
+          member_code: string
+          member_id: string
+        }[]
+      }
       admin_list_users: {
         Args: {
           p_anonymous?: boolean
@@ -1499,6 +1555,15 @@ export type Database = {
           member_id: string
         }[]
       }
+      assign_follow_up: {
+        Args: {
+          p_assigned_to: string
+          p_due_date: string
+          p_member_id: string
+          p_notes?: string
+        }
+        Returns: string
+      }
       assign_member_family_group: {
         Args: { p_member_id: string; p_scheme_id?: string }
         Returns: string
@@ -1512,21 +1577,13 @@ export type Database = {
         Returns: undefined
       }
       can_manage_sermons: { Args: { _user_id: string }; Returns: boolean }
+      complete_follow_up_assignment: {
+        Args: { p_assignment_id: string }
+        Returns: boolean
+      }
       decide_member_transfer: {
         Args: { p_approve: boolean; p_notes?: string; p_transfer_id: string }
         Returns: undefined
-      }
-      add_first_timer: {
-        Args: {
-          p_address?: string | null
-          p_first_name: string
-          p_last_name: string
-          p_phone?: string | null
-        }
-        Returns: {
-          member_code: string
-          member_id: string
-        }[]
       }
       get_follow_up_communications: {
         Args: { p_member_id: string }
@@ -1535,82 +1592,48 @@ export type Database = {
           body: string
           channel: string
           created_at: string
-          created_by: string | null
-          error_message: string | null
+          created_by: string
+          error_message: string
           id: string
           message_type: string
-          provider_message_id: string | null
+          provider_message_id: string
           scheduled_for: string
-          sent_at: string | null
+          sent_at: string
           status: string
         }[]
-      }
-      queue_follow_up_message: {
-        Args: {
-          p_automated?: boolean
-          p_body: string
-          p_channel: string
-          p_member_id: string
-          p_message_type?: string
-          p_scheduled_for?: string
-        }
-        Returns: string
       }
       get_follow_up_member_history: {
         Args: { p_member_id: string }
         Returns: {
-          called_by: string | null
+          called_by: string
           event_at: string
           event_type: string
-          new_stage: string | null
-          next_follow_up_date: string | null
-          notes: string | null
-          old_stage: string | null
-          outcome: string | null
-          status: string | null
+          new_stage: string
+          next_follow_up_date: string
+          notes: string
+          old_stage: string
+          outcome: string
+          status: string
         }[]
-      }
-      get_follow_up_workers: {
-        Args: never
-        Returns: {
-          user_id: string
-          full_name: string
-          email: string | null
-        }[]
-      }
-      assign_follow_up: {
-        Args: {
-          p_member_id: string
-          p_assigned_to: string
-          p_due_date?: string | null
-          p_notes?: string | null
-        }
-        Returns: string
-      }
-      complete_follow_up_assignment: {
-        Args: {
-          p_assignment_id: string
-        }
-        Returns: boolean
       }
       get_follow_up_operational_queue: {
         Args: never
         Returns: {
-          address: string | null
-          cell_group_id: string | null
+          address: string
+          cell_group_id: string
           first_name: string
           is_overdue: boolean
-          last_call_date: string | null
-          last_call_outcome: string | null
-          last_call_status: string | null
+          last_call_date: string
+          last_call_outcome: string
+          last_call_status: string
           last_name: string
-          last_stage_change: string | null
+          last_stage_change: string
           member_created_at: string
           member_id: string
-          membership_stage: string | null
-          next_follow_up_date: string | null
+          membership_stage: string
+          next_follow_up_date: string
           no_answer_count: number
-          phone_primary: string | null
+          phone_primary: string
         }[]
       }
       get_follow_up_queue: {
@@ -1629,12 +1652,49 @@ export type Database = {
           phone_primary: string
         }[]
       }
-      update_follow_up_stage: {
-        Args: { p_member_id: string; p_new_stage: string }
+      get_follow_up_queue_page: {
+        Args: {
+          p_contact_filter?: string
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_stage?: string
+        }
         Returns: {
+          address: string
+          cell_group_id: string
+          first_name: string
+          is_overdue: boolean
+          last_call_date: string
+          last_call_outcome: string
+          last_call_status: string
+          last_name: string
+          last_stage_change: string
+          member_created_at: string
           member_id: string
-          old_stage: string | null
-          new_stage: string
+          membership_stage: string
+          next_follow_up_date: string
+          no_answer_count: number
+          phone_primary: string
+          total_count: number
+        }[]
+      }
+      get_follow_up_stage_counts: {
+        Args: never
+        Returns: {
+          consistent_visitor: number
+          first_timer: number
+          in_foundational: number
+          member: number
+          total: number
+        }[]
+      }
+      get_follow_up_workers: {
+        Args: never
+        Returns: {
+          email: string
+          full_name: string
+          user_id: string
         }[]
       }
       grant_super_admin_by_email: { Args: { p_email: string }; Returns: string }
@@ -1660,6 +1720,17 @@ export type Database = {
       is_pastoral: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       my_roles: { Args: never; Returns: string[] }
+      queue_follow_up_message: {
+        Args: {
+          p_automated?: boolean
+          p_body: string
+          p_channel: string
+          p_member_id: string
+          p_message_type?: string
+          p_scheduled_for?: string
+        }
+        Returns: string
+      }
       reassign_all_members_to_scheme: {
         Args: { p_branch_id: string; p_scheme_id: string }
         Returns: number
@@ -1668,9 +1739,19 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: number
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       switch_family_grouping_scheme: {
         Args: { p_branch_id: string; p_scheme_id: string }
         Returns: Json
+      }
+      update_follow_up_stage: {
+        Args: { p_member_id: string; p_new_stage: string }
+        Returns: {
+          member_id: string
+          new_stage: string
+          old_stage: string
+        }[]
       }
     }
     Enums: {
