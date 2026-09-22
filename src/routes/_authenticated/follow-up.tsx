@@ -387,18 +387,23 @@ function FollowUpHub() {
 
           {(isFirstTimerLane
             ? firstTimerGroups.flatMap((group) => [
-                <div key={`month-${group.key}`} className="flex items-center gap-3 pt-2 pb-1">
+                { kind: "month" as const, key: `month-${group.key}`, label: group.label },
+                ...group.rows.map((row) => ({ kind: "row" as const, row, key: row.member_id })),
+              ])
+            : filtered.map((row) => ({ kind: "row" as const, row, key: row.member_id }))
+          ).map((item) => {
+            if (item.kind === "month") {
+              return (
+                <div key={item.key} className="flex items-center gap-3 pt-2 pb-1">
                   <div className="h-px flex-1 bg-white/10" />
                   <div className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-300/80">
-                    {group.label}
+                    {item.label}
                   </div>
                   <div className="h-px flex-1 bg-white/10" />
-                </div>,
-                ...group.rows.map((row) => ({ row, key: row.member_id })),
-              ])
-            : filtered.map((row) => ({ row, key: row.member_id }))
-          ).map((item) => {
-            if ("label" in item) return item;
+                </div>
+              );
+            }
+
             const row = item.row;
             const lastStageDays = daysAgo(row.last_stage_change);
             const lastCallDays = daysAgo(row.last_call_date);
