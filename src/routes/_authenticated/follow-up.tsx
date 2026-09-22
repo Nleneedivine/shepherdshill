@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -131,6 +131,13 @@ function formatDateTime(value: string): string {
   }).format(new Date(value));
 }
 
+function formatMonth(value: string): string {
+  return new Intl.DateTimeFormat("en-NG", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
 const selectTriggerClassName =
   "w-full mt-1 h-11 rounded-xl border border-white/15 bg-[#0D1117] px-3 text-sm text-white shadow-sm hover:bg-[#121821] focus:ring-2 focus:ring-white/20";
 
@@ -161,6 +168,25 @@ function FollowUpHub() {
 
   const queue = queuePage?.rows ?? [];
   const total = queuePage?.total ?? 0;
+
+  const firstTimerGroups = useMemo(() => {
+    if (!isFirstTimerLane) return [];
+    const groups = new Map<string, QueueRow[]>();
+    for (const row of queue) {
+      const key = new Intl.DateTimeFormat("en-CA", {
+        year: "numeric",
+        month: "2-digit",
+      }).format(new Date(row.member_created_at));
+      const existing = groups.get(key) ?? [];
+      existing.push(row);
+      groups.set(key, existing);
+    }
+    return Array.from(groups.entries()).map(([key, rows]) => ({
+      key,
+      label: formatMonth(rows[0].member_created_at),
+      rows,
+    }));
+  }, [isFirstTimerLane, queue]);
 
 
   const filtered = queue;
@@ -359,13 +385,27 @@ function FollowUpHub() {
             </div>
           )}
 
-          {filtered.map((row) => {
+          {(isFirstTimerLane
+            ? firstTimerGroups.flatMap((group) => [
+                <div key={`month-${group.key}`} className="flex items-center gap-3 pt-2 pb-1">
+                  <div className="h-px flex-1 bg-white/10" />
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-300/80">
+                    {group.label}
+                  </div>
+                  <div className="h-px flex-1 bg-white/10" />
+                </div>,
+                ...group.rows.map((row) => ({ row, key: row.member_id })),
+              ])
+            : filtered.map((row) => ({ row, key: row.member_id }))
+          ).map((item) => {
+            if ("label" in item) return item;
+            const row = item.row;
             const lastStageDays = daysAgo(row.last_stage_change);
             const lastCallDays = daysAgo(row.last_call_date);
 
             return (
               <div
-                key={row.member_id}
+                key={item.key}
                 className="w-full text-left bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/[0.07] transition-colors"
               >
                 <div className="flex items-start justify-between gap-3">
