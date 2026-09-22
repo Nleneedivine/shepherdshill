@@ -6,6 +6,7 @@ import {
   BarChart3,
   CheckCircle2,
   ChevronRight,
+  ArrowRight,
   Clock,
   History,
   MapPin,
@@ -45,13 +46,16 @@ interface HistoryEvent {
   status: string | null;
   notes: string | null;
   next_follow_up_date: string | null;
+  last_call_outcome: string | null;
+  last_call_status: string | null;
+  is_overdue: boolean;
   old_stage: string | null;
   new_stage: string | null;
   called_by: string | null;
 }
 
 async function fetchQueue(): Promise<QueueRow[]> {
-  const { data, error } = await supabase.rpc("get_follow_up_queue");
+  const { data, error } = await supabase.rpc("get_follow_up_operational_queue");
   if (error) throw error;
   return (data ?? []) as QueueRow[];
 }
@@ -108,6 +112,7 @@ function FollowUpHub() {
   const [contactFilter, setContactFilter] = useState<string>("all");
   const [activeMember, setActiveMember] = useState<QueueRow | null>(null);
   const [historyMember, setHistoryMember] = useState<QueueRow | null>(null);
+  const [stageMember, setStageMember] = useState<QueueRow | null>(null);
   const [showAddFirstTimer, setShowAddFirstTimer] = useState(false);
 
   const { data: queue, isLoading, isFetching, isError, error, refetch } = useQuery({
@@ -136,6 +141,8 @@ function FollowUpHub() {
   const total = queue?.length ?? 0;
   const neverCalled = (queue ?? []).filter((row) => !row.last_call_date).length;
   const missed = (queue ?? []).filter((row) => row.no_answer_count > 0).length;
+  const overdue = (queue ?? []).filter((row) => row.is_overdue).length;
+  const dueToday = (queue ?? []).filter((row) => row.next_follow_up_date === new Date().toISOString().slice(0, 10)).length;
   const stageCounts = stages
     .map((stage) => ({
       stage,
@@ -192,10 +199,12 @@ function FollowUpHub() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mt-5">
           <SummaryCard icon={<BarChart3 size={16} />} label="In queue" value={total} />
           <SummaryCard icon={<Clock size={16} />} label="Never called" value={neverCalled} />
           <SummaryCard icon={<AlertCircle size={16} />} label="Missed calls" value={missed} />
+          <SummaryCard icon={<Clock size={16} />} label="Due today" value={dueToday} />
+          <SummaryCard icon={<AlertCircle size={16} />} label="Overdue" value={overdue} />
         </div>
 
         {stageCounts.length > 0 && (
@@ -300,6 +309,13 @@ function FollowUpHub() {
                       </span>
                     )}
                     <button
+                      onClick={() => setStageMember(row)}
+                      aria-label={`Change stage for ${row.first_name} ${row.last_name}`}
+                      className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10"
+                    >
+                      <ArrowRight size={16} />
+                    </button>
+                    <button
                       onClick={() => setHistoryMember(row)}
                       aria-label={`View history for ${row.first_name} ${row.last_name}`}
                       className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10"
@@ -326,7 +342,11 @@ function FollowUpHub() {
                 <div className="flex items-center justify-between gap-3 mt-3">
                   <div className="flex items-center gap-1.5 text-xs text-slate-500">
                     <Clock size={12} />
-                    {lastCallDays !== null
+                    {row.next_follow_up_date
+                      ? row.is_overdue
+                        ? `Follow-up overdue — ${formatDate(row.next_follow_up_date)}`
+                        : `Next follow-up ${formatDate(row.next_follow_up_date)}`
+                      : lastCallDays !== null
                       ? `Last called ${lastCallDays}d ago`
                       : lastStageDays !== null
                       ? `Stage since ${lastStageDays}d ago — never called`
@@ -368,6 +388,18 @@ function FollowUpHub() {
             setActiveMember(null);
             void queryClient.invalidateQueries({ queryKey: ["follow-up-queue"] });
             showToast("Call logged", "success");
+          }}
+        />
+      )}
+
+      {stageMember && (
+        <StageChangeModal
+          member={stageMember}
+          onClose={() => setStageMember(null)}
+          onSaved={() => {
+            setStageMember(null);
+            void queryClient.invalidateQueries({ queryKey: ["follow-up-queue"] });
+            showToast("Member stage updated", "success");
           }}
         />
       )}
@@ -575,6 +607,67 @@ function CallLogModal({
               Save call
             </Button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function StageChangeModal({
+  member,
+  onClose,
+  onSaved,
+}: {
+  member: QueueRow;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const { showToast } = useToastContext();
+  const [stage, setStage] = useState(member.membership_stage ?? "first_timer");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase.rpc("update_follow_up_stage", {
+        p_member_id: member.member_id,
+        p_new_stage: stage,
+      });
+      if (error) throw error;
+      onSaved();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Could not update stage", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4">
+      <div className="bg-[#0D1117] border border-white/10 rounded-2xl w-full max-w-md p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-slate-500 uppercase tracking-wider">Member stage</p>
+            <h2 className="text-lg font-bold text-white mt-1">{member.first_name} {member.last_name}</h2>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
+        </div>
+        <div className="mt-5">
+          <label className="text-xs font-medium text-slate-400">Move to</label>
+          <Select value={stage} onValueChange={setStage}>
+            <SelectTrigger className={selectTriggerClassName}><SelectValue /></SelectTrigger>
+            <SelectContent className="border-white/15 bg-[#0D1117] text-white shadow-xl">
+              <SelectItem value="first_timer" className="text-white focus:bg-white/10 focus:text-white">First Timer</SelectItem>
+              <SelectItem value="consistent_visitor" className="text-white focus:bg-white/10 focus:text-white">Consistent Visitor</SelectItem>
+              <SelectItem value="in_foundational" className="text-white focus:bg-white/10 focus:text-white">In Foundation</SelectItem>
+              <SelectItem value="member" className="text-white focus:bg-white/10 focus:text-white">Member</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex gap-2 mt-5">
+          <Button variant="secondary" className="flex-1" onClick={onClose}>Cancel</Button>
+          <Button className="flex-1" loading={saving} onClick={handleSave}>Update stage</Button>
         </div>
       </div>
     </div>
