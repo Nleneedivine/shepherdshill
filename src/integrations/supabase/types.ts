@@ -1462,10 +1462,10 @@ export type Database = {
       }
       add_first_timer: {
         Args: {
-          p_address?: string
+          p_address?: string | null
           p_first_name: string
           p_last_name: string
-          p_phone?: string
+          p_phone?: string | null
         }
         Returns: {
           member_code: string
@@ -1475,15 +1475,15 @@ export type Database = {
       get_follow_up_member_history: {
         Args: { p_member_id: string }
         Returns: {
-          called_by: string
+          called_by: string | null
           event_at: string
           event_type: string
-          new_stage: string
-          next_follow_up_date: string
-          notes: string
-          old_stage: string
-          outcome: string
-          status: string
+          new_stage: string | null
+          next_follow_up_date: string | null
+          notes: string | null
+          old_stage: string | null
+          outcome: string | null
+          status: string | null
         }[]
       }
       get_follow_up_queue: {
