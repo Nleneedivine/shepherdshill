@@ -1460,6 +1460,32 @@ export type Database = {
         Args: { p_approve: boolean; p_notes?: string; p_transfer_id: string }
         Returns: undefined
       }
+      add_first_timer: {
+        Args: {
+          p_address?: string | null
+          p_first_name: string
+          p_last_name: string
+          p_phone?: string | null
+        }
+        Returns: {
+          member_code: string
+          member_id: string
+        }[]
+      }
+      get_follow_up_member_history: {
+        Args: { p_member_id: string }
+        Returns: {
+          called_by: string | null
+          event_at: string
+          event_type: string
+          new_stage: string | null
+          next_follow_up_date: string | null
+          notes: string | null
+          old_stage: string | null
+          outcome: string | null
+          status: string | null
+        }[]
+      }
       get_follow_up_queue: {
         Args: never
         Returns: {

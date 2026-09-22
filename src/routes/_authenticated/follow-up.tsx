@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Phone, MapPin, Clock, X } from "lucide-react";
+import { Phone, MapPin, Clock, X, UserPlus, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button, Input } from "@/components/ds";
 import { useToastContext } from "@/components/ds/Toast";
@@ -51,6 +51,7 @@ function FollowUpHub() {
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [activeMember, setActiveMember] = useState<QueueRow | null>(null);
+  const [showAddFirstTimer, setShowAddFirstTimer] = useState(false);
 
   const { data: queue, isLoading, isError, error } = useQuery({
     queryKey: ["follow-up-queue"],
@@ -121,6 +122,13 @@ function FollowUpHub() {
           </select>
         </div>
 
+        <div className="mt-5 flex justify-end">
+          <Button onClick={() => setShowAddFirstTimer(true)}>
+            <UserPlus size={16} className="mr-2" />
+            Add First Timer
+          </Button>
+        </div>
+
         <div className="mt-5 space-y-3">
           {filtered.length === 0 && (
             <p className="text-center text-slate-500 py-10">No one matches this filter.</p>
@@ -174,6 +182,17 @@ function FollowUpHub() {
         </div>
       </div>
 
+      {showAddFirstTimer && (
+        <AddFirstTimerModal
+          onClose={() => setShowAddFirstTimer(false)}
+          onSaved={() => {
+            setShowAddFirstTimer(false);
+            void queryClient.invalidateQueries({ queryKey: ["follow-up-queue"] });
+            showToast("First timer added successfully", "success");
+          }}
+        />
+      )}
+
       {activeMember && (
         <CallLogModal
           member={activeMember}
@@ -185,6 +204,70 @@ function FollowUpHub() {
           }}
         />
       )}
+    </div>
+  );
+}
+
+function AddFirstTimerModal({
+  onClose,
+  onSaved,
+}: {
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const { showToast } = useToastContext();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!firstName.trim() || !lastName.trim()) {
+      showToast("First name and last name are required", "error");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase.rpc("add_first_timer", {
+        p_first_name: firstName.trim(),
+        p_last_name: lastName.trim(),
+        p_phone: phone.trim() || null,
+        p_address: address.trim() || null,
+      });
+      if (error) throw error;
+      onSaved();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Could not add first timer", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4">
+      <div className="bg-[#0D1117] border border-white/10 rounded-2xl w-full max-w-md p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-white">Add First Timer</h2>
+            <p className="text-xs text-slate-500 mt-1">The person will be active immediately.</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
+        </div>
+
+        <div className="mt-5 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} autoFocus />
+            <Input label="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+          </div>
+          <Input label="Phone (optional)" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <Input label="Address (optional)" value={address} onChange={(e) => setAddress(e.target.value)} />
+          <div className="flex gap-2 pt-1">
+            <Button variant="secondary" className="flex-1" onClick={onClose}>Cancel</Button>
+            <Button className="flex-1" loading={saving} onClick={handleSave}>Add First Timer</Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
