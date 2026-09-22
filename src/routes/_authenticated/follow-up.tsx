@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Phone, MapPin, Clock, X, UserPlus, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button, Input } from "@/components/ds";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToastContext } from "@/components/ds/Toast";
 
 export const Route = createFileRoute("/_authenticated/follow-up")({
@@ -45,8 +46,8 @@ function stageLabel(stage: string | null): string {
     .join(" ");
 }
 
-const selectClassName =
-  "w-full mt-1 bg-[#0D1117] border border-white/15 rounded-xl px-3 py-2 text-sm text-white shadow-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-white/20 [&>option]:bg-[#0D1117] [&>option]:text-white";
+const selectTriggerClassName =
+  "w-full mt-1 h-11 rounded-xl border border-white/15 bg-[#0D1117] px-3 text-sm text-white shadow-sm hover:bg-[#121821] focus:ring-2 focus:ring-white/20";
 
 function FollowUpHub() {
   const { showToast } = useToastContext();
@@ -111,18 +112,21 @@ function FollowUpHub() {
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1"
           />
-          <select
-            value={stageFilter}
-            onChange={(e) => setStageFilter(e.target.value)}
-            className={selectClassName}
-          >
-            <option value="all">All stages</option>
-            {stages.map((s) => (
-              <option key={s} value={s}>
-                {stageLabel(s)}
-              </option>
-            ))}
-          </select>
+          <Select value={stageFilter} onValueChange={setStageFilter}>
+            <SelectTrigger className={selectTriggerClassName}>
+              <SelectValue placeholder="All stages" />
+            </SelectTrigger>
+            <SelectContent className="border-white/15 bg-[#0D1117] text-white shadow-xl">
+              <SelectItem value="all" className="text-white focus:bg-white/10 focus:text-white">
+                All stages
+              </SelectItem>
+              {stages.map((s) => (
+                <SelectItem key={s} value={s} className="text-white focus:bg-white/10 focus:text-white">
+                  {stageLabel(s)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="mt-5 flex justify-end">
@@ -329,31 +333,33 @@ function CallLogModal({
         <div className="mt-5 space-y-4">
           <div>
             <label className="text-xs font-medium text-slate-400">Outcome</label>
-            <select
-              value={outcome}
-              onChange={(e) => setOutcome(e.target.value)}
-              className={selectClassName}
-            >
-              <option value="reached">Reached</option>
-              <option value="no_answer">No answer</option>
-              <option value="voicemail">Left voicemail</option>
-              <option value="wrong_number">Wrong number</option>
-            </select>
+            <Select value={outcome} onValueChange={setOutcome}>
+              <SelectTrigger className={selectTriggerClassName}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="border-white/15 bg-[#0D1117] text-white shadow-xl">
+                <SelectItem value="reached" className="text-white focus:bg-white/10 focus:text-white">Reached</SelectItem>
+                <SelectItem value="no_answer" className="text-white focus:bg-white/10 focus:text-white">No answer</SelectItem>
+                <SelectItem value="voicemail" className="text-white focus:bg-white/10 focus:text-white">Left voicemail</SelectItem>
+                <SelectItem value="wrong_number" className="text-white focus:bg-white/10 focus:text-white">Wrong number</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
             <label className="text-xs font-medium text-slate-400">Status</label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className={selectClassName}
-            >
-              <option value="staying">Staying</option>
-              <option value="needs_another_call">Needs another call</option>
-              <option value="not_interested">Not interested</option>
-              <option value="moved_away">Moved away</option>
-              <option value="prayer_request_raised">Prayer request raised</option>
-            </select>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className={selectTriggerClassName}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="border-white/15 bg-[#0D1117] text-white shadow-xl">
+                <SelectItem value="staying" className="text-white focus:bg-white/10 focus:text-white">Staying</SelectItem>
+                <SelectItem value="needs_another_call" className="text-white focus:bg-white/10 focus:text-white">Needs another call</SelectItem>
+                <SelectItem value="not_interested" className="text-white focus:bg-white/10 focus:text-white">Not interested</SelectItem>
+                <SelectItem value="moved_away" className="text-white focus:bg-white/10 focus:text-white">Moved away</SelectItem>
+                <SelectItem value="prayer_request_raised" className="text-white focus:bg-white/10 focus:text-white">Prayer request raised</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
