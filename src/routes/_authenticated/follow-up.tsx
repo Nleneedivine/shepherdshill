@@ -55,34 +55,38 @@ interface HistoryEvent {
   called_by: string | null;
 }
 
-async function fetchQueue(): Promise<QueueRow[]> {
-  const { data, error } = await supabase.rpc("get_follow_up_operational_queue");
-  if (!error) return (data ?? []) as QueueRow[];
+async function fetchQueuePage(
+  stage: string,
+  search: string,
+  contactFilter: string,
+  page: number,
+): Promise<{ rows: QueueRow[]; total: number }> {
+  const { data, error } = await supabase.rpc("get_follow_up_queue_page", {
+    p_stage: stage,
+    p_search: search.trim() || null,
+    p_contact_filter: contactFilter,
+    p_limit: 50,
+    p_offset: page * 50,
+  });
+  if (error) throw error;
 
-  // Keep the existing live queue usable while the new operational migration
-  // is being applied to the connected Supabase project.
-  const legacy = await supabase.rpc("get_follow_up_queue");
-  if (legacy.error) throw error;
+  const rows = (data ?? []) as Array<QueueRow & { total_count: number }>;
+  return {
+    rows: rows.map(({ total_count: _total, ...row }) => row),
+    total: rows[0]?.total_count ?? 0,
+  };
+}
 
-  return ((legacy.data ?? []) as Array<{
-    member_id: string;
-    first_name: string;
-    last_name: string;
-    phone_primary: string | null;
-    address: string | null;
-    membership_stage: string | null;
-    cell_group_id: string | null;
-    member_created_at: string;
-    last_call_date: string | null;
-    no_answer_count: number;
-    last_stage_change: string | null;
-  }>).map((row) => ({
-    ...row,
-    last_call_outcome: null,
-    last_call_status: null,
-    next_follow_up_date: null,
-    is_overdue: false,
-  }));
+async function fetchStageCounts() {
+  const { data, error } = await supabase.rpc("get_follow_up_stage_counts");
+  if (error) throw error;
+  return data?.[0] ?? {
+    first_timer: 0,
+    consistent_visitor: 0,
+    in_foundational: 0,
+    member: 0,
+    total: 0,
+  };
 }
 
 async function fetchMemberHistory(memberId: string): Promise<HistoryEvent[]> {
@@ -133,51 +137,45 @@ function FollowUpHub() {
   const { showToast } = useToastContext();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [stageFilter, setStageFilter] = useState<string>("all");
+  const [stageFilter, setStageFilter] = useState<string>("first_timer");
   const [contactFilter, setContactFilter] = useState<string>("all");
+  const [page, setPage] = useState(0);
   const [activeMember, setActiveMember] = useState<QueueRow | null>(null);
   const [profileMember, setProfileMember] = useState<QueueRow | null>(null);
   const [historyMember, setHistoryMember] = useState<QueueRow | null>(null);
   const [stageMember, setStageMember] = useState<QueueRow | null>(null);
   const [showAddFirstTimer, setShowAddFirstTimer] = useState(false);
 
-  const { data: queue, isLoading, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ["follow-up-queue"],
-    queryFn: fetchQueue,
+  const { data: queuePage, isLoading, isFetching, isError, error, refetch } = useQuery({
+    queryKey: ["follow-up-queue", stageFilter, search, contactFilter, page],
+    queryFn: () => fetchQueuePage(stageFilter, search, contactFilter, page),
   });
 
-  const filtered = (queue ?? []).filter((row) => {
-    const query = search.trim().toLowerCase();
-    const matchesSearch =
-      !query ||
-      `${row.first_name} ${row.last_name}`.toLowerCase().includes(query) ||
-      row.phone_primary?.toLowerCase().includes(query);
-    const matchesStage = stageFilter === "all" || row.membership_stage === stageFilter;
-    const matchesContact =
-      contactFilter === "all" ||
-      (contactFilter === "never_called" && !row.last_call_date) ||
-      (contactFilter === "missed" && row.no_answer_count > 0) ||
-      (contactFilter === "due_today" && row.next_follow_up_date === new Date().toISOString().slice(0, 10)) ||
-      (contactFilter === "overdue" && row.is_overdue);
-    return matchesSearch && matchesStage && matchesContact;
+  const { data: stageCounts } = useQuery({
+    queryKey: ["follow-up-stage-counts"],
+    queryFn: fetchStageCounts,
   });
 
-  const stages = Array.from(
-    new Set((queue ?? []).map((r) => r.membership_stage).filter((s): s is string => !!s)),
-  );
+  const queue = queuePage?.rows ?? [];
+  const total = queuePage?.total ?? 0;
 
-  const total = queue?.length ?? 0;
-  const neverCalled = (queue ?? []).filter((row) => !row.last_call_date).length;
-  const missed = (queue ?? []).filter((row) => row.no_answer_count > 0).length;
-  const overdue = (queue ?? []).filter((row) => row.is_overdue).length;
-  const dueToday = (queue ?? []).filter((row) => row.next_follow_up_date === new Date().toISOString().slice(0, 10)).length;
-  const stageCounts = stages
-    .map((stage) => ({
-      stage,
-      count: (queue ?? []).filter((row) => row.membership_stage === stage).length,
-    }))
-    .sort((a, b) => b.count - a.count);
 
+  const filtered = queue;
+  const totalPages = Math.max(1, Math.ceil(total / 50));
+  const currentPage = page + 1;
+  const firstTimerCount = stageCounts?.first_timer ?? 0;
+  const neverCalled = queue.filter((row) => !row.last_call_date).length;
+  const missed = queue.filter((row) => row.no_answer_count > 0).length;
+  const overdue = queue.filter((row) => row.is_overdue).length;
+  const dueToday = queue.filter((row) => row.next_follow_up_date === new Date().toISOString().slice(0, 10)).length;
+  const stageCountEntries = [
+    ["first_timer", firstTimerCount],
+    ["consistent_visitor", stageCounts?.consistent_visitor ?? 0],
+    ["in_foundational", stageCounts?.in_foundational ?? 0],
+    ["member", stageCounts?.member ?? 0],
+  ] as const;
+  const stageCountsVisible = stageCountEntries.filter(([, count]) => count > 0);
+  const queueLabel = stageFilter === "first_timer" ? "First Timers" : "All Follow-Up";
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#080c16" }}>
@@ -228,24 +226,40 @@ function FollowUpHub() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mt-5">
-          <SummaryCard icon={<BarChart3 size={16} />} label="In queue" value={total} />
+          <SummaryCard icon={<UserPlus size={16} />} label="First timers" value={firstTimerCount} />
+          <SummaryCard icon={<BarChart3 size={16} />} label={queueLabel} value={total} />
           <SummaryCard icon={<Clock size={16} />} label="Never called" value={neverCalled} />
           <SummaryCard icon={<AlertCircle size={16} />} label="Missed calls" value={missed} />
           <SummaryCard icon={<Clock size={16} />} label="Due today" value={dueToday} />
           <SummaryCard icon={<AlertCircle size={16} />} label="Overdue" value={overdue} />
         </div>
 
-        {stageCounts.length > 0 && (
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={() => { setStageFilter("first_timer"); setPage(0); }}
+            className={`rounded-xl border px-4 py-2 text-sm font-medium ${stageFilter === "first_timer" ? "border-white/25 bg-white/10 text-white" : "border-white/10 bg-white/[0.03] text-slate-400"}`}
+          >
+            First Timers {firstTimerCount > 0 && <span className="ml-1 text-white">{firstTimerCount}</span>}
+          </button>
+          <button
+            onClick={() => { setStageFilter("all"); setPage(0); }}
+            className={`rounded-xl border px-4 py-2 text-sm font-medium ${stageFilter === "all" ? "border-white/25 bg-white/10 text-white" : "border-white/10 bg-white/[0.03] text-slate-400"}`}
+          >
+            All Follow-Up
+          </button>
+        </div>
+
+        {stageCountsVisible.length > 0 && stageFilter === "all" && (
           <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <div className="flex items-center gap-2">
               <BarChart3 size={15} className="text-slate-400" />
               <h2 className="text-sm font-semibold text-white">Queue by stage</h2>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
-              {stageCounts.map(({ stage, count }) => (
+              {stageCountsVisible.map(([stage, count]) => (
                 <button
                   key={stage}
-                  onClick={() => setStageFilter(stage)}
+                  onClick={() => { setStageFilter(stage); setPage(0); }}
                   className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10"
                 >
                   {stageLabel(stage)} <span className="text-white font-semibold">{count}</span>
@@ -254,9 +268,10 @@ function FollowUpHub() {
               {(stageFilter !== "all" || contactFilter !== "all" || search) && (
                 <button
                   onClick={() => {
-                    setStageFilter("all");
+                    setStageFilter("first_timer");
                     setContactFilter("all");
                     setSearch("");
+                    setPage(0);
                   }}
                   className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-slate-400 hover:text-white"
                 >
@@ -305,7 +320,29 @@ function FollowUpHub() {
         </div>
 
         <div className="mt-5 space-y-3">
-          {filtered.length === 0 && (
+          {filtered.length > 0 && totalPages > 1 && (
+          <div className="mt-5 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+            <Button
+              variant="secondary"
+              disabled={page === 0 || isFetching}
+              onClick={() => setPage((value) => Math.max(0, value - 1))}
+            >
+              Previous
+            </Button>
+            <span className="text-xs text-slate-500">
+              Page {currentPage} of {totalPages} · {total.toLocaleString()} records
+            </span>
+            <Button
+              variant="secondary"
+              disabled={page >= totalPages - 1 || isFetching}
+              onClick={() => setPage((value) => Math.min(totalPages - 1, value + 1))}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+
+        {filtered.length === 0 && (
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] py-12 text-center">
               <CheckCircle2 className="mx-auto text-emerald-400" size={24} />
               <p className="text-white font-medium mt-3">No one matches this filter</p>
