@@ -1,7 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Phone, MapPin, Clock, X, UserPlus, History } from "lucide-react";
+import {
+  AlertCircle,
+  BarChart3,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  History,
+  MapPin,
+  Phone,
+  UserPlus,
+  X,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button, Input } from "@/components/ds";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,10 +37,30 @@ interface QueueRow {
   last_stage_change: string | null;
 }
 
+interface HistoryEvent {
+  event_type: string;
+  event_at: string;
+  outcome: string | null;
+  status: string | null;
+  notes: string | null;
+  next_follow_up_date: string | null;
+  old_stage: string | null;
+  new_stage: string | null;
+  called_by: string | null;
+}
+
 async function fetchQueue(): Promise<QueueRow[]> {
   const { data, error } = await supabase.rpc("get_follow_up_queue");
   if (error) throw error;
   return (data ?? []) as QueueRow[];
+}
+
+async function fetchMemberHistory(memberId: string): Promise<HistoryEvent[]> {
+  const { data, error } = await supabase.rpc("get_follow_up_member_history", {
+    p_member_id: memberId,
+  });
+  if (error) throw error;
+  return (data ?? []) as HistoryEvent[];
 }
 
 function daysAgo(dateStr: string | null): number | null {
@@ -46,6 +77,25 @@ function stageLabel(stage: string | null): string {
     .join(" ");
 }
 
+function formatDate(value: string | null): string {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function formatDateTime(value: string): string {
+  return new Intl.DateTimeFormat("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
 const selectTriggerClassName =
   "w-full mt-1 h-11 rounded-xl border border-white/15 bg-[#0D1117] px-3 text-sm text-white shadow-sm hover:bg-[#121821] focus:ring-2 focus:ring-white/20";
 
@@ -55,6 +105,7 @@ function FollowUpHub() {
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [activeMember, setActiveMember] = useState<QueueRow | null>(null);
+  const [historyMember, setHistoryMember] = useState<QueueRow | null>(null);
   const [showAddFirstTimer, setShowAddFirstTimer] = useState(false);
 
   const { data: queue, isLoading, isError, error } = useQuery({
@@ -63,17 +114,28 @@ function FollowUpHub() {
   });
 
   const filtered = (queue ?? []).filter((row) => {
+    const query = search.trim().toLowerCase();
     const matchesSearch =
-      !search ||
-      `${row.first_name} ${row.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
-      row.phone_primary?.includes(search);
+      !query ||
+      `${row.first_name} ${row.last_name}`.toLowerCase().includes(query) ||
+      row.phone_primary?.toLowerCase().includes(query);
     const matchesStage = stageFilter === "all" || row.membership_stage === stageFilter;
     return matchesSearch && matchesStage;
   });
 
   const stages = Array.from(
-    new Set((queue ?? []).map((r) => r.membership_stage).filter((s): s is string => !!s))
+    new Set((queue ?? []).map((r) => r.membership_stage).filter((s): s is string => !!s)),
   );
+
+  const total = queue?.length ?? 0;
+  const neverCalled = (queue ?? []).filter((row) => !row.last_call_date).length;
+  const missed = (queue ?? []).filter((row) => row.no_answer_count > 0).length;
+  const stageCounts = stages
+    .map((stage) => ({
+      stage,
+      count: (queue ?? []).filter((row) => row.membership_stage === stage).length,
+    }))
+    .sort((a, b) => b.count - a.count);
 
   if (isLoading) {
     return (
@@ -89,7 +151,7 @@ function FollowUpHub() {
         <div className="text-center max-w-sm">
           <h1 className="text-xl font-bold text-white">Access restricted</h1>
           <p className="text-sm text-slate-400 mt-2">
-            {error instanceof Error && error.message.includes("Not authorized")
+            {error instanceof Error && error.message.toLowerCase().includes("not authorized")
               ? "This page is only available to the Evangelism and Follow-up team and church admins."
               : "Something went wrong loading the follow-up queue."}
           </p>
@@ -100,11 +162,55 @@ function FollowUpHub() {
 
   return (
     <div className="min-h-screen px-4 py-6 pb-24" style={{ backgroundColor: "#080c16" }}>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold text-white">Follow-Up Queue</h1>
-        <p className="text-sm text-slate-400 mt-1">{filtered.length} people to follow up with</p>
+      <div className="max-w-3xl mx-auto">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Follow-Up Hub</h1>
+            <p className="text-sm text-slate-400 mt-1">
+              Keep every first timer and member connection visible and actionable.
+            </p>
+          </div>
+          <Button onClick={() => setShowAddFirstTimer(true)}>
+            <UserPlus size={16} className="mr-2" />
+            Add First Timer
+          </Button>
+        </div>
 
-        <div className="mt-4 flex flex-col sm:flex-row gap-2">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-5">
+          <SummaryCard icon={<BarChart3 size={16} />} label="In queue" value={total} />
+          <SummaryCard icon={<Clock size={16} />} label="Never called" value={neverCalled} />
+          <SummaryCard icon={<AlertCircle size={16} />} label="Missed calls" value={missed} />
+        </div>
+
+        {stageCounts.length > 0 && (
+          <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 size={15} className="text-slate-400" />
+              <h2 className="text-sm font-semibold text-white">Queue by stage</h2>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {stageCounts.map(({ stage, count }) => (
+                <button
+                  key={stage}
+                  onClick={() => setStageFilter(stage)}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10"
+                >
+                  {stageLabel(stage)} <span className="text-white font-semibold">{count}</span>
+                </button>
+              ))}
+              {stageFilter !== "all" && (
+                <button
+                  onClick={() => setStageFilter("all")}
+                  className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-slate-400 hover:text-white"
+                >
+                  Clear filter
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-5 flex flex-col sm:flex-row gap-2">
           <Input
             type="text"
             placeholder="Search name or phone..."
@@ -129,16 +235,13 @@ function FollowUpHub() {
           </Select>
         </div>
 
-        <div className="mt-5 flex justify-end">
-          <Button onClick={() => setShowAddFirstTimer(true)}>
-            <UserPlus size={16} className="mr-2" />
-            Add First Timer
-          </Button>
-        </div>
-
         <div className="mt-5 space-y-3">
           {filtered.length === 0 && (
-            <p className="text-center text-slate-500 py-10">No one matches this filter.</p>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] py-12 text-center">
+              <CheckCircle2 className="mx-auto text-emerald-400" size={24} />
+              <p className="text-white font-medium mt-3">No one matches this filter</p>
+              <p className="text-xs text-slate-500 mt-1">Try another search or clear the stage filter.</p>
+            </div>
           )}
 
           {filtered.map((row) => {
@@ -146,44 +249,67 @@ function FollowUpHub() {
             const lastCallDays = daysAgo(row.last_call_date);
 
             return (
-              <button
+              <div
                 key={row.member_id}
-                onClick={() => setActiveMember(row)}
-                className="w-full text-left bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-colors"
+                className="w-full text-left bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/[0.07] transition-colors"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="font-semibold text-white">
+                  <button
+                    onClick={() => setActiveMember(row)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <div className="font-semibold text-white truncate">
                       {row.first_name} {row.last_name}
                     </div>
                     <div className="text-xs text-violet-400 mt-0.5">{stageLabel(row.membership_stage)}</div>
+                  </button>
+                  <div className="flex items-center gap-2">
+                    {row.no_answer_count > 0 && (
+                      <span className="text-xs bg-rose-500/20 text-rose-300 px-2 py-1 rounded-full whitespace-nowrap">
+                        {row.no_answer_count} missed
+                      </span>
+                    )}
+                    <button
+                      onClick={() => setHistoryMember(row)}
+                      aria-label={`View history for ${row.first_name} ${row.last_name}`}
+                      className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10"
+                    >
+                      <History size={16} />
+                    </button>
                   </div>
-                  {row.no_answer_count > 0 && (
-                    <span className="text-xs bg-rose-500/20 text-rose-300 px-2 py-1 rounded-full whitespace-nowrap">
-                      {row.no_answer_count} missed
-                    </span>
-                  )}
                 </div>
 
                 {row.phone_primary && (
-                  <div className="flex items-center gap-1.5 text-sm text-slate-300 mt-2">
+                  <a
+                    href={`tel:${row.phone_primary}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-1.5 text-sm text-slate-300 mt-2 hover:text-white"
+                  >
                     <Phone size={13} /> {row.phone_primary}
-                  </div>
+                  </a>
                 )}
                 {row.address && (
                   <div className="flex items-start gap-1.5 text-xs text-slate-400 mt-1">
                     <MapPin size={13} className="mt-0.5 shrink-0" /> {row.address}
                   </div>
                 )}
-                <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-2">
-                  <Clock size={12} />
-                  {lastCallDays !== null
-                    ? `Last called ${lastCallDays}d ago`
-                    : lastStageDays !== null
-                    ? `Stage since ${lastStageDays}d ago — never called`
-                    : "No activity yet"}
+                <div className="flex items-center justify-between gap-3 mt-3">
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <Clock size={12} />
+                    {lastCallDays !== null
+                      ? `Last called ${lastCallDays}d ago`
+                      : lastStageDays !== null
+                      ? `Stage since ${lastStageDays}d ago — never called`
+                      : "No activity yet"}
+                  </div>
+                  <button
+                    onClick={() => setActiveMember(row)}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-slate-300 hover:text-white"
+                  >
+                    Log call <ChevronRight size={13} />
+                  </button>
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -204,6 +330,10 @@ function FollowUpHub() {
         <CallLogModal
           member={activeMember}
           onClose={() => setActiveMember(null)}
+          onHistory={() => {
+            setHistoryMember(activeMember);
+            setActiveMember(null);
+          }}
           onSaved={() => {
             setActiveMember(null);
             void queryClient.invalidateQueries({ queryKey: ["follow-up-queue"] });
@@ -211,6 +341,30 @@ function FollowUpHub() {
           }}
         />
       )}
+
+      {historyMember && (
+        <MemberHistoryModal
+          member={historyMember}
+          onClose={() => setHistoryMember(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function SummaryCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
+      <div className="flex items-center gap-2 text-slate-400">{icon}<span className="text-xs">{label}</span></div>
+      <div className="text-xl sm:text-2xl font-bold text-white mt-2">{value}</div>
     </div>
   );
 }
@@ -252,7 +406,7 @@ function AddFirstTimerModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4 z-50">
       <div className="bg-[#0D1117] border border-white/10 rounded-2xl w-full max-w-md p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -282,10 +436,12 @@ function AddFirstTimerModal({
 function CallLogModal({
   member,
   onClose,
+  onHistory,
   onSaved,
 }: {
   member: QueueRow;
   onClose: () => void;
+  onHistory: () => void;
   onSaved: () => void;
 }) {
   const { showToast } = useToastContext();
@@ -319,15 +475,16 @@ function CallLogModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4 z-50">
       <div className="bg-[#0D1117] border border-white/10 rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white">
-            Log call — {member.first_name} {member.last_name}
-          </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
-            <X size={20} />
-          </button>
+          <div>
+            <h2 className="text-lg font-bold text-white">
+              Log call — {member.first_name} {member.last_name}
+            </h2>
+            <p className="text-xs text-slate-500 mt-1">{stageLabel(member.membership_stage)}</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
         </div>
 
         <div className="mt-5 space-y-4">
@@ -380,9 +537,116 @@ function CallLogModal({
             onChange={(e) => setNextFollowUp(e.target.value)}
           />
 
-          <Button className="w-full" loading={saving} onClick={handleSave}>
-            Save call log
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" className="flex-1" onClick={onHistory}>
+              <History size={15} className="mr-2" /> View history
+            </Button>
+            <Button className="flex-1" loading={saving} onClick={handleSave}>
+              Save call
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MemberHistoryModal({
+  member,
+  onClose,
+}: {
+  member: QueueRow;
+  onClose: () => void;
+}) {
+  const { data: events, isLoading, isError } = useQuery({
+    queryKey: ["follow-up-member-history", member.member_id],
+    queryFn: () => fetchMemberHistory(member.member_id),
+  });
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4 z-50">
+      <div className="bg-[#0D1117] border border-white/10 rounded-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs text-slate-500 uppercase tracking-wider">Member history</p>
+            <h2 className="text-lg font-bold text-white mt-1">
+              {member.first_name} {member.last_name}
+            </h2>
+            <p className="text-xs text-violet-400 mt-1">{stageLabel(member.membership_stage)}</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
+        </div>
+
+        {isLoading && <p className="text-sm text-slate-400 py-10 text-center">Loading history...</p>}
+        {isError && (
+          <div className="py-10 text-center">
+            <AlertCircle className="mx-auto text-rose-400" size={22} />
+            <p className="text-sm text-slate-300 mt-3">Could not load this member's history.</p>
+          </div>
+        )}
+
+        {!isLoading && !isError && events?.length === 0 && (
+          <div className="py-10 text-center">
+            <History className="mx-auto text-slate-500" size={22} />
+            <p className="text-sm text-slate-300 mt-3">No history yet.</p>
+            <p className="text-xs text-slate-500 mt-1">The first call or stage change will appear here.</p>
+          </div>
+        )}
+
+        {!isLoading && !isError && events && events.length > 0 && (
+          <div className="mt-5 space-y-3">
+            {events.map((event, index) => (
+              <div key={`${event.event_type}-${event.event_at}-${index}`} className="relative pl-7">
+                <div className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-slate-500 ring-4 ring-[#0D1117]" />
+                {index < events.length - 1 && (
+                  <div className="absolute left-[4px] top-4 bottom-[-14px] w-px bg-white/10" />
+                )}
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-medium text-white">
+                        {event.event_type === "call" ? "Follow-up call" : "Stage changed"}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5">{formatDateTime(event.event_at)}</div>
+                    </div>
+                    {event.outcome && (
+                      <span className="text-[11px] rounded-full border border-white/10 bg-white/5 px-2 py-1 text-slate-300">
+                        {stageLabel(event.outcome)}
+                      </span>
+                    )}
+                  </div>
+
+                  {event.event_type === "call" ? (
+                    <div className="mt-3 space-y-2">
+                      {event.status && (
+                        <div className="text-xs text-slate-400">
+                          Status: <span className="text-slate-200">{stageLabel(event.status)}</span>
+                        </div>
+                      )}
+                      {event.notes && (
+                        <p className="text-sm leading-6 text-slate-300 whitespace-pre-wrap">{event.notes}</p>
+                      )}
+                      {event.next_follow_up_date && (
+                        <div className="text-xs text-slate-400">
+                          Next follow-up: <span className="text-slate-200">{formatDate(event.next_follow_up_date)}</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mt-3 text-xs text-slate-300">
+                      {stageLabel(event.old_stage)} <span className="text-slate-500">→</span>{" "}
+                      <span className="text-white">{stageLabel(event.new_stage)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-5">
+          <Button variant="secondary" className="w-full" onClick={onClose}>Close</Button>
         </div>
       </div>
     </div>
