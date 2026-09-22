@@ -45,6 +45,9 @@ function stageLabel(stage: string | null): string {
     .join(" ");
 }
 
+const selectClassName =
+  "w-full mt-1 bg-[#0D1117] border border-white/15 rounded-xl px-3 py-2 text-sm text-white shadow-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-white/20 [&>option]:bg-[#0D1117] [&>option]:text-white";
+
 function FollowUpHub() {
   const { showToast } = useToastContext();
   const queryClient = useQueryClient();
@@ -111,7 +114,7 @@ function FollowUpHub() {
           <select
             value={stageFilter}
             onChange={(e) => setStageFilter(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
+            className={selectClassName}
           >
             <option value="all">All stages</option>
             {stages.map((s) => (
@@ -329,7 +332,7 @@ function CallLogModal({
             <select
               value={outcome}
               onChange={(e) => setOutcome(e.target.value)}
-              className="w-full mt-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
+              className={selectClassName}
             >
               <option value="reached">Reached</option>
               <option value="no_answer">No answer</option>
@@ -343,7 +346,7 @@ function CallLogModal({
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full mt-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
+              className={selectClassName}
             >
               <option value="staying">Staying</option>
               <option value="needs_another_call">Needs another call</option>
