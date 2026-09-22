@@ -37,6 +37,10 @@ interface QueueRow {
   last_call_date: string | null;
   no_answer_count: number;
   last_stage_change: string | null;
+  last_call_outcome: string | null;
+  last_call_status: string | null;
+  next_follow_up_date: string | null;
+  is_overdue: boolean;
 }
 
 interface HistoryEvent {
@@ -46,9 +50,6 @@ interface HistoryEvent {
   status: string | null;
   notes: string | null;
   next_follow_up_date: string | null;
-  last_call_outcome: string | null;
-  last_call_status: string | null;
-  is_overdue: boolean;
   old_stage: string | null;
   new_stage: string | null;
   called_by: string | null;
@@ -736,7 +737,7 @@ function MemberHistoryModal({
   });
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4 z-50">
+    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4">
       <div className="bg-[#0D1117] border border-white/10 rounded-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-start justify-between gap-4">
           <div>
