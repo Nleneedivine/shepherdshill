@@ -18,7 +18,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button, Input } from "@/components/ds";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToastContext } from "@/components/ds/Toast";\nimport { FollowUpCommunicationPanel } from "@/features/follow-up/FollowUpCommunicationPanel";
+import { useToastContext } from "@/components/ds/Toast";
+import { FollowUpCommunicationPanel } from "@/features/follow-up/FollowUpCommunicationPanel";
 
 export const Route = createFileRoute("/_authenticated/follow-up")({
   ssr: false,
