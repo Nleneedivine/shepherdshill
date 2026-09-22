@@ -122,6 +122,13 @@ function FollowUpHub() {
           </select>
         </div>
 
+        <div className="mt-5 flex justify-end">
+          <Button onClick={() => setShowAddFirstTimer(true)}>
+            <UserPlus size={16} className="mr-2" />
+            Add First Timer
+          </Button>
+        </div>
+
         <div className="mt-5 space-y-3">
           {filtered.length === 0 && (
             <p className="text-center text-slate-500 py-10">No one matches this filter.</p>
