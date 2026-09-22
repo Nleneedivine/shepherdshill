@@ -65,7 +65,7 @@ BEGIN
   FROM public.members m
   WHERE m.member_code LIKE 'RCCG-SH-' || v_year || '-%';
 
-  v_code := v_branch_code || '-' || v_year || '-' || lpad(v_seq::text, 4, '0');
+  v_code := 'RCCG-SH-' || v_year || '-' || lpad(v_seq::text, 4, '0');
 
   INSERT INTO public.members (
     member_code,
