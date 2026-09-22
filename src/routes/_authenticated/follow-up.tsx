@@ -136,6 +136,7 @@ function FollowUpHub() {
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [contactFilter, setContactFilter] = useState<string>("all");
   const [activeMember, setActiveMember] = useState<QueueRow | null>(null);
+  const [profileMember, setProfileMember] = useState<QueueRow | null>(null);
   const [historyMember, setHistoryMember] = useState<QueueRow | null>(null);
   const [stageMember, setStageMember] = useState<QueueRow | null>(null);
   const [showAddFirstTimer, setShowAddFirstTimer] = useState(false);
@@ -323,7 +324,7 @@ function FollowUpHub() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <button
-                    onClick={() => setActiveMember(row)}
+                    onClick={() => setProfileMember(row)}
                     className="min-w-0 flex-1 text-left"
                   >
                     <div className="font-semibold text-white truncate">
@@ -426,6 +427,25 @@ function FollowUpHub() {
         />
       )}
 
+      {profileMember && (
+        <MemberProfileModal
+          member={profileMember}
+          onClose={() => setProfileMember(null)}
+          onLogCall={() => {
+            setActiveMember(profileMember);
+            setProfileMember(null);
+          }}
+          onHistory={() => {
+            setHistoryMember(profileMember);
+            setProfileMember(null);
+          }}
+          onStage={() => {
+            setStageMember(profileMember);
+            setProfileMember(null);
+          }}
+        />
+      )}
+
       {activeMember && (
         <CallLogModal
           member={activeMember}
@@ -460,6 +480,81 @@ function FollowUpHub() {
           onClose={() => setHistoryMember(null)}
         />
       )}
+    </div>
+  );
+}
+
+
+function MemberProfileModal({
+  member,
+  onClose,
+  onLogCall,
+  onHistory,
+  onStage,
+}: {
+  member: QueueRow;
+  onClose: () => void;
+  onLogCall: () => void;
+  onHistory: () => void;
+  onStage: () => void;
+}) {
+  const lastCall = member.last_call_date ? formatDateTime(member.last_call_date) : "No call logged";
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4">
+      <div className="bg-[#0D1117] border border-white/10 rounded-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs text-slate-500 uppercase tracking-wider">Member profile</p>
+            <h2 className="text-xl font-bold text-white mt-1">{member.first_name} {member.last_name}</h2>
+            <p className="text-xs text-violet-400 mt-1">{stageLabel(member.membership_stage)}</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <ProfileStat label="Last call" value={lastCall} />
+          <ProfileStat label="Missed calls" value={String(member.no_answer_count)} />
+          <ProfileStat label="Next follow-up" value={member.next_follow_up_date ? formatDate(member.next_follow_up_date) : "Not scheduled"} />
+          <ProfileStat label="Joined queue" value={formatDate(member.member_created_at)} />
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="text-xs uppercase tracking-wider text-slate-500">Contact</div>
+          <div className="mt-3 space-y-2">
+            {member.phone_primary ? (
+              <a href={`tel:${member.phone_primary}`} className="flex items-center gap-2 text-sm text-slate-200 hover:text-white">
+                <Phone size={14} /> {member.phone_primary}
+              </a>
+            ) : (
+              <p className="text-sm text-slate-500">No phone number recorded.</p>
+            )}
+            {member.address ? (
+              <div className="flex items-start gap-2 text-sm text-slate-300"><MapPin size={14} className="mt-0.5 shrink-0" /> {member.address}</div>
+            ) : (
+              <p className="text-sm text-slate-500">No address recorded.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 mt-5">
+          <Button onClick={onLogCall}><Phone size={15} className="mr-2" /> Log call</Button>
+          <Button variant="secondary" onClick={onHistory}><History size={15} className="mr-2" /> History</Button>
+          <Button variant="secondary" onClick={onStage}><ArrowRight size={15} className="mr-2" /> Change stage</Button>
+        </div>
+
+        <div className="mt-3">
+          <Button variant="secondary" className="w-full" onClick={onClose}>Close</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+      <div className="text-[11px] uppercase tracking-wider text-slate-500">{label}</div>
+      <div className="text-sm text-white mt-1 leading-5">{value}</div>
     </div>
   );
 }
