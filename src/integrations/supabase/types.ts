@@ -1486,6 +1486,26 @@ export type Database = {
           status: string | null
         }[]
       }
+      get_follow_up_operational_queue: {
+        Args: never
+        Returns: {
+          address: string | null
+          cell_group_id: string | null
+          first_name: string
+          is_overdue: boolean
+          last_call_date: string | null
+          last_call_outcome: string | null
+          last_call_status: string | null
+          last_name: string
+          last_stage_change: string | null
+          member_created_at: string
+          member_id: string
+          membership_stage: string | null
+          next_follow_up_date: string | null
+          no_answer_count: number
+          phone_primary: string | null
+        }[]
+      }
       get_follow_up_queue: {
         Args: never
         Returns: {
@@ -1500,6 +1520,14 @@ export type Database = {
           membership_stage: string
           no_answer_count: number
           phone_primary: string
+        }[]
+      }
+      update_follow_up_stage: {
+        Args: { p_member_id: string; p_new_stage: string }
+        Returns: {
+          member_id: string
+          old_stage: string | null
+          new_stage: string
         }[]
       }
       grant_super_admin_by_email: { Args: { p_email: string }; Returns: string }
