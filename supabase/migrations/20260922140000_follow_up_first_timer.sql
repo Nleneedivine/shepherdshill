@@ -18,6 +18,7 @@ DECLARE
   v_code text;
   v_member_id uuid;
   v_branch_id uuid;
+  v_branch_code text;
 BEGIN
   IF v_uid IS NULL OR NOT (
     public.has_role(v_uid, 'admin')
@@ -38,15 +39,15 @@ BEGIN
   -- Prevent two simultaneous registrations from receiving the same code.
   PERFORM pg_advisory_xact_lock(hashtext('member-code-' || v_year));
 
-  SELECT id
-  INTO v_branch_id
+  SELECT id, branch_code
+  INTO v_branch_id, v_branch_code
   FROM public.branches
   WHERE status = 'active'
   ORDER BY created_at
   LIMIT 1;
 
   IF v_branch_id IS NULL THEN
-    SELECT id INTO v_branch_id
+    SELECT id, branch_code INTO v_branch_id, v_branch_code
     FROM public.branches
     ORDER BY created_at
     LIMIT 1;
@@ -64,7 +65,7 @@ BEGIN
   FROM public.members m
   WHERE m.member_code LIKE 'RCCG-SH-' || v_year || '-%';
 
-  v_code := 'RCCG-SH-' || v_year || '-' || lpad(v_seq::text, 4, '0');
+  v_code := v_branch_code || '-' || v_year || '-' || lpad(v_seq::text, 4, '0');
 
   INSERT INTO public.members (
     member_code,
