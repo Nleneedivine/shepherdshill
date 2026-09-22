@@ -214,15 +214,6 @@ function AddFirstTimerModal({
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<"history" | "log">("history");
-  const { data: history, isLoading: historyLoading, error: historyError } = useQuery({
-    queryKey: ["follow-up-member-history", member.member_id],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_follow_up_member_history", { p_member_id: member.member_id });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
 
   const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim()) {
@@ -256,35 +247,7 @@ function AddFirstTimerModal({
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-1 rounded-xl bg-white/5 p-1">
-          <button onClick={() => setTab("history")} className={`rounded-lg px-3 py-2 text-sm ${tab === "history" ? "bg-white/10 text-white" : "text-slate-400"}`}><History size={14} className="inline mr-1" />History</button>
-          <button onClick={() => setTab("log")} className={`rounded-lg px-3 py-2 text-sm ${tab === "log" ? "bg-white/10 text-white" : "text-slate-400"}`}>Log a call</button>
-        </div>
 
-        {tab === "history" ? (
-          <div className="mt-4 space-y-3">
-            {historyLoading && <p className="text-sm text-slate-500 py-6 text-center">Loading history...</p>}
-            {historyError && <p className="text-sm text-rose-300 py-4">Could not load history.</p>}
-            {!historyLoading && !historyError && history?.length === 0 && <p className="text-sm text-slate-500 py-6 text-center">No history yet.</p>}
-            {history?.map((item: any, index: number) => (
-              <div key={index} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium text-violet-300">{item.event_type === "stage_change" ? "Stage change" : "Call"}</span>
-                  <span className="text-[11px] text-slate-500">{item.event_at ? new Date(item.event_at).toLocaleString() : ""}</span>
-                </div>
-                {item.event_type === "stage_change" ? (
-                  <p className="text-sm text-slate-300 mt-2">{stageLabel(item.old_stage)} → {stageLabel(item.new_stage)}</p>
-                ) : (
-                  <div className="mt-2 space-y-1 text-sm text-slate-300">
-                    <p>{stageLabel(item.outcome)} · {stageLabel(item.status)}</p>
-                    {item.notes && <p className="text-slate-400">{item.notes}</p>}
-                    {item.next_follow_up_date && <p className="text-xs text-slate-500">Next follow-up: {item.next_follow_up_date}</p>}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
         <div className="mt-5 space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <Input label="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} autoFocus />
