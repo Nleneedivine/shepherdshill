@@ -1652,6 +1652,43 @@ export type Database = {
           phone_primary: string
         }[]
       }
+      get_follow_up_queue_page: {
+        Args: {
+          p_contact_filter?: string
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_stage?: string
+        }
+        Returns: {
+          address: string
+          cell_group_id: string
+          first_name: string
+          is_overdue: boolean
+          last_call_date: string
+          last_call_outcome: string
+          last_call_status: string
+          last_name: string
+          last_stage_change: string
+          member_created_at: string
+          member_id: string
+          membership_stage: string
+          next_follow_up_date: string
+          no_answer_count: number
+          phone_primary: string
+          total_count: number
+        }[]
+      }
+      get_follow_up_stage_counts: {
+        Args: never
+        Returns: {
+          consistent_visitor: number
+          first_timer: number
+          in_foundational: number
+          member: number
+          total: number
+        }[]
+      }
       get_follow_up_workers: {
         Args: never
         Returns: {
