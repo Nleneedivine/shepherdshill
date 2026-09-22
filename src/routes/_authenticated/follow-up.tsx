@@ -363,6 +363,17 @@ function FollowUpHub() {
                   </div>
                 </div>
 
+                {row.last_call_outcome && (
+                  <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-slate-400">
+                    <span>
+                      Last outcome: <span className="text-slate-200">{stageLabel(row.last_call_outcome)}</span>
+                    </span>
+                    {row.last_call_status && (
+                      <span className="text-slate-500">· {stageLabel(row.last_call_status)}</span>
+                    )}
+                  </div>
+                )}
+
                 {row.phone_primary && (
                   <a
                     href={`tel:${row.phone_primary}`}
