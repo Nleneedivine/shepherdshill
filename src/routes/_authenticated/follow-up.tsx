@@ -56,8 +56,32 @@ interface HistoryEvent {
 
 async function fetchQueue(): Promise<QueueRow[]> {
   const { data, error } = await supabase.rpc("get_follow_up_operational_queue");
-  if (error) throw error;
-  return (data ?? []) as QueueRow[];
+  if (!error) return (data ?? []) as QueueRow[];
+
+  // Keep the existing live queue usable while the new operational migration
+  // is being applied to the connected Supabase project.
+  const legacy = await supabase.rpc("get_follow_up_queue");
+  if (legacy.error) throw error;
+
+  return ((legacy.data ?? []) as Array<{
+    member_id: string;
+    first_name: string;
+    last_name: string;
+    phone_primary: string | null;
+    address: string | null;
+    membership_stage: string | null;
+    cell_group_id: string | null;
+    member_created_at: string;
+    last_call_date: string | null;
+    no_answer_count: number;
+    last_stage_change: string | null;
+  }>).map((row) => ({
+    ...row,
+    last_call_outcome: null,
+    last_call_status: null,
+    next_follow_up_date: null,
+    is_overdue: false,
+  }));
 }
 
 async function fetchMemberHistory(memberId: string): Promise<HistoryEvent[]> {
@@ -306,6 +330,16 @@ function FollowUpHub() {
                     {row.no_answer_count > 0 && (
                       <span className="text-xs bg-rose-500/20 text-rose-300 px-2 py-1 rounded-full whitespace-nowrap">
                         {row.no_answer_count} missed
+                      </span>
+                    )}
+                    {row.is_overdue && (
+                      <span className="text-xs bg-amber-500/20 text-amber-300 px-2 py-1 rounded-full whitespace-nowrap">
+                        Overdue
+                      </span>
+                    )}
+                    {row.next_follow_up_date && !row.is_overdue && (
+                      <span className="text-xs bg-sky-500/15 text-sky-300 px-2 py-1 rounded-full whitespace-nowrap">
+                        Due {formatDate(row.next_follow_up_date)}
                       </span>
                     )}
                     <button
