@@ -1460,6 +1460,32 @@ export type Database = {
         Args: { p_approve: boolean; p_notes?: string; p_transfer_id: string }
         Returns: undefined
       }
+      add_first_timer: {
+        Args: {
+          p_address?: string
+          p_first_name: string
+          p_last_name: string
+          p_phone?: string
+        }
+        Returns: {
+          member_code: string
+          member_id: string
+        }[]
+      }
+      get_follow_up_member_history: {
+        Args: { p_member_id: string }
+        Returns: {
+          called_by: string
+          event_at: string
+          event_type: string
+          new_stage: string
+          next_follow_up_date: string
+          notes: string
+          old_stage: string
+          outcome: string
+          status: string
+        }[]
+      }
       get_follow_up_queue: {
         Args: never
         Returns: {
