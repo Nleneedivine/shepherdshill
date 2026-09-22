@@ -499,6 +499,41 @@ function MemberProfileModal({
   onStage: () => void;
 }) {
   const lastCall = member.last_call_date ? formatDateTime(member.last_call_date) : "No call logged";
+  const { data: workers } = useQuery({
+    queryKey: ["follow-up-workers"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_follow_up_workers");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const [assignedTo, setAssignedTo] = useState("");
+  const [assignmentDate, setAssignmentDate] = useState("");
+  const [assignmentNotes, setAssignmentNotes] = useState("");
+  const [assigning, setAssigning] = useState(false);
+
+  const handleAssign = async () => {
+    if (!assignedTo) return;
+    setAssigning(true);
+    try {
+      const { error } = await supabase.rpc("assign_follow_up", {
+        p_member_id: member.member_id,
+        p_assigned_to: assignedTo,
+        p_due_date: assignmentDate || null,
+        p_notes: assignmentNotes.trim() || null,
+      });
+      if (error) throw error;
+      setAssignedTo("");
+      setAssignmentDate("");
+      setAssignmentNotes("");
+      alert("Follow-up assigned successfully.");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not assign follow-up");
+    } finally {
+      setAssigning(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4">
       <div className="bg-[#0D1117] border border-white/10 rounded-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
@@ -533,6 +568,29 @@ function MemberProfileModal({
             ) : (
               <p className="text-sm text-slate-500">No address recorded.</p>
             )}
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="text-xs uppercase tracking-wider text-slate-500">Assign follow-up</div>
+          <div className="mt-3 space-y-3">
+            <Select value={assignedTo} onValueChange={setAssignedTo}>
+              <SelectTrigger className={selectTriggerClassName}>
+                <SelectValue placeholder="Choose a follow-up worker" />
+              </SelectTrigger>
+              <SelectContent className="border-white/15 bg-[#0D1117] text-white shadow-xl">
+                {(workers ?? []).map((worker) => (
+                  <SelectItem key={worker.user_id} value={worker.user_id} className="text-white focus:bg-white/10 focus:text-white">
+                    {worker.full_name || worker.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input label="Assignment due date (optional)" type="date" value={assignmentDate} onChange={(e) => setAssignmentDate(e.target.value)} />
+            <Input label="Assignment note (optional)" value={assignmentNotes} onChange={(e) => setAssignmentNotes(e.target.value)} placeholder="e.g. Call after Sunday service" />
+            <Button className="w-full" loading={assigning} disabled={!assignedTo} onClick={handleAssign}>
+              Assign follow-up
+            </Button>
           </div>
         </div>
 
