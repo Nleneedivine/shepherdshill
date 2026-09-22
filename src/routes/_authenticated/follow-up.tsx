@@ -64,7 +64,7 @@ async function fetchQueuePage(
 ): Promise<{ rows: QueueRow[]; total: number }> {
   const { data, error } = await supabase.rpc("get_follow_up_queue_page", {
     p_stage: stage,
-    p_search: search.trim() || null,
+    p_search: search.trim() || undefined,
     p_contact_filter: contactFilter,
     p_limit: 50,
     p_offset: page * 50,
@@ -566,8 +566,8 @@ function MemberProfileModal({
       const { error } = await supabase.rpc("assign_follow_up", {
         p_member_id: member.member_id,
         p_assigned_to: assignedTo,
-        p_due_date: assignmentDate || null,
-        p_notes: assignmentNotes.trim() || null,
+        p_due_date: assignmentDate || new Date().toISOString().slice(0, 10),
+        p_notes: assignmentNotes.trim() || undefined,
       });
       if (error) throw error;
       setAssignedTo("");
@@ -707,8 +707,8 @@ function AddFirstTimerModal({
       const { error } = await supabase.rpc("add_first_timer", {
         p_first_name: firstName.trim(),
         p_last_name: lastName.trim(),
-        p_phone: phone.trim() || null,
-        p_address: address.trim() || null,
+        p_phone: phone.trim() || undefined,
+        p_address: address.trim() || undefined,
       });
       if (error) throw error;
       onSaved();
