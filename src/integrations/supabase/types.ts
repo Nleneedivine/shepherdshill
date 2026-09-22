@@ -1486,6 +1486,29 @@ export type Database = {
           status: string | null
         }[]
       }
+      get_follow_up_workers: {
+        Args: never
+        Returns: {
+          user_id: string
+          full_name: string
+          email: string | null
+        }[]
+      }
+      assign_follow_up: {
+        Args: {
+          p_member_id: string
+          p_assigned_to: string
+          p_due_date?: string | null
+          p_notes?: string | null
+        }
+        Returns: string
+      }
+      complete_follow_up_assignment: {
+        Args: {
+          p_assignment_id: string
+        }
+        Returns: boolean
+      }
       get_follow_up_operational_queue: {
         Args: never
         Returns: {
