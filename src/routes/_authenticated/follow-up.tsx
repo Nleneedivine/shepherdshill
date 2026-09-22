@@ -10,6 +10,7 @@ import {
   History,
   MapPin,
   Phone,
+  RefreshCw,
   UserPlus,
   X,
 } from "lucide-react";
@@ -104,11 +105,12 @@ function FollowUpHub() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("all");
+  const [contactFilter, setContactFilter] = useState<string>("all");
   const [activeMember, setActiveMember] = useState<QueueRow | null>(null);
   const [historyMember, setHistoryMember] = useState<QueueRow | null>(null);
   const [showAddFirstTimer, setShowAddFirstTimer] = useState(false);
 
-  const { data: queue, isLoading, isError, error } = useQuery({
+  const { data: queue, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["follow-up-queue"],
     queryFn: fetchQueue,
   });
@@ -120,7 +122,11 @@ function FollowUpHub() {
       `${row.first_name} ${row.last_name}`.toLowerCase().includes(query) ||
       row.phone_primary?.toLowerCase().includes(query);
     const matchesStage = stageFilter === "all" || row.membership_stage === stageFilter;
-    return matchesSearch && matchesStage;
+    const matchesContact =
+      contactFilter === "all" ||
+      (contactFilter === "never_called" && !row.last_call_date) ||
+      (contactFilter === "missed" && row.no_answer_count > 0);
+    return matchesSearch && matchesStage && matchesContact;
   });
 
   const stages = Array.from(
@@ -170,10 +176,20 @@ function FollowUpHub() {
               Keep every first timer and member connection visible and actionable.
             </p>
           </div>
-          <Button onClick={() => setShowAddFirstTimer(true)}>
-            <UserPlus size={16} className="mr-2" />
-            Add First Timer
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => void refetch()}
+              disabled={isFetching}
+              aria-label="Refresh follow-up queue"
+            >
+              <RefreshCw size={16} className={isFetching ? "animate-spin" : ""} />
+            </Button>
+            <Button onClick={() => setShowAddFirstTimer(true)}>
+              <UserPlus size={16} className="mr-2" />
+              Add First Timer
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-5">
@@ -198,9 +214,13 @@ function FollowUpHub() {
                   {stageLabel(stage)} <span className="text-white font-semibold">{count}</span>
                 </button>
               ))}
-              {stageFilter !== "all" && (
+              {(stageFilter !== "all" || contactFilter !== "all" || search) && (
                 <button
-                  onClick={() => setStageFilter("all")}
+                  onClick={() => {
+                    setStageFilter("all");
+                    setContactFilter("all");
+                    setSearch("");
+                  }}
                   className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-slate-400 hover:text-white"
                 >
                   Clear filter
@@ -218,6 +238,16 @@ function FollowUpHub() {
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1"
           />
+          <Select value={contactFilter} onValueChange={setContactFilter}>
+            <SelectTrigger className={selectTriggerClassName}>
+              <SelectValue placeholder="All contact states" />
+            </SelectTrigger>
+            <SelectContent className="border-white/15 bg-[#0D1117] text-white shadow-xl">
+              <SelectItem value="all" className="text-white focus:bg-white/10 focus:text-white">All contact states</SelectItem>
+              <SelectItem value="never_called" className="text-white focus:bg-white/10 focus:text-white">Never called</SelectItem>
+              <SelectItem value="missed" className="text-white focus:bg-white/10 focus:text-white">Has missed calls</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={stageFilter} onValueChange={setStageFilter}>
             <SelectTrigger className={selectTriggerClassName}>
               <SelectValue placeholder="All stages" />
@@ -240,7 +270,7 @@ function FollowUpHub() {
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] py-12 text-center">
               <CheckCircle2 className="mx-auto text-emerald-400" size={24} />
               <p className="text-white font-medium mt-3">No one matches this filter</p>
-              <p className="text-xs text-slate-500 mt-1">Try another search or clear the stage filter.</p>
+              <p className="text-xs text-slate-500 mt-1">Try another search or clear the filters.</p>
             </div>
           )}
 
@@ -475,7 +505,7 @@ function CallLogModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4 z-50">
+    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4">
       <div className="bg-[#0D1117] border border-white/10 rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <div>
