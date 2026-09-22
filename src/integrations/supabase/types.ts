@@ -395,6 +395,62 @@ export type Database = {
         }
         Relationships: []
       }
+      follow_up_messages: {
+        Row: {
+          automated: boolean
+          body: string
+          channel: string
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          member_id: string
+          message_type: string
+          provider_message_id: string | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          automated?: boolean
+          body: string
+          channel: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          member_id: string
+          message_type?: string
+          provider_message_id?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          automated?: boolean
+          body?: string
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          member_id?: string
+          message_type?: string
+          provider_message_id?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_up_messages_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follow_up_calls: {
         Row: {
           call_date: string
@@ -1471,6 +1527,34 @@ export type Database = {
           member_code: string
           member_id: string
         }[]
+      }
+      get_follow_up_communications: {
+        Args: { p_member_id: string }
+        Returns: {
+          automated: boolean
+          body: string
+          channel: string
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          message_type: string
+          provider_message_id: string | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+        }[]
+      }
+      queue_follow_up_message: {
+        Args: {
+          p_automated?: boolean
+          p_body: string
+          p_channel: string
+          p_member_id: string
+          p_message_type?: string
+          p_scheduled_for?: string
+        }
+        Returns: string
       }
       get_follow_up_member_history: {
         Args: { p_member_id: string }
