@@ -138,6 +138,8 @@ function FollowUpHub() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("first_timer");
+  // Follow-Up always opens in the newcomer lane. All stages is an explicit choice via the mode tabs.
+  const isFirstTimerLane = stageFilter === "first_timer";
   const [contactFilter, setContactFilter] = useState<string>("all");
   const [page, setPage] = useState(0);
   const [activeMember, setActiveMember] = useState<QueueRow | null>(null);
@@ -302,21 +304,27 @@ function FollowUpHub() {
               <SelectItem value="overdue" className="text-white focus:bg-white/10 focus:text-white">Overdue</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={stageFilter} onValueChange={(value) => { setStageFilter(value); setPage(0); }}>
-            <SelectTrigger className={selectTriggerClassName}>
-              <SelectValue placeholder="All stages" />
-            </SelectTrigger>
-            <SelectContent className="border-white/15 bg-[#0D1117] text-white shadow-xl">
-              <SelectItem value="all" className="text-white focus:bg-white/10 focus:text-white">
-                All stages
-              </SelectItem>
-              {stageCountEntries.map(([s, count]) => (
-                <SelectItem key={s} value={s} disabled={count === 0} className="text-white focus:bg-white/10 focus:text-white">
-                  {stageLabel(s)} ({count.toLocaleString()})
+          {isFirstTimerLane ? (
+            <div className="flex-1 h-11 rounded-xl border border-violet-400/20 bg-violet-500/10 px-3 flex items-center text-sm text-violet-200">
+              First Timers only
+            </div>
+          ) : (
+            <Select value={stageFilter} onValueChange={(value) => { setStageFilter(value); setPage(0); }}>
+              <SelectTrigger className={selectTriggerClassName}>
+                <SelectValue placeholder="All stages" />
+              </SelectTrigger>
+              <SelectContent className="border-white/15 bg-[#0D1117] text-white shadow-xl">
+                <SelectItem value="all" className="text-white focus:bg-white/10 focus:text-white">
+                  All stages
                 </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                {stageCountEntries.map(([s, count]) => (
+                  <SelectItem key={s} value={s} disabled={count === 0} className="text-white focus:bg-white/10 focus:text-white">
+                    {stageLabel(s)} ({count.toLocaleString()})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <div className="mt-5 space-y-3">
