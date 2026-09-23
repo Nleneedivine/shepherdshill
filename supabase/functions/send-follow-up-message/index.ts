@@ -38,12 +38,12 @@ Deno.serve(async (req) => {
 
   const { data: settings, error: settingsError } = await userClient
     .from("follow_up_communication_settings")
-    .select("provider,messaging_enabled,voice_number,messaging_agent_id")
+    .select("provider,messaging_provider,messaging_enabled,voice_number,messaging_agent_id")
     .eq("id", true)
     .maybeSingle();
   if (settingsError) return reply({ error: settingsError.message }, 500);
   if (!settings?.messaging_enabled) return reply({ error: "Messaging is currently turned off by an administrator" }, 400);
-  if (settings.provider !== "voicebip") return reply({ error: "The active messaging adapter is not configured" }, 503);
+  if ((settings.messaging_provider ?? settings.provider) !== "voicebip") return reply({ error: "The active messaging adapter is not configured" }, 503);
   if (!settings.messaging_agent_id) return reply({ error: "The messaging agent has not been configured" }, 503);
 
   const { data: member, error: memberError } = await userClient
