@@ -63,7 +63,7 @@ function FollowUpTools() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("follow_up_communication_settings").select("provider,messaging_enabled,calling_enabled,voice_number,sender_id,currency,voice_rate_per_minute,low_balance_threshold").eq("id", true).maybeSingle();
+    const { data, error } = await supabase.from("follow_up_communication_settings" as any).select("provider,messaging_enabled,calling_enabled,voice_number,sender_id,currency,voice_rate_per_minute,low_balance_threshold").eq("id", true).maybeSingle();
     if (error) showToast(error.message, "error");
     else if (data) {
       const next = data as Settings;
@@ -98,7 +98,7 @@ function FollowUpTools() {
     if (!settings) return;
     setSaving(true);
     const next = { ...settings, ...patch };
-    const { error } = await supabase.from("follow_up_communication_settings").update({
+    const { error } = await supabase.from("follow_up_communication_settings" as any).update({
       messaging_enabled: next.messaging_enabled,
       calling_enabled: next.calling_enabled,
       voice_number: next.voice_number,
