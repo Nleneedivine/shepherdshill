@@ -63,7 +63,7 @@ function FollowUpTools() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("follow_up_communication_settings" as any).select("provider,messaging_enabled,calling_enabled,voice_number,sender_id,messaging_agent_id,currency,voice_rate_per_minute,low_balance_threshold").eq("id", true).maybeSingle();
+    const { data, error } = await supabase.from("follow_up_communication_settings" as any).select("provider,voice_provider,messaging_provider,messaging_enabled,calling_enabled,voice_number,sender_id,messaging_agent_id,currency,voice_rate_per_minute,low_balance_threshold").eq("id", true).maybeSingle();
     if (error) showToast(error.message, "error");
     else if (data) {
       const next = data as Settings;
@@ -146,7 +146,7 @@ function FollowUpTools() {
         </div>
 
         <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5"><div className="flex items-center gap-2 text-slate-300"><Settings2 size={17} /><span className="font-semibold">Admin settings</span></div>
-          <div className="mt-4 grid md:grid-cols-2 gap-3">
+          <div className="mt-4 grid md:grid-cols-2 gap-3"><div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-slate-300">Voice provider: <span className="text-white">{settings.voice_provider || settings.provider}</span><div className="text-xs text-slate-500 mt-1">Messaging provider: {settings.messaging_provider || settings.provider}</div></div><div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs text-slate-500">Providers are intentionally separated so we can change voice and messaging pipes independently.</div></div><div className="mt-4 grid md:grid-cols-2 gap-3">
             <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 flex items-center justify-between">
               <div><div className="text-sm text-white">System calling</div><div className="text-xs text-slate-500 mt-1">Workers can place recorded human-to-human calls through the selected voice provider.</div></div>
               <button disabled={saving} onClick={() => void saveSettings({ calling_enabled: !settings.calling_enabled })} className={settings.calling_enabled ? "rounded-full bg-emerald-500/20 px-3 py-1.5 text-xs text-emerald-300" : "rounded-full bg-white/10 px-3 py-1.5 text-xs text-slate-300"}>{settings.calling_enabled ? "ON" : "OFF"}</button>
