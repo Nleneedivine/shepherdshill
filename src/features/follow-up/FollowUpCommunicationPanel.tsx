@@ -47,7 +47,7 @@ export function FollowUpCommunicationPanel({
   const [messageType, setMessageType] = useState("follow_up");
   const [body, setBody] = useState("");
   const [scheduledFor, setScheduledFor] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState(false);\n  const [sending, setSending] = useState(false);
 
   const { data: communications, isLoading } = useQuery({
     queryKey: ["follow-up-communications", memberId],
@@ -110,7 +110,7 @@ export function FollowUpCommunicationPanel({
             </div>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Queue a message now or for later. Delivery is provider-ready and will be connected separately.
+            Queue a message now or for later. Send now uses the configured provider. Queue keeps the message in Follow-Up history for later delivery.
           </p>
         </div>
         {phone && (
