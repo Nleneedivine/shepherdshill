@@ -32,10 +32,10 @@ Deno.serve(async (req) => {
 
   const payload = await readPayload(req);
   const sessionId = String(payload.sessionId ?? payload.callSessionId ?? payload.call_session_id ?? "");
-  const clientRequestId = String(payload.clientRequestId ?? "");
-  const status = String(payload.status ?? payload.callStatus ?? "");
-  const recordingUrl = String(payload.recordingUrl ?? payload.recording_url ?? payload.recording?.url ?? "");
-  const duration = Number(payload.durationInSeconds ?? payload.duration_seconds ?? payload.duration ?? 0);
+  const clientRequestId = String(payload.clientRequestId ?? payload.messageId ?? payload.message_id ?? "");
+  const status = String(payload.status?.name ?? payload.status ?? payload.callStatus ?? payload.call_status ?? "");
+  const recordingUrl = String(payload.recordingUrl ?? payload.recording_url ?? payload.recording?.url ?? payload.fileUrl ?? payload.file_url ?? "");
+  const duration = Number(payload.durationInSeconds ?? payload.duration_seconds ?? payload.duration ?? payload.inboundDuration ?? 0);
   const cost = Number(payload.amount ?? payload.cost ?? payload.charge ?? 0);
 
   let session: any = null;
@@ -48,11 +48,11 @@ Deno.serve(async (req) => {
     session = data;
   }
   // Some callbacks omit clientRequestId; fall back to the most recent active session.
-  if (!session && (payload.destinationNumber || payload.to || payload.toNumber)) {
+  if (!session && (payload.destinationNumber || payload.destinationA || payload.to || payload.toNumber)) {
     const { data } = await service
       .from("follow_up_call_sessions")
       .select("*")
-      .eq("operator_phone", String(payload.destinationNumber ?? payload.to ?? payload.toNumber))
+      .eq("operator_phone", String(payload.destinationNumber ?? payload.destinationA ?? payload.to ?? payload.toNumber))
       .in("status", ["queued", "dialing", "ringing"])
       .order("created_at", { ascending: false })
       .limit(1)
