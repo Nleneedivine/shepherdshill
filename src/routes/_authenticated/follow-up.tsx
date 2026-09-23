@@ -513,6 +513,7 @@ function FollowUpHub() {
           onSaved={() => {
             setShowAddFirstTimer(false);
             void queryClient.invalidateQueries({ queryKey: ["follow-up-queue"] });
+            void queryClient.invalidateQueries({ queryKey: ["follow-up-stage-counts"] });
             showToast("First timer added successfully", "success");
           }}
         />
@@ -869,6 +870,19 @@ function CallLogModal({
         next_follow_up_date: nextFollowUp || null,
       });
       if (error) throw error;
+
+      // Completing an assignment here closes the current action while preserving
+      // the call itself as the durable history record.
+      const { data: assignment } = await supabase.rpc("get_follow_up_current_assignment", {
+        p_member_id: member.member_id,
+      });
+      const openAssignment = assignment?.[0];
+      if (openAssignment) {
+        await supabase.rpc("complete_follow_up_assignment", {
+          p_assignment_id: openAssignment.id,
+        });
+      }
+
       onSaved();
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Could not save call log", "error");
