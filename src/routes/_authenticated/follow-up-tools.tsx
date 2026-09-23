@@ -12,6 +12,8 @@ export const Route = createFileRoute("/_authenticated/follow-up-tools")({
 
 type Settings = {
   provider: string;
+  voice_provider: string;
+  messaging_provider: string;
   messaging_enabled: boolean;
   calling_enabled: boolean;
   voice_number: string | null;
