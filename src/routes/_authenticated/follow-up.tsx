@@ -20,6 +20,8 @@ import { Button, Input } from "@/components/ds";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToastContext } from "@/components/ds/Toast";
 import { FollowUpCommunicationPanel } from "@/features/follow-up/FollowUpCommunicationPanel";
+import { FollowUpCallPanel } from "@/features/follow-up/FollowUpCallPanel";
+import { CallTranscriptionPanel } from "@/features/follow-up/CallTranscriptionPanel";
 
 export const Route = createFileRoute("/_authenticated/follow-up")({
   ssr: false,
@@ -675,6 +677,8 @@ function MemberProfileModal({
           </div>
         </div>
 
+        <FollowUpCallPanel memberId={member.member_id} phone={member.phone_primary} />
+        <CallTranscriptionPanel memberId={member.member_id} />
         <FollowUpCommunicationPanel memberId={member.member_id} phone={member.phone_primary} />
 
         <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
