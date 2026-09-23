@@ -8,8 +8,8 @@ Deno.serve(async (req) => {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) return new Response(JSON.stringify({ configured: false, error: "Not signed in" }), { status: 401, headers: { ...cors, "Content-Type": "application/json" } });
 
-  const { data: allowed } = await supabase.rpc("is_in_followup_department", { p_user_id: user.user.id });
-  const { data: admin } = await supabase.rpc("has_role", { p_user_id: user.user.id, p_role: "admin" });
+  const { data: allowed } = await supabase.rpc("is_in_followup_department", { check_user_id: user.user.id });
+  const { data: admin } = await supabase.rpc("has_role", { _user_id: user.user.id, _role: "admin" });
   if (!allowed && !admin) return new Response(JSON.stringify({ configured: false, error: "Not authorized" }), { status: 403, headers: { ...cors, "Content-Type": "application/json" } });
 
   const username = Deno.env.get("AT_USERNAME");
