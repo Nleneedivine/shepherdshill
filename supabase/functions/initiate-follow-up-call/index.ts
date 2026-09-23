@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getVoiceProvider } from "../voice-provider/index.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -43,8 +44,8 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (settingsError) return json({ error: settingsError.message }, 500);
   if (!settings?.calling_enabled) return json({ error: "System calling is currently turned off by an administrator" }, 400);
-  if (settings.provider !== "africastalking") return json({ error: "Africa's Talking is not the active voice provider" }, 400);
-  if (!settings.voice_number) return json({ error: "The Africa's Talking voice number has not been configured" }, 400);
+  if (!settings.provider) return json({ error: "No voice provider has been configured" }, 503);
+  if (!settings.voice_number) return json({ error: "The system voice number has not been configured" }, 400);
 
   const { data: member, error: memberError } = await userClient
     .from("members")
@@ -69,6 +70,7 @@ Deno.serve(async (req) => {
       operator_phone: operatorPhone,
       member_phone: member.phone_primary,
       client_request_id: clientRequestId,
+      provider: settings.provider,
       status: "queued",
       started_at: new Date().toISOString(),
     })
@@ -76,41 +78,31 @@ Deno.serve(async (req) => {
     .single();
   if (insertError) return json({ error: insertError.message }, 500);
 
-  const username = Deno.env.get("AT_USERNAME");
-  const apiKey = Deno.env.get("AT_API_KEY");
-  if (!username || !apiKey) return json({ error: "Africa's Talking credentials are not configured", call_id: session.id }, 503);
-
-  const form = new URLSearchParams({
-    username,
-    to: operatorPhone,
-    from: settings.voice_number,
-    clientRequestId,
-  });
-
   try {
-    const response = await fetch("https://voice.africastalking.com/call", {
-      method: "POST",
-      headers: { apiKey, "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
-      body: form.toString(),
+    const provider = getVoiceProvider(settings.provider);
+    const result = await provider.startHumanBridgeCall({
+      operatorPhone,
+      memberPhone: member.phone_primary,
+      callerId: settings.voice_number,
+      clientRequestId,
     });
-    const text = await response.text();
-    let provider: any = null;
-    try { provider = JSON.parse(text); } catch { provider = { raw: text }; }
-
-    if (!response.ok) {
-      await serviceClient.from("follow_up_call_sessions").update({ status: "failed", updated_at: new Date().toISOString() }).eq("id", session.id);
-      return json({ error: "Africa's Talking rejected the call", details: provider, call_id: session.id }, 502);
-    }
 
     await serviceClient.from("follow_up_call_sessions").update({
       status: "dialing",
-      provider_session_id: provider?.entries?.[0]?.sessionId ?? provider?.sessionId ?? null,
+      provider_session_id: result.providerSessionId ?? null,
       updated_at: new Date().toISOString(),
     }).eq("id", session.id);
 
-    return json({ call_id: session.id, provider });
+    return json({ call_id: session.id, provider: result.raw });
   } catch (error) {
-    await serviceClient.from("follow_up_call_sessions").update({ status: "failed", updated_at: new Date().toISOString() }).eq("id", session.id);
-    return json({ error: error instanceof Error ? error.message : "Call request failed", call_id: session.id }, 502);
+    await serviceClient.from("follow_up_call_sessions").update({
+      status: "failed",
+      updated_at: new Date().toISOString(),
+    }).eq("id", session.id);
+
+    return json({
+      error: error instanceof Error ? error.message : "Call request failed",
+      call_id: session.id,
+    }, 502);
   }
 });
