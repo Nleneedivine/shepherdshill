@@ -39,12 +39,12 @@ Deno.serve(async (req) => {
 
   const { data: settings, error: settingsError } = await userClient
     .from("follow_up_communication_settings")
-    .select("calling_enabled,voice_number,provider")
+    .select("calling_enabled,voice_number,provider,voice_provider")
     .eq("id", true)
     .maybeSingle();
   if (settingsError) return json({ error: settingsError.message }, 500);
   if (!settings?.calling_enabled) return json({ error: "System calling is currently turned off by an administrator" }, 400);
-  if (!settings.provider) return json({ error: "No voice provider has been configured" }, 503);
+  const voiceProvider = settings.voice_provider ?? settings.provider;\n  if (!voiceProvider) return json({ error: "No voice provider has been configured" }, 503);
   if (!settings.voice_number) return json({ error: "The system voice number has not been configured" }, 400);
 
   const { data: member, error: memberError } = await userClient
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
       operator_phone: operatorPhone,
       member_phone: member.phone_primary,
       client_request_id: clientRequestId,
-      provider: settings.provider,
+      provider: voiceProvider,
       status: "queued",
       started_at: new Date().toISOString(),
     })
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
   if (insertError) return json({ error: insertError.message }, 500);
 
   try {
-    const provider = getVoiceProvider(settings.provider);
+    const provider = getVoiceProvider(voiceProvider);
     const result = await provider.startHumanBridgeCall({
       operatorPhone,
       memberPhone: member.phone_primary,
