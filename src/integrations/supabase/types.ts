@@ -1697,6 +1697,19 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_follow_up_current_assignment: {
+        Args: { p_member_id: string }
+        Returns: {
+          assigned_to: string
+          created_at: string
+          due_date: string
+          id: string
+          notes: string
+          status: string
+          worker_email: string
+          worker_name: string
+        }[]
+      }
       grant_super_admin_by_email: { Args: { p_email: string }; Returns: string }
       has_role: {
         Args: {
