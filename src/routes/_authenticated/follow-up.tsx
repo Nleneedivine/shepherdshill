@@ -603,6 +603,16 @@ function MemberProfileModal({
   const [assignmentDate, setAssignmentDate] = useState("");
   const [assignmentNotes, setAssignmentNotes] = useState("");
   const [assigning, setAssigning] = useState(false);
+  const { data: currentAssignment, refetch: refetchAssignment } = useQuery({
+    queryKey: ["follow-up-current-assignment", member.member_id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_follow_up_current_assignment", {
+        p_member_id: member.member_id,
+      });
+      if (error) throw error;
+      return data?.[0] ?? null;
+    },
+  });
 
   const handleAssign = async () => {
     if (!assignedTo) return;
@@ -618,6 +628,7 @@ function MemberProfileModal({
       setAssignedTo("");
       setAssignmentDate("");
       setAssignmentNotes("");
+      await refetchAssignment();
       showToast("Follow-up assigned successfully", "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Could not assign follow-up", "error");
@@ -666,7 +677,40 @@ function MemberProfileModal({
         <FollowUpCommunicationPanel memberId={member.member_id} phone={member.phone_primary} />
 
         <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <div className="text-xs uppercase tracking-wider text-slate-500">Assign follow-up</div>
+          <div className="text-xs uppercase tracking-wider text-slate-500">Follow-up assignment</div>
+          {currentAssignment ? (
+            <div className="mt-3 rounded-xl border border-emerald-400/15 bg-emerald-500/5 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-medium text-white">Assigned to {currentAssignment.worker_name || currentAssignment.worker_email}</div>
+                  <div className="text-xs text-slate-400 mt-1">
+                    {currentAssignment.due_date ? `Due ${formatDate(currentAssignment.due_date)}` : "No due date"}
+                  </div>
+                  {currentAssignment.notes && (
+                    <p className="text-xs text-slate-400 mt-2">{currentAssignment.notes}</p>
+                  )}
+                </div>
+                <Button
+                  variant="secondary"
+                  onClick={async () => {
+                    const { error } = await supabase.rpc("complete_follow_up_assignment", {
+                      p_assignment_id: currentAssignment.id,
+                    });
+                    if (error) {
+                      showToast(error.message, "error");
+                      return;
+                    }
+                    await refetchAssignment();
+                    showToast("Follow-up marked complete", "success");
+                  }}
+                >
+                  <CheckCircle2 size={15} className="mr-2" /> Complete
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-2 text-xs text-slate-500">No open assignment. Assign the next action below.</p>
+          )}
           <div className="mt-3 space-y-3">
             <Select value={assignedTo} onValueChange={setAssignedTo}>
               <SelectTrigger className={selectTriggerClassName}>
