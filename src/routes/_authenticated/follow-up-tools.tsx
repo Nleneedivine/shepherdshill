@@ -15,7 +15,8 @@ type Settings = {
   messaging_enabled: boolean;
   calling_enabled: boolean;
   voice_number: string | null;
-  sender_id: string | null;\n  messaging_agent_id: string | null;
+  sender_id: string | null;
+  messaging_agent_id: string | null;
   currency: string;
   voice_rate_per_minute: number | null;
   low_balance_threshold: number;
@@ -102,7 +103,8 @@ function FollowUpTools() {
       messaging_enabled: next.messaging_enabled,
       calling_enabled: next.calling_enabled,
       voice_number: next.voice_number,
-      sender_id: next.sender_id,\n      messaging_agent_id: next.messaging_agent_id,
+      sender_id: next.sender_id,
+      messaging_agent_id: next.messaging_agent_id,
       voice_rate_per_minute: next.voice_rate_per_minute,
       low_balance_threshold: next.low_balance_threshold,
       updated_by: (await supabase.auth.getUser()).data.user?.id ?? null,
