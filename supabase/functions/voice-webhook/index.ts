@@ -47,6 +47,19 @@ Deno.serve(async (req) => {
     const { data } = await service.from("follow_up_call_sessions").select("*").eq("provider_session_id", sessionId).maybeSingle();
     session = data;
   }
+  // Some callback payloads omit clientRequestId; fall back to the most recent
+  // dialing session for the operator number.
+  if (!session && payload.destinationNumber) {
+    const { data } = await service
+      .from("follow_up_call_sessions")
+      .select("*")
+      .eq("operator_phone", String(payload.destinationNumber))
+      .in("status", ["queued", "dialing", "ringing"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    session = data;
+  }
 
   if (session) {
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
