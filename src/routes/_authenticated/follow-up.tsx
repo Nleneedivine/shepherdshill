@@ -13,6 +13,7 @@ import {
   Phone,
   RefreshCw,
   UserPlus,
+  PhoneCall,
   X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -249,6 +250,9 @@ function FollowUpHub() {
             >
               <RefreshCw size={16} className={isFetching ? "animate-spin" : ""} />
             </Button>
+            <a href="/follow-up-tools" className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 hover:bg-white/10">
+              <PhoneCall size={15} className="mr-2" /> Calls & Tools
+            </a>
             <Button onClick={() => setShowAddFirstTimer(true)}>
               <UserPlus size={16} className="mr-2" />
               Add First Timer
