@@ -27,16 +27,16 @@ async function readPayload(req: Request) {
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("OK");
-  const secret = Deno.env.get("AT_CALLBACK_SECRET");
+  const secret = Deno.env.get("VOICE_CALLBACK_SECRET");
   if (secret && new URL(req.url).searchParams.get("token") !== secret) return new Response("Unauthorized", { status: 401 });
 
   const payload = await readPayload(req);
-  const sessionId = String(payload.sessionId ?? "");
+  const sessionId = String(payload.sessionId ?? payload.callSessionId ?? payload.call_session_id ?? "");
   const clientRequestId = String(payload.clientRequestId ?? "");
   const status = String(payload.status ?? payload.callStatus ?? "");
-  const recordingUrl = String(payload.recordingUrl ?? "");
-  const duration = Number(payload.durationInSeconds ?? payload.duration ?? 0);
-  const cost = Number(payload.amount ?? payload.cost ?? 0);
+  const recordingUrl = String(payload.recordingUrl ?? payload.recording_url ?? payload.recording?.url ?? "");
+  const duration = Number(payload.durationInSeconds ?? payload.duration_seconds ?? payload.duration ?? 0);
+  const cost = Number(payload.amount ?? payload.cost ?? payload.charge ?? 0);
 
   let session: any = null;
   if (clientRequestId) {
@@ -47,13 +47,12 @@ Deno.serve(async (req) => {
     const { data } = await service.from("follow_up_call_sessions").select("*").eq("provider_session_id", sessionId).maybeSingle();
     session = data;
   }
-  // Some callback payloads omit clientRequestId; fall back to the most recent
-  // dialing session for the operator number.
-  if (!session && payload.destinationNumber) {
+  // Some callbacks omit clientRequestId; fall back to the most recent active session.
+  if (!session && (payload.destinationNumber || payload.to || payload.toNumber)) {
     const { data } = await service
       .from("follow_up_call_sessions")
       .select("*")
-      .eq("operator_phone", String(payload.destinationNumber))
+      .eq("operator_phone", String(payload.destinationNumber ?? payload.to ?? payload.toNumber))
       .in("status", ["queued", "dialing", "ringing"])
       .order("created_at", { ascending: false })
       .limit(1)
@@ -110,16 +109,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  // When the AT callback represents the first leg of an outbound call, bridge the operator to the member.
-  if (session && payload.isActive === "1" && session.operator_phone && session.member_phone) {
-    const { data: settings } = await service
-      .from("follow_up_communication_settings")
-      .select("voice_number")
-      .eq("id", true)
-      .maybeSingle();
-    const callerId = String(settings?.voice_number ?? "");
-    return xml(`<Say voice="woman" playBeep="false">This call is being connected through the Follow-Up system. The conversation may be recorded for follow-up and training purposes.</Say><Dial phoneNumbers="${esc(session.member_phone)}" callerId="${esc(callerId)}" record="true" sequential="true" />`);
-  }
+
 
   return new Response("OK");
 });
