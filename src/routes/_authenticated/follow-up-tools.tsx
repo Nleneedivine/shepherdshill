@@ -15,7 +15,7 @@ type Settings = {
   messaging_enabled: boolean;
   calling_enabled: boolean;
   voice_number: string | null;
-  sender_id: string | null;
+  sender_id: string | null;\n  messaging_agent_id: string | null;
   currency: string;
   voice_rate_per_minute: number | null;
   low_balance_threshold: number;
@@ -63,7 +63,7 @@ function FollowUpTools() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("follow_up_communication_settings" as any).select("provider,messaging_enabled,calling_enabled,voice_number,sender_id,currency,voice_rate_per_minute,low_balance_threshold").eq("id", true).maybeSingle();
+    const { data, error } = await supabase.from("follow_up_communication_settings" as any).select("provider,messaging_enabled,calling_enabled,voice_number,sender_id,messaging_agent_id,currency,voice_rate_per_minute,low_balance_threshold").eq("id", true).maybeSingle();
     if (error) showToast(error.message, "error");
     else if (data) {
       const next = data as Settings;
@@ -102,7 +102,7 @@ function FollowUpTools() {
       messaging_enabled: next.messaging_enabled,
       calling_enabled: next.calling_enabled,
       voice_number: next.voice_number,
-      sender_id: next.sender_id,
+      sender_id: next.sender_id,\n      messaging_agent_id: next.messaging_agent_id,
       voice_rate_per_minute: next.voice_rate_per_minute,
       low_balance_threshold: next.low_balance_threshold,
       updated_by: (await supabase.auth.getUser()).data.user?.id ?? null,
@@ -152,7 +152,7 @@ function FollowUpTools() {
               <button disabled={saving} onClick={() => void saveSettings({ calling_enabled: !settings.calling_enabled })} className={settings.calling_enabled ? "rounded-full bg-emerald-500/20 px-3 py-1.5 text-xs text-emerald-300" : "rounded-full bg-white/10 px-3 py-1.5 text-xs text-slate-300"}>{settings.calling_enabled ? "ON" : "OFF"}</button>
             </div>
             <div className="rounded-xl border border-amber-400/10 bg-amber-500/[0.04] p-3 text-xs text-slate-400">Keep calling OFF until the selected provider, real number, credentials and callback/webhook setup are configured.</div>
-          </div><p className="text-xs text-slate-500 mt-1">Only admins or the Follow-Up department head should change these values.</p><div className="grid md:grid-cols-3 gap-3 mt-4"><Input label="Voice number" value={settings.voice_number ?? ""} onChange={(e) => setSettings({ ...settings, voice_number: e.target.value })} placeholder="+234..." /><Input label="Sender ID" value={settings.sender_id ?? ""} onChange={(e) => setSettings({ ...settings, sender_id: e.target.value })} placeholder="ShepherdsHill" /><Input label="Voice rate / minute (NGN)" type="number" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="Enter current provider rate" /></div><div className="grid md:grid-cols-3 gap-3 mt-3"><Input label="Low balance alert (NGN)" type="number" value={threshold} onChange={(e) => setThreshold(e.target.value)} /><div className="md:col-span-2 flex items-end"><Button loading={saving} onClick={() => void saveSettings({ voice_number: settings.voice_number || null, sender_id: settings.sender_id || null, voice_rate_per_minute: rate ? Number(rate) : null, low_balance_threshold: threshold ? Number(threshold) : 5000 })}>Save settings</Button></div></div></div>
+          </div><p className="text-xs text-slate-500 mt-1">Only admins or the Follow-Up department head should change these values.</p><div className="grid md:grid-cols-3 gap-3 mt-4"><Input label="Voice number" value={settings.voice_number ?? ""} onChange={(e) => setSettings({ ...settings, voice_number: e.target.value })} placeholder="+234..." /><Input label="Sender ID" value={settings.sender_id ?? ""} onChange={(e) => setSettings({ ...settings, sender_id: e.target.value })} placeholder="ShepherdsHill" /><Input label="Messaging agent ID" value={settings.messaging_agent_id ?? ""} onChange={(e) => setSettings({ ...settings, messaging_agent_id: e.target.value })} placeholder="Provider agent ID" /><Input label="Voice rate / minute (NGN)" type="number" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="Enter current provider rate" /></div><div className="grid md:grid-cols-3 gap-3 mt-3"><Input label="Low balance alert (NGN)" type="number" value={threshold} onChange={(e) => setThreshold(e.target.value)} /><div className="md:col-span-2 flex items-end"><Button loading={saving} onClick={() => void saveSettings({ voice_number: settings.voice_number || null, sender_id: settings.sender_id || null, voice_rate_per_minute: rate ? Number(rate) : null, low_balance_threshold: threshold ? Number(threshold) : 5000 })}>Save settings</Button></div></div></div>
 
         <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5"><h2 className="font-semibold text-white">How to recharge</h2><div className="mt-3 space-y-2 text-sm text-slate-300"><p><b>1.</b> Tap <b>Recharge</b> above.</p><p><b>2.</b> In the provider dashboard, open <b>Billing / Top Up</b>.</p><p><b>3.</b> Choose the country and payment method, then complete the payment.</p><p><b>4.</b> Return here and tap <b>Check balance</b>.</p></div><p className="text-xs text-slate-500 mt-3">We deliberately do not store card details in Shepherd's Hill.</p><a className="inline-flex items-center gap-2 text-xs text-violet-300 mt-3 hover:text-white" href="https://voicebip.ng/" target="_blank" rel="noreferrer">Open provider billing <ExternalLink size={13} /></a></div>
 
