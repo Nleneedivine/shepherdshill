@@ -2,3 +2,8 @@ project_id = "sycqbqqyhcqbffjcheja"
 
 [functions.submit-registration]
 verify_jwt = false
+
+# Africa's Talking sends voice callbacks without a Supabase user JWT.
+# The webhook verifies AT_CALLBACK_SECRET inside the function.
+[functions.voice-webhook]
+verify_jwt = false
