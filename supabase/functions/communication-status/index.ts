@@ -21,12 +21,12 @@ Deno.serve(async (req) => {
 
   const { data: settings, error } = await supabase
     .from("follow_up_communication_settings")
-    .select("provider,currency")
+    .select("provider,voice_provider,currency")
     .eq("id", true)
     .maybeSingle();
   if (error) return reply({ configured: false, balance: null, currency: "NGN", last_synced_at: new Date().toISOString(), error: error.message }, 500);
 
-  const provider = settings?.provider ?? "none";
+  const provider = settings?.voice_provider ?? settings?.provider ?? "none";
   const currency = settings?.currency ?? "NGN";
   const now = new Date().toISOString();
 
