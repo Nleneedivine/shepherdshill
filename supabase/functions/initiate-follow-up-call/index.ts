@@ -44,7 +44,8 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (settingsError) return json({ error: settingsError.message }, 500);
   if (!settings?.calling_enabled) return json({ error: "System calling is currently turned off by an administrator" }, 400);
-  const voiceProvider = settings.voice_provider ?? settings.provider;\n  if (!voiceProvider) return json({ error: "No voice provider has been configured" }, 503);
+  const voiceProvider = settings.voice_provider ?? settings.provider;
+  if (!voiceProvider) return json({ error: "No voice provider has been configured" }, 503);
   if (!settings.voice_number) return json({ error: "The system voice number has not been configured" }, 400);
 
   const { data: member, error: memberError } = await userClient
