@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, FileAudio, Loader2, Play, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ds";
@@ -25,7 +25,7 @@ export function CallTranscriptionPanel({ memberId }: { memberId: string }) {
     setLoading(false);
   };
 
-  useState(() => { void load(); });
+  useEffect(() => { void load(); }, []);
 
   const transcribe = async (call: CallRow) => {
     setBusy(call.id);
