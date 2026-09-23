@@ -50,6 +50,7 @@ export function getVoiceProvider(provider: string): VoiceProvider {
         anonymization: false,
         notifyUrl: callbackUrl,
         notifyContentType: "application/json",
+        maxDuration: 300,
       }],
     };
 
@@ -74,10 +75,11 @@ export function getVoiceProvider(provider: string): VoiceProvider {
     const result = raw as Record<string, unknown>;
     const messages = Array.isArray(result?.messages) ? result.messages : [];
     const first = (messages[0] ?? {}) as Record<string, unknown>;
+    const providerError = String(first?.status?.description ?? first?.status?.name ?? first?.status ?? result?.errorMessage ?? "");
 
     return {
       providerSessionId: String(first?.messageId ?? first?.callId ?? first?.call_id ?? result?.bulkId ?? input.clientRequestId) || null,
-      raw,
+      raw: providerError ? { providerError, response: raw } : raw,
     };
   }
   if (provider === "notify_africa") {
