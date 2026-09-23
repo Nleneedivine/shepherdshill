@@ -42,10 +42,11 @@ export function getVoiceProvider(provider: string): VoiceProvider {
     const body = {
       bulkId: input.clientRequestId,
       messages: [{
-        messageId: input.clientRequestId,
         from: input.callerId.replace(/^\+/, ""),
+        fromB: input.callerId.replace(/^\+/, ""),
         destinationA: input.operatorPhone.replace(/^\+/, ""),
         destinationB: input.memberPhone.replace(/^\+/, ""),
+        messageId: input.clientRequestId,
         anonymization: false,
         notifyUrl: callbackUrl,
         notifyContentType: "application/json",
