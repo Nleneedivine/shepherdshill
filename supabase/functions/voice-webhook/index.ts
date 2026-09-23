@@ -99,7 +99,13 @@ Deno.serve(async (req) => {
 
   // When the AT callback represents the first leg of an outbound call, bridge the operator to the member.
   if (session && payload.isActive === "1" && session.operator_phone && session.member_phone) {
-    return xml(`<Say voice="woman" playBeep="false">This call is being connected through the Follow-Up system. The conversation may be recorded for follow-up and training purposes.</Say><Dial phoneNumbers="${esc(session.member_phone)}" callerId="${esc(session.voice_number ?? "")}" record="true" sequential="true" />`);
+    const { data: settings } = await service
+      .from("follow_up_communication_settings")
+      .select("voice_number")
+      .eq("id", true)
+      .maybeSingle();
+    const callerId = String(settings?.voice_number ?? "");
+    return xml(`<Say voice="woman" playBeep="false">This call is being connected through the Follow-Up system. The conversation may be recorded for follow-up and training purposes.</Say><Dial phoneNumbers="${esc(session.member_phone)}" callerId="${esc(callerId)}" record="true" sequential="true" />`);
   }
 
   return new Response("OK");
