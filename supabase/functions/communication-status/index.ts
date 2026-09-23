@@ -55,6 +55,19 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Infobip exposes voice usage and pricing through its portal/calculator,
+  // but this integration does not invent a balance endpoint or balance value.
+  if (provider === "infobip") {
+    const configured = Boolean(Deno.env.get("INFOBIP_API_KEY"));
+    return reply({
+      configured,
+      balance: null,
+      currency,
+      provider,
+      last_synced_at: now,
+      error: configured ? "Live balance is managed in the Infobip portal" : undefined,
+    });
+  }
   // Notify Africa's Voice API currently exposes call sessions, but its public
   // developer docs do not document a balance endpoint. We therefore never
   // invent a balance figure.
