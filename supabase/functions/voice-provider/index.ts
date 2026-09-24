@@ -84,6 +84,8 @@ export function getVoiceProvider(provider: string): VoiceProvider {
       providerSessionId: String(first?.messageId ?? first?.callId ?? first?.call_id ?? result?.bulkId ?? input.clientRequestId) || null,
       raw: providerError ? { providerError, response: raw } : raw,
     };
+      },
+    };
   }
   if (provider === "notify_africa") {
     return {
