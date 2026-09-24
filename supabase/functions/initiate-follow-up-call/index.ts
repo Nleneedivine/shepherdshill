@@ -41,7 +41,11 @@ function getVoiceProvider(provider: string): VoiceProvider {
       async startHumanBridgeCall(input) {
         const apiKey = env("INFOBIP_API_KEY");
         const baseUrl = env("INFOBIP_API_BASE_URL") || "https://api.infobip.com";
-        const path = env("INFOBIP_CLICK_TO_CALL_PATH") || "/voice/3/click-to-call";
+        // Infobip's Click-to-Call endpoint. Ignore the old, non-existent path if still configured.
+        const configuredPath = env("INFOBIP_CLICK_TO_CALL_PATH");
+        const path = configuredPath && !configuredPath.includes("/voice/3/click-to-call")
+          ? configuredPath
+          : "/voice/ctc/1/send";
         const callbackUrl = env("INFOBIP_CLICK_TO_CALL_NOTIFY_URL");
 
         if (!apiKey) throw new Error("Infobip API key is not configured");
