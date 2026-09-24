@@ -59,6 +59,14 @@ interface HistoryEvent {
   called_by: string | null;
 }
 
+interface FollowUpAssignment {
+  id: string;
+  worker_name: string | null;
+  worker_email: string | null;
+  due_date: string | null;
+  notes: string | null;
+}
+
 async function fetchQueuePage(
   stage: string,
   search: string,
