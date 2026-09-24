@@ -31,6 +31,9 @@ function env(name: string) {
  */
 export function getVoiceProvider(provider: string): VoiceProvider {
   if (provider === "infobip") {
+    return {
+      name: "infobip",
+      async startHumanBridgeCall(input) {
     const apiKey = env("INFOBIP_API_KEY");
     const baseUrl = env("INFOBIP_API_BASE_URL") || "https://api.infobip.com";
     const path = env("INFOBIP_CLICK_TO_CALL_PATH") || "/voice/3/click-to-call";
