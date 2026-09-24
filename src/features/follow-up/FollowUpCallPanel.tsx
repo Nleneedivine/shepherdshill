@@ -31,7 +31,7 @@ export function FollowUpCallPanel({ memberId, phone }: { memberId: string; phone
   useEffect(() => {
     setOperatorPhone(localStorage.getItem("follow-up-operator-phone") ?? "");
     void supabase.from("follow_up_communication_settings" as any).select("calling_enabled").eq("id", true).maybeSingle()
-      .then(({ data }) => setEnabled(Boolean(data?.calling_enabled)));
+      .then(({ data }) => setEnabled(Boolean((data as { calling_enabled?: boolean } | null)?.calling_enabled)));
   }, []);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export function FollowUpCallPanel({ memberId, phone }: { memberId: string; phone
         .select("id,status,duration_seconds,created_at,started_at,ended_at")
         .eq("id", callId)
         .maybeSingle();
-      if (!cancelled && data) setSession(data as CallSession);
+      if (!cancelled && data) setSession(data as unknown as CallSession);
     };
     void poll();
     const interval = window.setInterval(() => { void poll(); }, 3000);

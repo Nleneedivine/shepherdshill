@@ -69,7 +69,7 @@ function FollowUpTools() {
     const { data, error } = await supabase.from("follow_up_communication_settings" as any).select("provider,voice_provider,messaging_provider,messaging_enabled,calling_enabled,voice_number,sender_id,messaging_agent_id,currency,voice_rate_per_minute,low_balance_threshold").eq("id", true).maybeSingle();
     if (error) showToast(error.message, "error");
     else if (data) {
-      const next = data as Settings;
+      const next = data as unknown as Settings;
       setSettings(next);
       setRate(next.voice_rate_per_minute?.toString() ?? "");
       setThreshold(next.low_balance_threshold.toString());

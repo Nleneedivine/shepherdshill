@@ -37,7 +37,7 @@ export function CallTranscriptionPanel({ memberId }: { memberId: string }) {
       const { pipeline } = await import("@huggingface/transformers");
       const transcriber = await pipeline("automatic-speech-recognition", "Xenova/whisper-tiny.en", { dtype: "q8" });
       const result = await transcriber(url, { chunk_length_s: 30, stride_length_s: 5 });
-      const text = typeof result === "string" ? result : result?.text ?? "";
+      const text = typeof result === "string" ? result : ((Array.isArray(result) ? result[0]?.text : (result as { text?: string })?.text) ?? "");
       if (!text.trim()) throw new Error("No speech was detected");
       const { error: saveError } = await supabase.from("follow_up_call_sessions" as any).update({
         transcript: text.trim(),
