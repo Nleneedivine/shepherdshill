@@ -47,7 +47,8 @@ export function FollowUpCommunicationPanel({
   const [messageType, setMessageType] = useState("follow_up");
   const [body, setBody] = useState("");
   const [scheduledFor, setScheduledFor] = useState("");
-  const [saving, setSaving] = useState(false);\n  const [sending, setSending] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const { data: communications, isLoading } = useQuery({
     queryKey: ["follow-up-communications", memberId],

@@ -439,6 +439,86 @@ export type Database = {
           },
         ]
       }
+      follow_up_call_sessions: {
+        Row: {
+          client_request_id: string | null
+          cost: number | null
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          initiated_by: string | null
+          member_id: string
+          member_phone: string
+          operator_phone: string
+          provider: string
+          provider_session_id: string | null
+          recording_path: string | null
+          recording_status: string
+          recording_url: string | null
+          started_at: string | null
+          status: string
+          transcript: string | null
+          transcript_language: string | null
+          transcription_status: string
+          updated_at: string
+        }
+        Insert: {
+          client_request_id?: string | null
+          cost?: number | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          initiated_by?: string | null
+          member_id: string
+          member_phone: string
+          operator_phone: string
+          provider?: string
+          provider_session_id?: string | null
+          recording_path?: string | null
+          recording_status?: string
+          recording_url?: string | null
+          started_at?: string | null
+          status?: string
+          transcript?: string | null
+          transcript_language?: string | null
+          transcription_status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_request_id?: string | null
+          cost?: number | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          initiated_by?: string | null
+          member_id?: string
+          member_phone?: string
+          operator_phone?: string
+          provider?: string
+          provider_session_id?: string | null
+          recording_path?: string | null
+          recording_status?: string
+          recording_url?: string | null
+          started_at?: string | null
+          status?: string
+          transcript?: string | null
+          transcript_language?: string | null
+          transcription_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_up_call_sessions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follow_up_calls: {
         Row: {
           call_date: string
@@ -482,6 +562,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      follow_up_communication_settings: {
+        Row: {
+          calling_enabled: boolean
+          currency: string
+          id: boolean
+          low_balance_threshold: number
+          messaging_agent_id: string | null
+          messaging_enabled: boolean
+          messaging_provider: string
+          provider: string
+          sender_id: string | null
+          updated_at: string
+          updated_by: string | null
+          voice_number: string | null
+          voice_provider: string
+          voice_rate_per_minute: number | null
+        }
+        Insert: {
+          calling_enabled?: boolean
+          currency?: string
+          id?: boolean
+          low_balance_threshold?: number
+          messaging_agent_id?: string | null
+          messaging_enabled?: boolean
+          messaging_provider?: string
+          provider?: string
+          sender_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          voice_number?: string | null
+          voice_provider?: string
+          voice_rate_per_minute?: number | null
+        }
+        Update: {
+          calling_enabled?: boolean
+          currency?: string
+          id?: boolean
+          low_balance_threshold?: number
+          messaging_agent_id?: string | null
+          messaging_enabled?: boolean
+          messaging_provider?: string
+          provider?: string
+          sender_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          voice_number?: string | null
+          voice_provider?: string
+          voice_rate_per_minute?: number | null
+        }
+        Relationships: []
       }
       follow_up_goals: {
         Row: {
@@ -1585,6 +1716,38 @@ export type Database = {
         Args: { p_approve: boolean; p_notes?: string; p_transfer_id: string }
         Returns: undefined
       }
+      get_follow_up_call_sessions: {
+        Args: { p_member_id: string }
+        Returns: {
+          client_request_id: string | null
+          cost: number | null
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          initiated_by: string | null
+          member_id: string
+          member_phone: string
+          operator_phone: string
+          provider: string
+          provider_session_id: string | null
+          recording_path: string | null
+          recording_status: string
+          recording_url: string | null
+          started_at: string | null
+          status: string
+          transcript: string | null
+          transcript_language: string | null
+          transcription_status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "follow_up_call_sessions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_follow_up_communications: {
         Args: { p_member_id: string }
         Returns: {
@@ -1695,19 +1858,6 @@ export type Database = {
           email: string
           full_name: string
           user_id: string
-        }[]
-      }
-      get_follow_up_current_assignment: {
-        Args: { p_member_id: string }
-        Returns: {
-          assigned_to: string
-          created_at: string
-          due_date: string
-          id: string
-          notes: string
-          status: string
-          worker_email: string
-          worker_name: string
         }[]
       }
       grant_super_admin_by_email: { Args: { p_email: string }; Returns: string }

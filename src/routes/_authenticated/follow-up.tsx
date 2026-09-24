@@ -59,6 +59,14 @@ interface HistoryEvent {
   called_by: string | null;
 }
 
+interface FollowUpAssignment {
+  id: string;
+  worker_name: string | null;
+  worker_email: string | null;
+  due_date: string | null;
+  notes: string | null;
+}
+
 async function fetchQueuePage(
   stage: string,
   search: string,
@@ -612,12 +620,13 @@ function MemberProfileModal({
   const [assigning, setAssigning] = useState(false);
   const { data: currentAssignment, refetch: refetchAssignment } = useQuery({
     queryKey: ["follow-up-current-assignment", member.member_id],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_follow_up_current_assignment", {
+    queryFn: async (): Promise<FollowUpAssignment | null> => {
+      const { data, error } = await supabase.rpc("get_follow_up_current_assignment" as never, {
         p_member_id: member.member_id,
-      });
+      } as never);
       if (error) throw error;
-      return data?.[0] ?? null;
+      const rows = (data ?? []) as unknown as FollowUpAssignment[];
+      return rows[0] ?? null;
     },
   });
 
@@ -881,10 +890,10 @@ function CallLogModal({
 
       // Completing an assignment here closes the current action while preserving
       // the call itself as the durable history record.
-      const { data: assignment } = await supabase.rpc("get_follow_up_current_assignment", {
+      const { data: assignment } = await supabase.rpc("get_follow_up_current_assignment" as never, {
         p_member_id: member.member_id,
-      });
-      const openAssignment = assignment?.[0];
+      } as never);
+      const openAssignment = ((assignment ?? []) as unknown as FollowUpAssignment[])[0];
       if (openAssignment) {
         await supabase.rpc("complete_follow_up_assignment", {
           p_assignment_id: openAssignment.id,
