@@ -21,6 +21,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SermonsIdRouteImport } from './routes/sermons_.$id'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthenticatedSuperAdminRouteImport } from './routes/_authenticated/super-admin'
+import { Route as AuthenticatedFollowUpToolsRouteImport } from './routes/_authenticated/follow-up-tools'
 import { Route as AuthenticatedFollowUpRouteImport } from './routes/_authenticated/follow-up'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSuperAdminIndexRouteImport } from './routes/_authenticated/super-admin.index'
@@ -105,6 +106,12 @@ const AuthenticatedSuperAdminRoute = AuthenticatedSuperAdminRouteImport.update({
   path: '/super-admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFollowUpToolsRoute =
+  AuthenticatedFollowUpToolsRouteImport.update({
+    id: '/follow-up-tools',
+    path: '/follow-up-tools',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFollowUpRoute = AuthenticatedFollowUpRouteImport.update({
   id: '/follow-up',
   path: '/follow-up',
@@ -258,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/visit': typeof VisitRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/follow-up': typeof AuthenticatedFollowUpRoute
+  '/follow-up-tools': typeof AuthenticatedFollowUpToolsRoute
   '/super-admin': typeof AuthenticatedSuperAdminRouteWithChildren
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/sermons/$id': typeof SermonsIdRoute
@@ -295,6 +303,7 @@ export interface FileRoutesByTo {
   '/visit': typeof VisitRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/follow-up': typeof AuthenticatedFollowUpRoute
+  '/follow-up-tools': typeof AuthenticatedFollowUpToolsRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/sermons/$id': typeof SermonsIdRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
@@ -333,6 +342,7 @@ export interface FileRoutesById {
   '/visit': typeof VisitRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/follow-up': typeof AuthenticatedFollowUpRoute
+  '/_authenticated/follow-up-tools': typeof AuthenticatedFollowUpToolsRoute
   '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRouteWithChildren
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/sermons_/$id': typeof SermonsIdRoute
@@ -372,6 +382,7 @@ export interface FileRouteTypes {
     | '/visit'
     | '/dashboard'
     | '/follow-up'
+    | '/follow-up-tools'
     | '/super-admin'
     | '/auth/reset-password'
     | '/sermons/$id'
@@ -409,6 +420,7 @@ export interface FileRouteTypes {
     | '/visit'
     | '/dashboard'
     | '/follow-up'
+    | '/follow-up-tools'
     | '/auth/reset-password'
     | '/sermons/$id'
     | '/admin/departments'
@@ -446,6 +458,7 @@ export interface FileRouteTypes {
     | '/visit'
     | '/_authenticated/dashboard'
     | '/_authenticated/follow-up'
+    | '/_authenticated/follow-up-tools'
     | '/_authenticated/super-admin'
     | '/auth/reset-password'
     | '/sermons_/$id'
@@ -570,6 +583,13 @@ declare module '@tanstack/react-router' {
       path: '/super-admin'
       fullPath: '/super-admin'
       preLoaderRoute: typeof AuthenticatedSuperAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/follow-up-tools': {
+      id: '/_authenticated/follow-up-tools'
+      path: '/follow-up-tools'
+      fullPath: '/follow-up-tools'
+      preLoaderRoute: typeof AuthenticatedFollowUpToolsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/follow-up': {
@@ -776,6 +796,7 @@ const AuthenticatedSuperAdminRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFollowUpRoute: typeof AuthenticatedFollowUpRoute
+  AuthenticatedFollowUpToolsRoute: typeof AuthenticatedFollowUpToolsRoute
   AuthenticatedSuperAdminRoute: typeof AuthenticatedSuperAdminRouteWithChildren
   AuthenticatedAdminDepartmentsRoute: typeof AuthenticatedAdminDepartmentsRoute
   AuthenticatedAdminDraftsRoute: typeof AuthenticatedAdminDraftsRoute
@@ -795,6 +816,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFollowUpRoute: AuthenticatedFollowUpRoute,
+  AuthenticatedFollowUpToolsRoute: AuthenticatedFollowUpToolsRoute,
   AuthenticatedSuperAdminRoute: AuthenticatedSuperAdminRouteWithChildren,
   AuthenticatedAdminDepartmentsRoute: AuthenticatedAdminDepartmentsRoute,
   AuthenticatedAdminDraftsRoute: AuthenticatedAdminDraftsRoute,
