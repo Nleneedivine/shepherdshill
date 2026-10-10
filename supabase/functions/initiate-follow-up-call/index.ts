@@ -34,13 +34,21 @@ function env(name: string) {
   return Deno.env.get(name)?.trim() ?? "";
 }
 
+function normalizeNigerianPhone(value: string): string {
+  const digits = value.replace(/[\\s().-]/g, "").replace(/^\\+/, "");
+  if (/^0[789][01]\\d{8}$/.test(digits)) return "234" + digits.slice(1);
+  if (/^234[789][01]\\d{8}$/.test(digits)) return digits;
+  if (/^\\d{8,15}$/.test(digits)) return digits;
+  throw new Error("Invalid phone number. Use a Nigerian mobile number such as 08012345678 or +2348012345678.");
+}
+
 function getVoiceProvider(provider: string): VoiceProvider {
   if (provider === "infobip") {
     return {
       name: "infobip",
       async startHumanBridgeCall(input) {
         const apiKey = env("INFOBIP_API_KEY");
-        const baseUrl = env("INFOBIP_API_BASE_URL") || "https://api.infobip.com";
+        const baseUrl = env("INFOBIP_API_BASE_URL") || "https://4knxlp.api.infobip.com";
         // Infobip's Click-to-Call endpoint. Ignore the old, non-existent path if still configured.
         const configuredPath = env("INFOBIP_CLICK_TO_CALL_PATH");
         const path = configuredPath && !configuredPath.includes("/voice/3/click-to-call")
@@ -87,11 +95,16 @@ function getVoiceProvider(provider: string): VoiceProvider {
         const result = raw as Record<string, unknown>;
         const messages = Array.isArray(result?.messages) ? result.messages : [];
         const first = (messages[0] ?? {}) as Record<string, unknown>;
-        const providerError = String(first?.status?.description ?? first?.status?.name ?? first?.status ?? result?.errorMessage ?? "");
+        const status = first?.status as Record<string, unknown> | string | undefined;
+        const statusName = typeof status === "object" ? String(status?.name ?? "") : String(status ?? "");
+        const providerError = String((typeof status === "object" ? status?.description : "") ?? result?.errorMessage ?? result?.requestError?.serviceException?.text ?? "");
+        if (statusName && !/^(accepted|pending|queued|sent|delivered|200)$/i.test(statusName)) {
+          throw new Error("Infobip rejected the call: " + (providerError || statusName));
+        }
 
         return {
           providerSessionId: String(first?.messageId ?? first?.callId ?? first?.call_id ?? result?.bulkId ?? input.clientRequestId) || null,
-          raw: providerError ? { providerError, response: raw } : raw,
+          raw: { response: raw, providerStatus: statusName || "accepted", providerError },
         };
       },
     };
@@ -211,7 +224,7 @@ Deno.serve(async (req) => {
       member_id: member.id,
       initiated_by: userId,
       operator_phone: operatorPhone,
-      member_phone: member.phone_primary,
+      member_phone: normalizeNigerianPhone(member.phone_primary),
       client_request_id: clientRequestId,
       provider: voiceProvider,
       status: "queued",
@@ -225,7 +238,7 @@ Deno.serve(async (req) => {
     const provider = getVoiceProvider(voiceProvider);
     const result = await provider.startHumanBridgeCall({
       operatorPhone,
-      memberPhone: member.phone_primary,
+      memberPhone: normalizeNigerianPhone(member.phone_primary),
       callerId: settings.voice_number,
       clientRequestId,
     });
@@ -240,6 +253,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     await serviceClient.from("follow_up_call_sessions").update({
       status: "failed",
+      error_message: error instanceof Error ? error.message.slice(0, 1000) : "Call request failed",
       updated_at: new Date().toISOString(),
     }).eq("id", session.id);
 
