@@ -127,7 +127,7 @@ BEGIN
     AND role IN (
       'member','first_timer','visitor','volunteer','worker','pastoral_team',
       'senior_pastor','provincial_pastor','zonal_pastor','area_supervisor',
-      'parish_pastor','counselling_pastor','department_head','cell_leader',
+      'parish_pastor','counselling_pastor','finance_director','department_head','cell_leader',
       'prayer_coordinator','admin','super_admin'
     );
 
