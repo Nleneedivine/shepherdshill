@@ -30,6 +30,30 @@ const optionalUuid = (value: unknown): string | null | undefined => {
   return value;
 };
 
+async function readBodyLimited(req: Request, maxBytes: number): Promise<string> {
+  if (!req.body) return "";
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new Error("payload_too_large");
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
+}
+
 function cleanObject(source: Record<string, unknown>, schema: Record<string, number>) {
   const result: Record<string, string | null> = {};
   for (const [key, max] of Object.entries(schema)) {
@@ -80,8 +104,11 @@ Deno.serve(async (req) => {
 
     let body: unknown;
     try {
-      body = await req.json();
-    } catch {
+      body = JSON.parse(await readBodyLimited(req, 64 * 1024));
+    } catch (error) {
+      if (error instanceof Error && error.message === "payload_too_large") {
+        return json({ error: "Submission is too large" }, 413);
+      }
       return json({ error: "Invalid JSON body" }, 400);
     }
     if (!isRecord(body) || !isRecord(body.submission) || typeof body.turnstileToken !== "string" || body.turnstileToken.length > 4096) {
