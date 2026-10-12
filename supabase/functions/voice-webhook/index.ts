@@ -40,16 +40,47 @@ const esc = (value: string) => value
 
 async function readPayload(req: Request) {
   const contentType = (req.headers.get("content-type") ?? "").toLowerCase();
-  if (contentType.includes("application/json")) return await req.json();
-  if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
-    const form = await req.formData();
-    const result: Record<string, string> = {};
-    for (const [key, value] of form.entries()) {
-      if (typeof value === "string") result[key] = value;
-    }
-    return result;
+  if (!contentType.includes("application/json") &&
+      !contentType.includes("application/x-www-form-urlencoded") &&
+      !contentType.includes("multipart/form-data")) {
+    throw new Error("unsupported_content_type");
   }
-  throw new Error("unsupported_content_type");
+
+  // Bound the actual streamed body even when Content-Length is missing or false.
+  const reader = req.body?.getReader();
+  if (!reader) throw new Error("empty_callback_body");
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_CALLBACK_BYTES) {
+      await reader.cancel();
+      throw new Error("callback_too_large");
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  const boundedRequest = new Request(req.url, {
+    method: "POST",
+    headers: { "content-type": req.headers.get("content-type") ?? "" },
+    body: bytes,
+  });
+  if (contentType.includes("application/json")) return await boundedRequest.json();
+
+  const form = await boundedRequest.formData();
+  const result: Record<string, string> = {};
+  for (const [key, value] of form.entries()) {
+    if (typeof value === "string") result[key] = value;
+  }
+  return result;
 }
 
 function allowedRecordingUrl(raw: string): URL | null {
