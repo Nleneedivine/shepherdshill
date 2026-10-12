@@ -243,7 +243,14 @@ Deno.serve(async (req) => {
     if (photoUrl) {
       try {
         const parsedPhotoUrl = new URL(photoUrl);
-        if (parsedPhotoUrl.protocol !== "https:") return json({ error: "Invalid profile photo URL" }, 400);
+        const trustedStorageHost = new URL(supabaseUrl).host;
+        if (
+          parsedPhotoUrl.protocol !== "https:" ||
+          parsedPhotoUrl.host !== trustedStorageHost ||
+          !parsedPhotoUrl.pathname.startsWith("/storage/v1/object/public/member-photos/onboarding/")
+        ) {
+          return json({ error: "Invalid profile photo URL" }, 400);
+        }
       } catch {
         return json({ error: "Invalid profile photo URL" }, 400);
       }
