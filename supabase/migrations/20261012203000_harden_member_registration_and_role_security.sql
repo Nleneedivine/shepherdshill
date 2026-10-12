@@ -17,6 +17,10 @@ DROP POLICY IF EXISTS "Anyone can submit registration" ON public.member_registra
 REVOKE INSERT ON public.member_registrations FROM anon, authenticated;
 GRANT INSERT ON public.member_registrations TO service_role;
 
+-- Support the rolling one-hour count without a full table scan.
+CREATE INDEX IF NOT EXISTS idx_registration_attempts_ip_created_at
+  ON public.registration_attempts (ip_address, created_at DESC);
+
 -- Serialize attempts by IP and authenticated user so concurrent requests cannot
 -- all pass a count-then-insert rate limit at once.
 CREATE OR REPLACE FUNCTION public.consume_registration_rate_limit(
@@ -123,7 +127,8 @@ BEGIN
     AND role IN (
       'member','first_timer','visitor','volunteer','worker','pastoral_team',
       'senior_pastor','provincial_pastor','zonal_pastor','area_supervisor',
-      'parish_pastor','counselling_pastor','admin','super_admin'
+      'parish_pastor','counselling_pastor','department_head','cell_leader',
+      'prayer_coordinator','admin','super_admin'
     );
 
   INSERT INTO public.user_roles (user_id, role, branch_id, assigned_by, assigned_at)
