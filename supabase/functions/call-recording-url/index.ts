@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
   const { data: superAdmin } = await user.rpc("has_role", { _user_id: auth.user.id, _role: "super_admin" });
   if (!allowed && !admin && !superAdmin) return new Response(JSON.stringify({ error: "Not authorized" }), { status: 403, headers: { ...cors, "Content-Type": "application/json" } });
 
-  const body = await readJsonLimited(req, 8 * 1024).catch(() => ({}));
+  const body: Record<string, unknown> = await readJsonLimited(req, 8 * 1024).catch((): Record<string, unknown> => ({}));
   const callId = typeof body.call_id === "string" ? body.call_id : "";
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(callId)) {
     return new Response(JSON.stringify({ error: "A valid call_id is required" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
