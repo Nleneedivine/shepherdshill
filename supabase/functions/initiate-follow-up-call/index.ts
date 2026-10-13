@@ -97,7 +97,9 @@ function getVoiceProvider(provider: string): VoiceProvider {
         const first = (messages[0] ?? {}) as Record<string, unknown>;
         const status = first?.status as Record<string, unknown> | string | undefined;
         const statusName = typeof status === "object" ? String(status?.name ?? "") : String(status ?? "");
-        const providerError = String((typeof status === "object" ? status?.description : "") ?? result?.errorMessage ?? result?.requestError?.serviceException?.text ?? "");
+        const requestError = result?.requestError as Record<string, unknown> | undefined;
+        const serviceException = requestError?.serviceException as Record<string, unknown> | undefined;
+        const providerError = String((typeof status === "object" ? status?.description : "") ?? result?.errorMessage ?? serviceException?.text ?? "");
         if (statusName && !/^(accepted|pending|queued|sent|delivered|200)$/i.test(statusName)) {
           throw new Error("Infobip rejected the call: " + (providerError || statusName));
         }
@@ -216,7 +218,7 @@ Deno.serve(async (req) => {
   const { data: superAdmin } = await userClient.rpc("has_role", { _user_id: userId, _role: "super_admin" });
   if (!allowed && !admin && !superAdmin) return json({ error: "Not authorized" }, 403);
 
-  const body = await readJsonLimited(req, 16 * 1024).catch(() => ({}));
+  const body: Record<string, unknown> = await readJsonLimited(req, 16 * 1024).catch((): Record<string, unknown> => ({}));
   const memberId = typeof body.member_id === "string" ? body.member_id : "";
   const operatorPhone = typeof body.operator_phone === "string" ? body.operator_phone.trim() : "";
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
