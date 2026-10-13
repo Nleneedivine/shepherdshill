@@ -40,8 +40,8 @@ export function Step4Church({ data, errors, onChange }: Props) {
     if (!search || data.cellGroupText === "unknown") { setResults([]); return; }
     const t = setTimeout(async () => {
       const { data: rows } = await supabase
-        .from("cell_groups")
-        .select("*")
+        .from("public_cell_group_options")
+        .select("id, name, leader_name, meeting_day, meeting_time, branch_id, parish_id, is_active")
         .or(`name.ilike.%${search}%,leader_name.ilike.%${search}%`)
         .limit(8);
       setResults((rows as CellGroup[]) ?? []);
