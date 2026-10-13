@@ -40,7 +40,7 @@ ORDER BY e.enumsortorder;
 SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
 FROM pg_policies
 WHERE schemaname = 'public'
-  AND tablename IN ('members', 'member_registrations', 'registration_attempts', 'user_roles', 'form_drafts')
+  AND tablename IN ('members', 'member_registrations', 'registration_attempts', 'user_roles', 'form_drafts', 'system_logs')
 ORDER BY tablename, policyname;
 
 -- 4) Inspect table privileges for the registration intake table.
