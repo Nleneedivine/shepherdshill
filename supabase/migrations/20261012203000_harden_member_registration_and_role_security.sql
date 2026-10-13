@@ -76,8 +76,73 @@ CREATE POLICY "Authenticated insert own logs"
 DROP POLICY IF EXISTS "Auth users read members" ON public.members;
 DROP POLICY IF EXISTS "Admins manage members" ON public.members;
 
--- Keep the newer "Members read own or admins read all" and
--- "Admins can manage members" policies as the intended access boundaries.
+-- Branch resolution is centralized so RLS policies and privileged functions use
+-- the same scope. Super admins are global; other staff must have an assigned branch.
+CREATE OR REPLACE FUNCTION public.current_user_branch()
+RETURNS uuid
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+  SELECT COALESCE(
+    (SELECT p.branch_id FROM public.profiles p WHERE p.id = auth.uid()),
+    (SELECT ur.branch_id FROM public.user_roles ur
+     WHERE ur.user_id = auth.uid() AND ur.branch_id IS NOT NULL
+     ORDER BY ur.assigned_at DESC NULLS LAST
+     LIMIT 1)
+  );
+$function$;
+
+REVOKE ALL ON FUNCTION public.current_user_branch() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.current_user_branch() TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.can_access_member(p_member_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+  SELECT CASE
+    WHEN auth.uid() IS NULL THEN false
+    WHEN public.has_role(auth.uid(), 'super_admin') THEN true
+    WHEN EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() AND p.member_id = p_member_id
+    ) THEN true
+    WHEN public.is_pastoral(auth.uid()) THEN EXISTS (
+      SELECT 1 FROM public.members m
+      WHERE m.id = p_member_id
+        AND m.branch_id = public.current_user_branch()
+    )
+    ELSE false
+  END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.can_access_member(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.can_access_member(uuid) TO authenticated, service_role;
+
+-- Replace the later broad policies as well: RLS policies are OR-ed, so leaving
+-- "Admins can manage members" or the pastoral read policy unchanged would undo
+-- branch scoping even after removing the oldest permissive policy.
+DROP POLICY IF EXISTS "Members read own or admins read all" ON public.members;
+CREATE POLICY "Members read own or admins read all"
+  ON public.members FOR SELECT TO authenticated
+  USING (public.can_access_member(id));
+
+DROP POLICY IF EXISTS "Admins can manage members" ON public.members;
+CREATE POLICY "Admins can manage members"
+  ON public.members FOR ALL TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND branch_id = public.current_user_branch())
+  )
+  WITH CHECK (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND branch_id = public.current_user_branch())
+  );
+
 
 -- Remove the legacy storage read policy that allowed anon/authenticated
 -- clients to read every object in the member-photos bucket. The later staff
