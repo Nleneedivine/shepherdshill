@@ -29,13 +29,14 @@ The callback accepts `x-voice-callback-secret` where the provider supports custo
 3. As worker, pastoral-team, senior-pastor, admin, and super-admin accounts, verify only the intended read/write operations remain available.
 4. Confirm pastoral roles can read authorized member records but cannot update/delete members unless separately authorized by the admin policy.
 5. Confirm direct INSERT into `member_registrations` fails for both `anon` and `authenticated`; confirm the Edge Function still accepts a valid authenticated submission with valid Turnstile.
-6. Confirm missing/invalid JWTs, missing Turnstile, malformed JSON, overlong fields, invalid UUIDs, and invalid consent are rejected.
-7. Send concurrent registration requests and verify the database rate limit never accepts more than five attempts per hour for one IP or user.
-8. Verify an admin cannot grant pastoral/super-admin roles, cannot modify a super-admin, cannot change their own role, and cannot assign roles to users in another branch. Verify a super-admin can perform the intended role-management operations.
-9. Verify voice callback requests fail with 503 when the secret is absent, 401 for a wrong secret, and 400 for a missing call identifier.
-10. Verify a recording URL on an unapproved host is never fetched, redirects are rejected, oversized recordings are rejected, and valid provider recordings are stored in the private bucket.
-11. Exercise registration, approval, member search, follow-up assignment, call status updates, and recording playback end-to-end.
-12. Confirm build, lint, TypeScript checks, and CI pass before merge.
+6. Confirm the `anon` role has no SELECT/INSERT/UPDATE/DELETE grant or policy on `form_drafts`; confirm anonymous-authenticated visitors can only read/write rows with their own `user_id`.
+7. Confirm missing/invalid JWTs, missing Turnstile, malformed JSON, overlong fields, invalid UUIDs, and invalid consent are rejected.
+8. Send concurrent registration requests and verify the database rate limit never accepts more than five attempts per hour for one IP or user.
+9. Verify an admin cannot grant pastoral/super-admin roles, cannot modify a super-admin, cannot change their own role, and cannot assign roles to users in another branch. Verify a super-admin can perform the intended role-management operations.
+10. Verify voice callback requests fail with 503 when the secret is absent, 401 for a wrong secret, and 400 for a missing call identifier.
+11. Verify a recording URL on an unapproved host is never fetched, redirects are rejected, oversized recordings are rejected, and valid provider recordings are stored in the private bucket.
+12. Exercise registration, approval, member search, follow-up assignment, call status updates, and recording playback end-to-end.
+13. Confirm build, lint, TypeScript checks, and CI pass before merge.
 
 ## Operational caveats
 
