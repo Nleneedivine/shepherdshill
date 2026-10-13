@@ -738,4 +738,69 @@ $function$;
 REVOKE ALL ON FUNCTION public.get_follow_up_call_sessions(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_follow_up_call_sessions(uuid) TO authenticated;
 
+CREATE OR REPLACE FUNCTION public.save_follow_up_call_transcript(
+  p_call_id uuid,
+  p_transcript text DEFAULT NULL,
+  p_language text DEFAULT 'en',
+  p_status text DEFAULT 'completed'
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+DECLARE
+  v_call public.follow_up_call_sessions%ROWTYPE;
+  v_member_branch uuid;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'unauthorized';
+  END IF;
+
+  IF p_status NOT IN ('completed', 'failed') THEN
+    RAISE EXCEPTION 'invalid transcription status';
+  END IF;
+  IF p_status = 'completed'
+     AND (p_transcript IS NULL OR length(btrim(p_transcript)) = 0 OR length(p_transcript) > 100000) THEN
+    RAISE EXCEPTION 'invalid transcript';
+  END IF;
+  IF p_language IS NOT NULL AND length(p_language) > 12 THEN
+    RAISE EXCEPTION 'invalid transcript language';
+  END IF;
+
+  SELECT * INTO v_call
+  FROM public.follow_up_call_sessions
+  WHERE id = p_call_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'call not found';
+  END IF;
+
+  SELECT m.branch_id INTO v_member_branch
+  FROM public.members m
+  WHERE m.id = v_call.member_id;
+
+  IF NOT (
+    public.has_role(auth.uid(), 'super_admin')
+    OR v_call.initiated_by = auth.uid()
+    OR (
+      (public.is_admin(auth.uid()) OR public.is_in_followup_department(auth.uid()))
+      AND v_member_branch IS NOT NULL
+      AND v_member_branch = public.current_user_branch()
+    )
+  ) THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+
+  UPDATE public.follow_up_call_sessions
+  SET transcript = CASE WHEN p_status = 'completed' THEN btrim(p_transcript) ELSE transcript END,
+      transcript_language = CASE WHEN p_status = 'completed' THEN COALESCE(NULLIF(p_language, ''), 'en') ELSE transcript_language END,
+      transcription_status = p_status,
+      updated_at = now()
+  WHERE id = p_call_id;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.save_follow_up_call_transcript(uuid, text, text, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.save_follow_up_call_transcript(uuid, text, text, text) TO authenticated;
+
 COMMIT;
