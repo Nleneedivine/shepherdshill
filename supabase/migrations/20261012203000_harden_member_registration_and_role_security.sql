@@ -168,6 +168,7 @@ ALTER TABLE public.member_registrations
 
 -- Scope registration and account metadata to the user's branch. Branchless
 -- registrations remain visible to super admins only until a branch is assigned.
+DROP POLICY IF EXISTS "Admins read registrations" ON public.member_registrations;
 DROP POLICY IF EXISTS "Admins can view registrations" ON public.member_registrations;
 CREATE POLICY "Admins can view registrations"
   ON public.member_registrations FOR SELECT TO authenticated
@@ -176,6 +177,7 @@ CREATE POLICY "Admins can view registrations"
     OR (public.is_pastoral(auth.uid()) AND branch_id = public.current_user_branch())
   );
 
+DROP POLICY IF EXISTS "Admins update registrations" ON public.member_registrations;
 DROP POLICY IF EXISTS "Admins can update registrations" ON public.member_registrations;
 CREATE POLICY "Admins can update registrations"
   ON public.member_registrations FOR UPDATE TO authenticated
