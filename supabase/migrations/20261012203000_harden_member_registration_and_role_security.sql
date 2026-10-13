@@ -373,9 +373,17 @@ BEGIN
   IF NOT v_is_super THEN
     v_actor_branch := public.current_user_branch();
 
-    SELECT branch_id INTO v_target_branch
-    FROM public.profiles
-    WHERE id = p_target_user_id;
+    SELECT COALESCE(
+      p.branch_id,
+      (SELECT ur.branch_id
+       FROM public.user_roles ur
+       WHERE ur.user_id = p.id AND ur.branch_id IS NOT NULL
+       ORDER BY ur.assigned_at DESC NULLS LAST
+       LIMIT 1)
+    )
+    INTO v_target_branch
+    FROM public.profiles p
+    WHERE p.id = p_target_user_id;
 
     IF v_actor_branch IS NULL THEN
       RAISE EXCEPTION 'forbidden: your admin account is not assigned to a branch';
