@@ -30,15 +30,16 @@ The callback accepts `x-voice-callback-secret` where the provider supports custo
 4. Confirm pastoral roles can read authorized member records but cannot update/delete members unless separately authorized by the admin policy.
 5. Confirm direct INSERT into `member_registrations` fails for both `anon` and `authenticated`; confirm the Edge Function still accepts a valid authenticated submission with valid Turnstile.
 6. Confirm the `anon` role has no SELECT/INSERT/UPDATE/DELETE grant or policy on `form_drafts`; confirm anonymous-authenticated visitors can only read/write rows with their own `user_id`.
-7. Inspect the `member-photos` bucket's `public` flag. If it is public, treat photo URLs as publicly accessible and plan a tested signed-URL migration before making it private.
-8. Confirm missing/invalid JWTs, missing Turnstile, malformed JSON, overlong fields, invalid UUIDs, and invalid consent are rejected.
-9. Send concurrent registration requests and verify the database rate limit never accepts more than five attempts per hour for one IP or user.
-10. Verify an admin cannot grant pastoral/super-admin roles, modify a super-admin, change their own role, assign roles across branches, or grant roles to profile-less anonymous auth users. Verify a super-admin can perform intended role-management operations.
-11. Verify a branch admin cannot approve another branch's registration or assign a cell group from another branch; verify a super-admin can approve across branches.
-12. Verify voice callback requests fail with 503 when the secret is absent, 401 for a wrong secret, and 400 for a missing call identifier.
-13. Verify a recording URL on an unapproved host is never fetched, redirects are rejected, oversized recordings are rejected, and valid provider recordings are stored in the private bucket.
-14. Exercise registration, approval, member search, follow-up assignment, call status updates, and recording playback end-to-end.
-15. Confirm build, lint, TypeScript checks for every Edge Function, and CI pass before merge.
+7. Confirm `anon` has no direct grants on `cell_groups` or `form_drafts`; verify the public cell-group options view exposes only the intended non-sensitive columns.
+8. Inspect the `member-photos` bucket's `public` flag. If it is public, treat photo URLs as publicly accessible and plan a tested signed-URL migration before making it private.
+9. Confirm missing/invalid JWTs, missing Turnstile, malformed JSON, overlong fields, invalid UUIDs, and invalid consent are rejected.
+10. Send concurrent registration requests and verify the database rate limit never accepts more than five attempts per hour for one IP or user.
+11. Verify an admin cannot grant pastoral/super-admin roles, modify a super-admin, change their own role, assign roles across branches, or grant roles to profile-less anonymous auth users. Verify a super-admin can perform intended role-management operations.
+12. Verify a branch admin cannot approve another branch's registration or assign a cell group from another branch; verify a super-admin can approve across branches.
+13. Verify voice callback requests fail with 503 when the secret is absent, 401 for a wrong secret, and 400 for a missing call identifier.
+14. Verify a recording URL on an unapproved host is never fetched, redirects are rejected, oversized recordings are rejected, and valid provider recordings are stored in the private bucket.
+15. Exercise registration, approval, member search, follow-up assignment, call status updates, and recording playback end-to-end.
+16. Confirm build, lint, TypeScript checks for every Edge Function, and CI pass before merge.
 
 ## Operational caveats
 
