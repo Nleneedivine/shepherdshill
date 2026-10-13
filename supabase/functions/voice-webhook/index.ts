@@ -216,8 +216,9 @@ Deno.serve(async (req) => {
     }
 
     if (recordingLocation) {
-      updates.recording_url = recordingLocation.toString();
-      updates.recording_status = "processing";
+      // Keep the provider's potentially signed URL out of the database. The
+      // private copy is stored as recording_path after the bounded download.
+      updates.recording_status = "pending";
     }
     if (updates.status === "completed") updates.ended_at = new Date().toISOString();
 
