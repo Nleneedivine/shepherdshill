@@ -163,10 +163,11 @@ Deno.serve(async (req) => {
   const sessionId = String(payload.sessionId ?? payload.callSessionId ?? payload.call_session_id ?? "").slice(0, 200);
   const clientRequestId = String(payload.clientRequestId ?? payload.messageId ?? payload.message_id ?? "").slice(0, 200);
   const status = String(statusName ?? payload.callStatus ?? payload.call_status ?? "").slice(0, 100);
-  const recordingUrl = String(payload.recordingUrl ?? payload.recording_url ??
+  const recordingValue = payload.recordingUrl ?? payload.recording_url ??
     (typeof payload.recording === "object" && payload.recording !== null
-      ? (payload.recording as Record<string, unknown>).url ?? ""
-      : "") ?? payload.fileUrl ?? payload.file_url ?? "").slice(0, 4096);
+      ? (payload.recording as Record<string, unknown>).url
+      : undefined) ?? payload.fileUrl ?? payload.file_url ?? "";
+  const recordingUrl = String(recordingValue).slice(0, 4096);
   const duration = Number(payload.durationInSeconds ?? payload.duration_seconds ?? payload.duration ?? payload.inboundDuration ?? 0);
   const cost = Number(payload.amount ?? payload.cost ?? payload.charge ?? 0);
 
