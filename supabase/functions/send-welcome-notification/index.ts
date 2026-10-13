@@ -18,7 +18,7 @@
 //   APP_URL                       (public app URL used in message body)
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 type Channel = "whatsapp" | "sms" | "imessage" | "auto";
 
