@@ -950,4 +950,464 @@ GRANT EXECUTE ON FUNCTION public.get_follow_up_communications(uuid) TO authentic
 REVOKE ALL ON FUNCTION public.queue_follow_up_message(uuid, text, text, text, timestamptz, boolean) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.queue_follow_up_message(uuid, text, text, text, timestamptz, boolean) TO authenticated;
 
+-- Branch-scope follow-up assignments, queue, stage counts, history, and worker lookup.
+DROP POLICY IF EXISTS "Follow-up staff read assignments" ON public.follow_up_assignments;
+CREATE POLICY "Follow-up staff read assignments"
+  ON public.follow_up_assignments FOR SELECT TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR assigned_to = auth.uid()
+    OR (
+      (public.is_admin(auth.uid()) OR public.is_in_followup_department(auth.uid()))
+      AND EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = follow_up_assignments.member_id
+          AND m.branch_id = public.current_user_branch()
+      )
+    )
+  );
+
+DROP POLICY IF EXISTS "Follow-up staff manage assignments" ON public.follow_up_assignments;
+REVOKE INSERT, UPDATE, DELETE ON public.follow_up_assignments FROM authenticated;
+GRANT SELECT ON public.follow_up_assignments TO authenticated;
+GRANT ALL ON public.follow_up_assignments TO service_role;
+
+CREATE OR REPLACE FUNCTION public.get_follow_up_workers()
+RETURNS TABLE(
+  user_id uuid,
+  full_name text,
+  email text
+)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+DECLARE
+  v_uid uuid := auth.uid();
+BEGIN
+  IF v_uid IS NULL OR NOT (
+    public.has_role(v_uid, 'admin')
+    OR public.has_role(v_uid, 'super_admin')
+    OR public.is_in_followup_department(v_uid)
+  ) THEN
+    RAISE EXCEPTION 'unauthorized';
+  END IF;
+
+  RETURN QUERY
+  SELECT DISTINCT
+    p.id,
+    COALESCE(NULLIF(trim(p.full_name), ''), p.email),
+    p.email
+  FROM public.profiles p
+  JOIN public.user_roles ur
+    ON ur.user_id = p.id
+  WHERE ur.role IN ('worker', 'pastoral_team', 'admin', 'super_admin')
+    AND (
+      public.has_role(v_uid, 'super_admin')
+      OR COALESCE(p.branch_id, ur.branch_id) = public.current_user_branch()
+    )
+  ORDER BY COALESCE(NULLIF(trim(p.full_name), ''), p.email);
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.get_follow_up_workers() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_follow_up_workers() TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.assign_follow_up(
+  p_member_id uuid,
+  p_assigned_to uuid,
+  p_due_date date DEFAULT NULL,
+  p_notes text DEFAULT NULL
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_assignment_id uuid;
+  v_is_super boolean;
+  v_actor_branch uuid;
+  v_member_branch uuid;
+  v_target_branch uuid;
+BEGIN
+  IF v_uid IS NULL OR NOT (
+    public.has_role(v_uid, 'admin')
+    OR public.has_role(v_uid, 'super_admin')
+    OR public.is_in_followup_department(v_uid)
+  ) THEN
+    RAISE EXCEPTION 'unauthorized';
+  END IF;
+
+  v_is_super := public.has_role(v_uid, 'super_admin');
+  v_actor_branch := public.current_user_branch();
+
+  SELECT branch_id INTO v_member_branch
+  FROM public.members
+  WHERE id = p_member_id AND membership_status = 'active';
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'active member not found';
+  END IF;
+
+  SELECT COALESCE(
+    p.branch_id,
+    (SELECT ur2.branch_id FROM public.user_roles ur2
+     WHERE ur2.user_id = p.id AND ur2.branch_id IS NOT NULL
+     ORDER BY ur2.assigned_at DESC NULLS LAST LIMIT 1)
+  )
+  INTO v_target_branch
+  FROM public.profiles p
+  WHERE p.id = p_assigned_to
+    AND EXISTS (
+      SELECT 1 FROM public.user_roles ur
+      WHERE ur.user_id = p.id
+        AND ur.role IN ('worker', 'pastoral_team', 'admin', 'super_admin')
+    );
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'invalid follow-up worker';
+  END IF;
+
+  IF NOT v_is_super THEN
+    IF v_actor_branch IS NULL OR v_member_branch IS DISTINCT FROM v_actor_branch THEN
+      RAISE EXCEPTION 'forbidden: member is outside your branch';
+    END IF;
+    IF v_target_branch IS NULL OR v_target_branch IS DISTINCT FROM v_actor_branch THEN
+      RAISE EXCEPTION 'forbidden: worker is outside your branch';
+    END IF;
+  END IF;
+
+  IF p_notes IS NOT NULL AND length(p_notes) > 2000 THEN
+    RAISE EXCEPTION 'assignment notes are too long';
+  END IF;
+
+  UPDATE public.follow_up_assignments
+  SET status = 'reassigned',
+      completed_at = COALESCE(completed_at, now())
+  WHERE member_id = p_member_id
+    AND status = 'open';
+
+  INSERT INTO public.follow_up_assignments (
+    member_id,
+    assigned_to,
+    assigned_by,
+    due_date,
+    notes
+  )
+  VALUES (
+    p_member_id,
+    p_assigned_to,
+    v_uid,
+    p_due_date,
+    NULLIF(trim(p_notes), '')
+  )
+  RETURNING id INTO v_assignment_id;
+
+  RETURN v_assignment_id;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.assign_follow_up(uuid, uuid, date, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.assign_follow_up(uuid, uuid, date, text) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.complete_follow_up_assignment(
+  p_assignment_id uuid
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_is_super boolean;
+  v_assigned_to uuid;
+  v_member_branch uuid;
+BEGIN
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'unauthorized';
+  END IF;
+
+  v_is_super := public.has_role(v_uid, 'super_admin');
+
+  SELECT a.assigned_to, m.branch_id
+  INTO v_assigned_to, v_member_branch
+  FROM public.follow_up_assignments a
+  JOIN public.members m ON m.id = a.member_id
+  WHERE a.id = p_assignment_id AND a.status = 'open';
+  IF NOT FOUND THEN RETURN false; END IF;
+
+  IF NOT (
+    v_assigned_to = v_uid
+    OR v_is_super
+    OR (
+      (public.is_admin(v_uid) OR public.is_in_followup_department(v_uid))
+      AND v_member_branch IS NOT NULL
+      AND v_member_branch = public.current_user_branch()
+    )
+  ) THEN
+    RETURN false;
+  END IF;
+
+  UPDATE public.follow_up_assignments
+  SET status = 'completed',
+      completed_at = now()
+  WHERE id = p_assignment_id AND status = 'open';
+
+  RETURN FOUND;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.complete_follow_up_assignment(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.complete_follow_up_assignment(uuid) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.get_follow_up_queue_page(
+  p_stage text DEFAULT 'first_timer',
+  p_search text DEFAULT NULL,
+  p_contact_filter text DEFAULT 'all',
+  p_limit integer DEFAULT 50,
+  p_offset integer DEFAULT 0
+)
+RETURNS TABLE(
+  member_id uuid,
+  first_name text,
+  last_name text,
+  phone_primary text,
+  address text,
+  membership_stage text,
+  cell_group_id uuid,
+  member_created_at timestamptz,
+  last_call_date timestamptz,
+  last_call_outcome text,
+  last_call_status text,
+  no_answer_count bigint,
+  last_stage_change timestamptz,
+  next_follow_up_date date,
+  is_overdue boolean,
+  total_count bigint
+)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_limit integer := LEAST(GREATEST(COALESCE(p_limit, 50), 1), 100);
+  v_offset integer := GREATEST(COALESCE(p_offset, 0), 0);
+  v_search text := NULLIF(trim(COALESCE(p_search, '')), '');
+BEGIN
+  IF v_uid IS NULL OR NOT (
+    public.has_role(v_uid, 'admin')
+    OR public.has_role(v_uid, 'super_admin')
+    OR public.is_in_followup_department(v_uid)
+  ) THEN
+    RAISE EXCEPTION 'unauthorized';
+  END IF;
+
+  IF p_stage NOT IN ('first_timer','consistent_visitor','in_foundational','member','all') THEN
+    RAISE EXCEPTION 'invalid follow-up stage';
+  END IF;
+
+  IF COALESCE(p_contact_filter, 'all') NOT IN ('all','never_called','missed','due_today','overdue') THEN
+    RAISE EXCEPTION 'invalid follow-up contact filter';
+  END IF;
+
+  RETURN QUERY
+  WITH base AS (
+    SELECT
+      m.id AS member_id,
+      m.first_name,
+      m.last_name,
+      m.phone_primary,
+      m.address,
+      m.membership_stage,
+      m.cell_group_id,
+      m.created_at AS member_created_at,
+      lc.call_date AS last_call_date,
+      lc.outcome AS last_call_outcome,
+      lc.status AS last_call_status,
+      COALESCE(na.count, 0)::bigint AS no_answer_count,
+      ls.changed_at AS last_stage_change,
+      lc.next_follow_up_date,
+      (lc.next_follow_up_date IS NOT NULL AND lc.next_follow_up_date < CURRENT_DATE) AS is_overdue
+    FROM public.members m
+    LEFT JOIN LATERAL (
+      SELECT fc.call_date, fc.outcome, fc.status, fc.next_follow_up_date
+      FROM public.follow_up_calls fc
+      WHERE fc.member_id = m.id
+      ORDER BY fc.call_date DESC, fc.created_at DESC
+      LIMIT 1
+    ) lc ON true
+    LEFT JOIN LATERAL (
+      SELECT count(*)::bigint AS count
+      FROM public.follow_up_calls fc
+      WHERE fc.member_id = m.id AND fc.outcome = 'no_answer'
+    ) na ON true
+    LEFT JOIN LATERAL (
+      SELECT msh.changed_at
+      FROM public.member_stage_history msh
+      WHERE msh.member_id = m.id
+      ORDER BY msh.changed_at DESC
+      LIMIT 1
+    ) ls ON true
+    WHERE m.membership_status = 'active'
+      AND (public.has_role(v_uid, 'super_admin') OR m.branch_id = public.current_user_branch())
+      AND (p_stage = 'all' OR m.membership_stage = p_stage)
+      AND (
+        v_search IS NULL
+        OR m.first_name ILIKE '%' || v_search || '%'
+        OR m.middle_name ILIKE '%' || v_search || '%'
+        OR m.last_name ILIKE '%' || v_search || '%'
+        OR m.preferred_name ILIKE '%' || v_search || '%'
+        OR m.member_code ILIKE '%' || v_search || '%'
+        OR COALESCE(m.phone_primary, '') ILIKE '%' || v_search || '%'
+      )
+      AND (
+        COALESCE(p_contact_filter, 'all') = 'all'
+        OR (p_contact_filter = 'never_called' AND lc.call_date IS NULL)
+        OR (p_contact_filter = 'missed' AND COALESCE(na.count, 0) > 0)
+        OR (p_contact_filter = 'due_today' AND lc.next_follow_up_date = CURRENT_DATE)
+        OR (p_contact_filter = 'overdue' AND lc.next_follow_up_date < CURRENT_DATE)
+      )
+  ),
+  counted AS (
+    SELECT base.*, count(*) OVER () AS total_count FROM base
+  )
+  SELECT
+    counted.member_id, counted.first_name, counted.last_name, counted.phone_primary,
+    counted.address, counted.membership_stage, counted.cell_group_id,
+    counted.member_created_at, counted.last_call_date, counted.last_call_outcome,
+    counted.last_call_status, counted.no_answer_count, counted.last_stage_change,
+    counted.next_follow_up_date, counted.is_overdue, counted.total_count
+  FROM counted
+  ORDER BY
+    CASE
+      WHEN counted.membership_stage = 'first_timer' THEN 0
+      WHEN counted.is_overdue THEN 1
+      WHEN counted.next_follow_up_date = CURRENT_DATE THEN 2
+      WHEN counted.next_follow_up_date IS NULL AND counted.last_call_date IS NULL THEN 3
+      ELSE 4
+    END,
+    CASE WHEN counted.membership_stage = 'first_timer' THEN counted.member_created_at END DESC,
+    counted.member_created_at DESC
+  LIMIT v_limit OFFSET v_offset;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.get_follow_up_queue_page(text, text, text, integer, integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_follow_up_queue_page(text, text, text, integer, integer) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.get_follow_up_stage_counts()
+RETURNS TABLE(
+  first_timer bigint,
+  consistent_visitor bigint,
+  in_foundational bigint,
+  member bigint,
+  total bigint
+)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+DECLARE
+  v_uid uuid := auth.uid();
+BEGIN
+  IF v_uid IS NULL OR NOT (
+    public.has_role(v_uid, 'admin')
+    OR public.has_role(v_uid, 'super_admin')
+    OR public.is_in_followup_department(v_uid)
+  ) THEN
+    RAISE EXCEPTION 'unauthorized';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    count(*) FILTER (WHERE membership_stage = 'first_timer'),
+    count(*) FILTER (WHERE membership_stage = 'consistent_visitor'),
+    count(*) FILTER (WHERE membership_stage = 'in_foundational'),
+    count(*) FILTER (WHERE membership_stage = 'member'),
+    count(*)
+  FROM public.members
+  WHERE membership_status = 'active'
+    AND (public.has_role(v_uid, 'super_admin') OR branch_id = public.current_user_branch())
+    AND membership_stage IN (
+      'first_timer',
+      'consistent_visitor',
+      'in_foundational',
+      'member'
+    );
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.get_follow_up_stage_counts() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_follow_up_stage_counts() TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.get_follow_up_member_history(p_member_id uuid)
+RETURNS TABLE(
+  event_type text,
+  event_at timestamptz,
+  outcome text,
+  status text,
+  notes text,
+  next_follow_up_date date,
+  old_stage text,
+  new_stage text,
+  called_by uuid
+)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+DECLARE
+  v_uid uuid := auth.uid();
+BEGIN
+  IF v_uid IS NULL OR NOT (
+    public.has_role(v_uid, 'admin')
+    OR public.has_role(v_uid, 'super_admin')
+    OR public.is_in_followup_department(v_uid)
+  ) THEN
+    RAISE EXCEPTION 'unauthorized';
+  END IF;
+
+  IF NOT public.has_role(v_uid, 'super_admin') AND NOT EXISTS (
+    SELECT 1 FROM public.members m
+    WHERE m.id = p_member_id AND m.branch_id = public.current_user_branch()
+  ) THEN
+    RAISE EXCEPTION 'unauthorized';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    'call'::text,
+    fc.call_date::timestamptz,
+    fc.outcome,
+    fc.status,
+    fc.notes,
+    fc.next_follow_up_date,
+    NULL::text,
+    NULL::text,
+    fc.called_by
+  FROM public.follow_up_calls fc
+  WHERE fc.member_id = p_member_id
+
+  UNION ALL
+
+  SELECT
+    'stage_change'::text,
+    msh.changed_at,
+    NULL::text,
+    NULL::text,
+    NULL::text,
+    NULL::date,
+    msh.old_stage,
+    msh.new_stage,
+    NULL::uuid
+  FROM public.member_stage_history msh
+  WHERE msh.member_id = p_member_id
+
+  ORDER BY event_at DESC;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.get_follow_up_member_history(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_follow_up_member_history(uuid) TO authenticated;
+
 COMMIT;
