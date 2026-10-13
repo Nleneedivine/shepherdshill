@@ -146,7 +146,7 @@ CREATE POLICY "Admins can manage members"
 -- leader phone numbers and private meeting addresses. Keep public registration
 -- lookup on a narrow view and require staff/linked members for base-table access.
 DROP POLICY IF EXISTS "Cell groups readable by all" ON public.cell_groups;
-REVOKE SELECT ON public.cell_groups FROM anon;
+REVOKE ALL ON public.cell_groups FROM anon;
 CREATE POLICY "Staff and linked members read cell groups"
   ON public.cell_groups FOR SELECT TO authenticated
   USING (
