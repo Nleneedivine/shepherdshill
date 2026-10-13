@@ -803,4 +803,151 @@ $function$;
 REVOKE ALL ON FUNCTION public.save_follow_up_call_transcript(uuid, text, text, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.save_follow_up_call_transcript(uuid, text, text, text) TO authenticated;
 
+-- Communication history and queueing are branch-scoped too. Clients may enqueue
+-- through the guarded RPC, but cannot directly forge/update message rows.
+DROP POLICY IF EXISTS "Follow-up staff can read messages" ON public.follow_up_messages;
+CREATE POLICY "Follow-up staff can read messages"
+  ON public.follow_up_messages FOR SELECT TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR created_by = auth.uid()
+    OR (
+      (public.is_admin(auth.uid()) OR public.is_in_followup_department(auth.uid()))
+      AND EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = follow_up_messages.member_id
+          AND m.branch_id = public.current_user_branch()
+      )
+    )
+  );
+
+DROP POLICY IF EXISTS "Follow-up staff can insert messages" ON public.follow_up_messages;
+REVOKE INSERT ON public.follow_up_messages FROM authenticated;
+GRANT SELECT ON public.follow_up_messages TO authenticated;
+GRANT ALL ON public.follow_up_messages TO service_role;
+
+CREATE OR REPLACE FUNCTION public.get_follow_up_communications(p_member_id uuid)
+RETURNS TABLE (
+  id uuid,
+  channel text,
+  message_type text,
+  body text,
+  status text,
+  automated boolean,
+  scheduled_for timestamptz,
+  sent_at timestamptz,
+  provider_message_id text,
+  error_message text,
+  created_by uuid,
+  created_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+BEGIN
+  IF auth.uid() IS NULL OR NOT (
+    public.has_role(auth.uid(), 'super_admin')
+    OR public.is_admin(auth.uid())
+    OR public.is_in_followup_department(auth.uid())
+  ) THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
+  IF NOT public.has_role(auth.uid(), 'super_admin') AND NOT EXISTS (
+    SELECT 1 FROM public.members m
+    WHERE m.id = p_member_id AND m.branch_id = public.current_user_branch()
+  ) THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
+  RETURN QUERY
+  SELECT m.id, m.channel, m.message_type, m.body, m.status, m.automated,
+         m.scheduled_for, m.sent_at, m.provider_message_id, m.error_message,
+         m.created_by, m.created_at
+  FROM public.follow_up_messages m
+  WHERE m.member_id = p_member_id
+  ORDER BY m.created_at DESC;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.queue_follow_up_message(
+  p_member_id uuid,
+  p_channel text,
+  p_body text,
+  p_message_type text DEFAULT 'manual',
+  p_scheduled_for timestamptz DEFAULT now(),
+  p_automated boolean DEFAULT false
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+DECLARE
+  v_message_id uuid;
+  v_opted_out boolean;
+BEGIN
+  IF auth.uid() IS NULL OR NOT (
+    public.has_role(auth.uid(), 'super_admin')
+    OR public.is_admin(auth.uid())
+    OR public.is_in_followup_department(auth.uid())
+  ) THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
+  IF NOT public.has_role(auth.uid(), 'super_admin') AND NOT EXISTS (
+    SELECT 1 FROM public.members m
+    WHERE m.id = p_member_id AND m.branch_id = public.current_user_branch()
+      AND m.membership_status = 'active'
+  ) THEN
+    RAISE EXCEPTION 'Member not found or outside your branch';
+  END IF;
+
+  IF p_automated AND NOT (
+    public.has_role(auth.uid(), 'super_admin') OR public.is_admin(auth.uid())
+  ) THEN
+    RAISE EXCEPTION 'Only admins may queue automated messages';
+  END IF;
+  IF p_channel NOT IN ('whatsapp', 'sms') THEN
+    RAISE EXCEPTION 'Unsupported communication channel';
+  END IF;
+  IF p_message_type NOT IN ('manual', 'welcome', 'reminder', 'follow_up', 'stage_update') THEN
+    RAISE EXCEPTION 'Unsupported message type';
+  END IF;
+  IF length(btrim(COALESCE(p_body, ''))) = 0 OR length(p_body) > 2000 THEN
+    RAISE EXCEPTION 'Message must contain 1 to 2000 characters';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.members
+    WHERE id = p_member_id AND membership_status = 'active'
+  ) THEN
+    RAISE EXCEPTION 'Member not found or inactive';
+  END IF;
+
+  SELECT COALESCE(notification_opt_out, false)
+  INTO v_opted_out
+  FROM public.members WHERE id = p_member_id;
+  IF v_opted_out THEN
+    RAISE EXCEPTION 'This member has opted out of notifications';
+  END IF;
+
+  INSERT INTO public.follow_up_messages (
+    member_id, channel, message_type, body, automated, scheduled_for, created_by
+  ) VALUES (
+    p_member_id, p_channel, p_message_type, btrim(p_body), p_automated,
+    COALESCE(p_scheduled_for, now()), auth.uid()
+  )
+  RETURNING id INTO v_message_id;
+
+  RETURN v_message_id;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.get_follow_up_communications(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_follow_up_communications(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.queue_follow_up_message(uuid, text, text, text, timestamptz, boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.queue_follow_up_message(uuid, text, text, text, timestamptz, boolean) TO authenticated;
+
 COMMIT;
