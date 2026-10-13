@@ -89,7 +89,7 @@ function getVoiceProvider(provider: string): VoiceProvider {
         try { raw = JSON.parse(text); } catch { /* keep raw text */ }
 
         if (!response.ok) {
-          throw new Error("Infobip rejected the call (" + response.status + "): " + text.slice(0, 500));
+          throw new Error("Infobip rejected the call (HTTP " + response.status + ")");
         }
 
         const result = raw as Record<string, unknown>;
@@ -144,7 +144,7 @@ function getVoiceProvider(provider: string): VoiceProvider {
         try { raw = JSON.parse(text); } catch { /* keep raw text */ }
 
         if (!response.ok) {
-          throw new Error(`Notify Africa rejected the call (${response.status}): ${text.slice(0, 500)}`);
+          throw new Error(`Notify Africa rejected the call (HTTP ${response.status})`);
         }
 
         const result = raw as Record<string, unknown>;
@@ -170,6 +170,10 @@ function getVoiceProvider(provider: string): VoiceProvider {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  const declaredLength = Number(req.headers.get("content-length") ?? 0);
+  if (Number.isFinite(declaredLength) && declaredLength > 16 * 1024) {
+    return json({ error: "Request too large" }, 413);
+  }
 
   const userClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -186,10 +190,11 @@ Deno.serve(async (req) => {
   if (!allowed && !admin && !superAdmin) return json({ error: "Not authorized" }, 403);
 
   const body = await req.json().catch(() => ({}));
-  const memberId = String(body.member_id ?? "");
-  const operatorPhone = String(body.operator_phone ?? "").trim();
-  if (!memberId || !/^\+\d{8,15}$/.test(operatorPhone)) {
-    return json({ error: "A valid operator phone in international format is required" }, 400);
+  const memberId = typeof body.member_id === "string" ? body.member_id : "";
+  const operatorPhone = typeof body.operator_phone === "string" ? body.operator_phone.trim() : "";
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (!uuidPattern.test(memberId) || !/^\+\d{8,15}$/.test(operatorPhone)) {
+    return json({ error: "A valid member ID and operator phone are required" }, 400);
   }
 
   const { data: settings, error: settingsError } = await userClient
@@ -253,12 +258,12 @@ Deno.serve(async (req) => {
   } catch (error) {
     await serviceClient.from("follow_up_call_sessions").update({
       status: "failed",
-      error_message: error instanceof Error ? error.message.slice(0, 1000) : "Call request failed",
+      error_message: "Voice provider call request failed",
       updated_at: new Date().toISOString(),
     }).eq("id", session.id);
 
     return json({
-      error: error instanceof Error ? error.message : "Call request failed",
+      error: "Voice provider call request failed",
       call_id: session.id,
     }, 502);
   }
