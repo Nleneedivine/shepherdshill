@@ -17,6 +17,7 @@ WHERE table_schema = 'public'
     ))
     OR (table_name = 'registration_attempts' AND column_name IN ('ip_address', 'created_at'))
     OR (table_name = 'form_drafts' AND column_name IN ('id', 'user_id', 'session_id', 'form_key', 'form_data', 'expires_at'))
+    OR (table_name = 'cell_groups' AND column_name IN ('id', 'branch_id', 'leader_name', 'leader_phone', 'address'))
     OR (table_name = 'user_roles' AND column_name IN (
       'user_id', 'role', 'branch_id', 'assigned_by', 'assigned_at'
     ))
@@ -40,7 +41,7 @@ ORDER BY e.enumsortorder;
 SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
 FROM pg_policies
 WHERE schemaname = 'public'
-  AND tablename IN ('members', 'member_registrations', 'registration_attempts', 'user_roles', 'form_drafts', 'system_logs', 'profiles')
+  AND tablename IN ('members', 'member_registrations', 'registration_attempts', 'user_roles', 'form_drafts', 'system_logs', 'profiles', 'cell_groups')
 ORDER BY tablename, policyname;
 
 -- 4) Inspect table privileges for the registration intake table.
@@ -71,9 +72,9 @@ ORDER BY policyname;
 SELECT grantee, privilege_type
 FROM information_schema.role_table_grants
 WHERE table_schema = 'public'
-  AND table_name = 'form_drafts'
+  AND table_name IN ('form_drafts', 'cell_groups')
   AND grantee = 'anon'
-ORDER BY privilege_type;
+ORDER BY table_name, privilege_type;
 
 -- 6) Inspect relevant function signatures and security properties.
 SELECT n.nspname AS schema_name, p.proname AS function_name,
