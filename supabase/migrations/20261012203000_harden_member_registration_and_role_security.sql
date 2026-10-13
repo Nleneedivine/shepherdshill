@@ -215,10 +215,10 @@ CREATE POLICY "Admins read all roles"
     public.has_role(auth.uid(), 'super_admin')
     OR (public.is_admin(auth.uid()) AND EXISTS (
       SELECT 1 FROM public.profiles p
-      WHERE p.id = public.user_roles.user_id
+      WHERE p.id = user_roles.user_id
         AND (
-          COALESCE(p.branch_id, public.user_roles.branch_id) = public.current_user_branch()
-          OR (p.branch_id IS NULL AND public.user_roles.branch_id IS NULL)
+          COALESCE(p.branch_id, user_roles.branch_id) = public.current_user_branch()
+          OR (p.branch_id IS NULL AND user_roles.branch_id IS NULL)
         )
     ))
   );
@@ -230,7 +230,7 @@ CREATE POLICY "Admins view all form drafts"
     public.has_role(auth.uid(), 'super_admin')
     OR (public.is_admin(auth.uid()) AND EXISTS (
       SELECT 1 FROM public.profiles p
-      WHERE p.id = public.form_drafts.user_id
+      WHERE p.id = form_drafts.user_id
         AND p.branch_id = public.current_user_branch()
     ))
   );
@@ -242,7 +242,7 @@ CREATE POLICY "Admins delete abandoned drafts"
     public.has_role(auth.uid(), 'super_admin')
     OR (public.is_admin(auth.uid()) AND EXISTS (
       SELECT 1 FROM public.profiles p
-      WHERE p.id = public.form_drafts.user_id
+      WHERE p.id = form_drafts.user_id
         AND p.branch_id = public.current_user_branch()
     ))
   );
