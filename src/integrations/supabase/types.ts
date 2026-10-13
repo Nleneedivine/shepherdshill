@@ -1762,6 +1762,15 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      save_follow_up_call_transcript: {
+        Args: {
+          p_call_id: string
+          p_language?: string | null
+          p_status?: string
+          p_transcript?: string | null
+        }
+        Returns: undefined
+      }
       get_follow_up_communications: {
         Args: { p_member_id: string }
         Returns: {
