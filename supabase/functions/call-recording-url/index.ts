@@ -53,9 +53,34 @@ Deno.serve(async (req) => {
   }
 
   const service = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
-  const { data: call, error } = await service.from("follow_up_call_sessions").select("id,recording_path").eq("id", callId).maybeSingle();
-  if (error || !call?.recording_path) return new Response(JSON.stringify({ error: "Recording is not available yet" }), { status: 404, headers: { ...cors, "Content-Type": "application/json" } });
+  const { data: call, error } = await service
+    .from("follow_up_call_sessions")
+    .select("id, member_id, initiated_by, recording_path")
+    .eq("id", callId)
+    .maybeSingle();
+  if (error || !call?.recording_path || !call.member_id) {
+    return new Response(JSON.stringify({ error: "Recording is not available" }), {
+      status: 404, headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "no-store" },
+    });
+  }
+
+  const { data: member } = await service
+    .from("members")
+    .select("branch_id")
+    .eq("id", call.member_id)
+    .maybeSingle();
+  const { data: callerBranch } = await user.rpc("current_user_branch");
+  if (!superAdmin && call.initiated_by !== auth.user.id &&
+      (!callerBranch || !member || member.branch_id !== callerBranch)) {
+    // Return the same response as a missing recording to avoid call-ID probing.
+    return new Response(JSON.stringify({ error: "Recording is not available" }), {
+      status: 404, headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "no-store" },
+    });
+  }
+
   const { data: signed, error: signedError } = await service.storage.from("call-recordings").createSignedUrl(call.recording_path, 3600);
   if (signedError) return new Response(JSON.stringify({ error: "Unable to create recording link" }), { status: 500, headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "no-store" } });
-  return new Response(JSON.stringify({ url: signed.signedUrl }), { headers: { ...cors, "Content-Type": "application/json" } });
+  return new Response(JSON.stringify({ url: signed.signedUrl }), {
+    headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "no-store" },
+  });
 });
