@@ -710,6 +710,7 @@ CREATE POLICY "follow_up_call_sessions_staff_select"
 
 DROP POLICY IF EXISTS "follow_up_call_sessions_staff_insert" ON public.follow_up_call_sessions;
 DROP POLICY IF EXISTS "follow_up_call_sessions_staff_update" ON public.follow_up_call_sessions;
+REVOKE ALL ON public.follow_up_call_sessions FROM PUBLIC, anon;
 REVOKE INSERT, UPDATE ON public.follow_up_call_sessions FROM authenticated;
 GRANT SELECT ON public.follow_up_call_sessions TO authenticated;
 GRANT ALL ON public.follow_up_call_sessions TO service_role;
@@ -822,6 +823,7 @@ CREATE POLICY "Follow-up staff can read messages"
   );
 
 DROP POLICY IF EXISTS "Follow-up staff can insert messages" ON public.follow_up_messages;
+REVOKE ALL ON public.follow_up_messages FROM PUBLIC, anon;
 REVOKE INSERT ON public.follow_up_messages FROM authenticated;
 GRANT SELECT ON public.follow_up_messages TO authenticated;
 GRANT ALL ON public.follow_up_messages TO service_role;
@@ -968,6 +970,7 @@ CREATE POLICY "Follow-up staff read assignments"
   );
 
 DROP POLICY IF EXISTS "Follow-up staff manage assignments" ON public.follow_up_assignments;
+REVOKE ALL ON public.follow_up_assignments FROM PUBLIC, anon;
 REVOKE INSERT, UPDATE, DELETE ON public.follow_up_assignments FROM authenticated;
 GRANT SELECT ON public.follow_up_assignments TO authenticated;
 GRANT ALL ON public.follow_up_assignments TO service_role;
@@ -1432,7 +1435,7 @@ BEGIN
 END;
 $function$;
 
-REVOKE ALL ON public.follow_up_calls FROM anon;
+REVOKE ALL ON public.follow_up_calls FROM PUBLIC, anon;
 REVOKE SELECT, UPDATE, DELETE ON public.follow_up_calls FROM authenticated;
 GRANT INSERT ON public.follow_up_calls TO authenticated;
 GRANT ALL ON public.follow_up_calls TO service_role;
@@ -1454,7 +1457,7 @@ CREATE POLICY "Branch staff insert follow-up calls"
     )
   );
 
-REVOKE ALL ON public.member_stage_history FROM anon, authenticated;
+REVOKE ALL ON public.member_stage_history FROM PUBLIC, anon, authenticated;
 GRANT ALL ON public.member_stage_history TO service_role;
 
 CREATE OR REPLACE FUNCTION public.add_first_timer(
