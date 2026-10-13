@@ -81,11 +81,15 @@ Deno.serve(async (req) => {
 
   const { data: member, error: memberError } = await userClient
     .from("members")
-    .select("id,phone_primary,membership_status,notification_opt_out")
+    .select("id,phone_primary,membership_status,notification_opt_out,branch_id")
     .eq("id", memberId)
     .maybeSingle();
-  if (memberError) return reply({ error: memberError.message }, 500);
+  if (memberError) return reply({ error: "Unable to load member" }, 500);
   if (!member?.phone_primary || member.membership_status !== "active") return reply({ error: "Member is inactive or has no phone number" }, 400);
+  const { data: callerBranch } = await userClient.rpc("current_user_branch");
+  if (superAdmin !== true && (!callerBranch || member.branch_id !== callerBranch)) {
+    return reply({ error: "Member not found" }, 404);
+  }
   if (member.notification_opt_out) return reply({ error: "This member has opted out of notifications" }, 400);
 
   const serviceClient = createClient(
