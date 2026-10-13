@@ -31,9 +31,9 @@ export function RoleModal({ user, currentUserId, callerIsSuperAdmin, onClose, on
     else if (user.primary_role === "admin") setChoice("admin");
     else if (CUSTOM_ROLES.includes(user.primary_role)) {
       setChoice("custom");
-      setCustomRole(user.primary_role);
+      setCustomRole(callerIsSuperAdmin || user.primary_role === "worker" ? user.primary_role : "worker");
     } else setChoice("member");
-  }, [user]);
+  }, [user, callerIsSuperAdmin]);
 
   if (!user) return null;
 
@@ -124,7 +124,7 @@ export function RoleModal({ user, currentUserId, callerIsSuperAdmin, onClose, on
                   onChange={(e) => setCustomRole(e.target.value as AppRole)}
                   className="w-full rounded-lg bg-black/30 border border-white/10 text-white text-sm px-3 py-2"
                 >
-                  {CUSTOM_ROLES.map((r) => (
+                  {(callerIsSuperAdmin ? CUSTOM_ROLES : ["worker" as AppRole]).map((r) => (
                     <option key={r} value={r}>{r.replace(/_/g, " ")}</option>
                   ))}
                 </select>
