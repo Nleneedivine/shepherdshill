@@ -142,6 +142,33 @@ CREATE POLICY "Admins can manage members"
   );
 
 
+-- The old public cell-group SELECT policy exposed every column, including
+-- leader phone numbers and private meeting addresses. Keep public registration
+-- lookup on a narrow view and require staff/linked members for base-table access.
+DROP POLICY IF EXISTS "Cell groups readable by all" ON public.cell_groups;
+REVOKE SELECT ON public.cell_groups FROM anon;
+CREATE POLICY "Staff and linked members read cell groups"
+  ON public.cell_groups FOR SELECT TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_staff(auth.uid()) AND branch_id = public.current_user_branch())
+    OR EXISTS (
+      SELECT 1
+      FROM public.profiles p
+      JOIN public.members m ON m.id = p.member_id
+      WHERE p.id = auth.uid() AND m.cell_group_id = cell_groups.id
+    )
+  );
+
+CREATE OR REPLACE VIEW public.public_cell_group_options
+WITH (security_barrier = true)
+AS
+SELECT id, name, leader_name, meeting_day, meeting_time, branch_id, parish_id, is_active
+FROM public.cell_groups
+WHERE is_active = true;
+
+GRANT SELECT ON public.public_cell_group_options TO anon, authenticated;
+
 -- Scope branch-owned configuration writes. Global hierarchy records have no
 -- branch_id and are therefore managed only by super admins; branch-owned
 -- departments, cell groups and parishes can be changed only inside the caller's branch.
