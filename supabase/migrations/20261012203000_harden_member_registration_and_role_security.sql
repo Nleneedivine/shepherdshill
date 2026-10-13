@@ -32,9 +32,7 @@ BEGIN
   IF NEW.branch_id IS DISTINCT FROM OLD.branch_id
      AND auth.uid() IS NOT NULL
      AND NOT public.has_role(auth.uid(), 'super_admin') THEN
-    SELECT p.branch_id INTO v_actor_branch
-    FROM public.profiles p
-    WHERE p.id = auth.uid();
+    v_actor_branch := public.current_user_branch();
 
     IF NOT public.has_role(auth.uid(), 'admin')
        OR v_actor_branch IS NULL
@@ -373,9 +371,7 @@ BEGIN
   -- A regular admin is branch-scoped. Do not let an admin grant roles to
   -- another branch or create an unscoped role assignment.
   IF NOT v_is_super THEN
-    SELECT branch_id INTO v_actor_branch
-    FROM public.profiles
-    WHERE id = v_uid;
+    v_actor_branch := public.current_user_branch();
 
     SELECT branch_id INTO v_target_branch
     FROM public.profiles
@@ -467,7 +463,7 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'submission not found'; END IF;
 
   IF NOT v_is_super THEN
-    SELECT branch_id INTO v_actor_branch FROM public.profiles WHERE id = v_uid;
+    v_actor_branch := public.current_user_branch();
     IF v_actor_branch IS NULL THEN
       RAISE EXCEPTION 'forbidden: your admin account is not assigned to a branch';
     END IF;
