@@ -98,7 +98,7 @@ ORDER BY grantee, privilege_type;
 
 -- Before applying the migration, verify:
 -- * Every expected column above is present.
--- * Every role name in the migration's DELETE list is present in app_role.
+-- * app_role contains the intended roles supported by the UI and role-assignment function; legacy-role cleanup uses text comparisons to avoid enum casts.
 -- * The current effective member SELECT policy set has no unexpected broad policy.
 -- * The current registration insert policy/grants are understood.
 -- * No anon policy grants access to form_drafts; the app uses auth.uid()-scoped drafts.
