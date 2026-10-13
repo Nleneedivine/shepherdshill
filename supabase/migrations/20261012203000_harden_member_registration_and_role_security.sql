@@ -30,6 +30,7 @@ BEGIN
   END IF;
 
   IF NEW.branch_id IS DISTINCT FROM OLD.branch_id
+     AND auth.uid() IS NOT NULL
      AND NOT public.has_role(auth.uid(), 'super_admin') THEN
     SELECT p.branch_id INTO v_actor_branch
     FROM public.profiles p
