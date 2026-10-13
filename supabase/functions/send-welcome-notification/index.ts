@@ -147,6 +147,20 @@ async function deliver(channel: Channel, phone: string, message: string) {
 }
 
 Deno.serve(async (req) => {
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ ok: false, error: "Method not allowed" }), {
+      status: 405,
+      headers: { "content-type": "application/json", "cache-control": "no-store" },
+    });
+  }
+  const declaredLength = Number(req.headers.get("content-length") ?? 0);
+  if (Number.isFinite(declaredLength) && declaredLength > 16 * 1024) {
+    return new Response(JSON.stringify({ ok: false, error: "Request too large" }), {
+      status: 413,
+      headers: { "content-type": "application/json", "cache-control": "no-store" },
+    });
+  }
+
   try {
     // --- AUTH GATE: block every request that isn't from a signed-in admin/pastoral user ---
     const callerId = await authorizeCaller(req);
@@ -162,10 +176,29 @@ Deno.serve(async (req) => {
 
     // Direct-message mode
     if (body?.payload) {
-      const p = body.payload as DirectPayload;
-      const result = await deliver(p.channel ?? "auto", p.recipientPhone, p.message);
-      await logAudit("notification_sent", { mode: "direct", recipient: p.recipientPhone, result, sentBy: callerId });
-      return new Response(JSON.stringify(result), { headers: { "content-type": "application/json" } });
+      const p = body.payload as Partial<DirectPayload>;
+      const phone = typeof p.recipientPhone === "string" ? p.recipientPhone.trim() : "";
+      const message = typeof p.message === "string" ? p.message.trim() : "";
+      const channel = p.channel ?? "auto";
+      const recipientName = typeof p.recipientName === "string" ? p.recipientName.trim() : "";
+
+      // Bound inputs before making paid provider requests or writing audit data.
+      if (!/^\+?[1-9]\d{7,14}$/.test(phone)) {
+        return new Response(JSON.stringify({ ok: false, error: "A valid international recipient phone is required" }), {
+          status: 400, headers: { "content-type": "application/json", "cache-control": "no-store" },
+        });
+      }
+      if (!message || message.length > 1600 || recipientName.length > 120 ||
+          !["whatsapp", "sms", "imessage", "auto"].includes(channel)) {
+        return new Response(JSON.stringify({ ok: false, error: "Invalid notification payload" }), {
+          status: 400, headers: { "content-type": "application/json", "cache-control": "no-store" },
+        });
+      }
+      const result = await deliver(channel, phone, message);
+      await logAudit("notification_sent", { mode: "direct", recipient: phone, channel, result, sentBy: callerId });
+      return new Response(JSON.stringify(result), {
+        headers: { "content-type": "application/json", "cache-control": "no-store" },
+      });
     }
 
     // Member welcome mode
