@@ -14,6 +14,7 @@ DROP POLICY IF EXISTS "Admins manage members" ON public.members;
 -- Registration submissions must go through submit-registration, which verifies
 -- authentication, Turnstile, validates fields, and applies server-side rate limits.
 DROP POLICY IF EXISTS "Anyone can submit registration" ON public.member_registrations;
+DROP POLICY IF EXISTS "Anyone can submit a registration" ON public.member_registrations;
 REVOKE INSERT ON public.member_registrations FROM anon, authenticated;
 GRANT INSERT ON public.member_registrations TO service_role;
 
