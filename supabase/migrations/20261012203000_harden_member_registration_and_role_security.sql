@@ -146,7 +146,7 @@ CREATE POLICY "Admins can manage members"
 -- leader phone numbers and private meeting addresses. Keep public registration
 -- lookup on a narrow view and require staff/linked members for base-table access.
 DROP POLICY IF EXISTS "Cell groups readable by all" ON public.cell_groups;
-REVOKE ALL ON public.cell_groups FROM anon;
+REVOKE ALL ON public.cell_groups FROM PUBLIC, anon;
 CREATE POLICY "Staff and linked members read cell groups"
   ON public.cell_groups FOR SELECT TO authenticated
   USING (
@@ -239,7 +239,7 @@ DROP POLICY IF EXISTS "Anon inserts own session draft" ON public.form_drafts;
 DROP POLICY IF EXISTS "Anon updates own session draft" ON public.form_drafts;
 DROP POLICY IF EXISTS "Anon selects own session draft" ON public.form_drafts;
 DROP POLICY IF EXISTS "Anon deletes own session draft" ON public.form_drafts;
-REVOKE ALL ON public.form_drafts FROM anon;
+REVOKE ALL ON public.form_drafts FROM PUBLIC, anon;
 
 -- Registration submissions must go through submit-registration, which verifies
 -- authentication, Turnstile, validates fields, and applies server-side rate limits.
@@ -338,7 +338,7 @@ CREATE POLICY "Super admins view logs"
 
 DROP POLICY IF EXISTS "Anyone can submit registration" ON public.member_registrations;
 DROP POLICY IF EXISTS "Anyone can submit a registration" ON public.member_registrations;
-REVOKE INSERT ON public.member_registrations FROM anon, authenticated;
+REVOKE INSERT ON public.member_registrations FROM PUBLIC, anon, authenticated;
 GRANT INSERT ON public.member_registrations TO service_role;
 
 -- Support the rolling one-hour count without a full table scan.
