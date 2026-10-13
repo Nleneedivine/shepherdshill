@@ -5,6 +5,7 @@ const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body)
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return reply({ error: "Method not allowed" }, 405);
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -14,10 +15,9 @@ Deno.serve(async (req) => {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) return reply({ configured: false, error: "Not signed in" }, 401);
 
-  const { data: allowed } = await supabase.rpc("is_in_followup_department", { check_user_id: user.user.id });
   const { data: admin } = await supabase.rpc("has_role", { _user_id: user.user.id, _role: "admin" });
   const { data: superAdmin } = await supabase.rpc("has_role", { _user_id: user.user.id, _role: "super_admin" });
-  if (!allowed && !admin && !superAdmin) return reply({ configured: false, error: "Not authorized" }, 403);
+  if (!admin && !superAdmin) return reply({ configured: false, error: "Not authorized" }, 403);
 
   const { data: settings, error } = await supabase
     .from("follow_up_communication_settings")
@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
         error: response.ok ? undefined : "Voice provider balance request failed",
       });
     } catch (err) {
-      return reply({ configured: false, balance: null, currency, provider, last_synced_at: now, error: err instanceof Error ? err.message : "Provider request failed" });
+      return reply({ configured: false, balance: null, currency, provider, last_synced_at: now, error: "Voice provider balance request failed" });
     }
   }
 
