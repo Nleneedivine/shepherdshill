@@ -202,6 +202,20 @@ Deno.serve(async (req) => {
 
     // Direct-message mode
     if (body?.payload) {
+      // Arbitrary-recipient sends can incur provider charges and enable spam.
+      // Pastoral staff can send member welcome messages, but direct sends require
+      // an admin/super-admin role.
+      const roleClient = createClient(supabaseUrl, serviceRoleKey);
+      const [{ data: isAdmin }, { data: isSuperAdmin }] = await Promise.all([
+        roleClient.rpc("has_role", { _user_id: callerId, _role: "admin" }),
+        roleClient.rpc("has_role", { _user_id: callerId, _role: "super_admin" }),
+      ]);
+      if (isAdmin !== true && isSuperAdmin !== true) {
+        return new Response(JSON.stringify({ ok: false, error: "Not authorized for direct notifications" }), {
+          status: 403, headers: { "content-type": "application/json", "cache-control": "no-store" },
+        });
+      }
+
       const p = body.payload as Partial<DirectPayload>;
       const phone = typeof p.recipientPhone === "string" ? p.recipientPhone.trim() : "";
       const message = typeof p.message === "string" ? p.message.trim() : "";
