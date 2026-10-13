@@ -84,7 +84,8 @@ FROM pg_proc p
 JOIN pg_namespace n ON n.oid = p.pronamespace
 WHERE n.nspname = 'public'
   AND p.proname IN ('has_role', 'is_admin', 'is_pastoral',
-                    'consume_registration_rate_limit', 'assign_user_role')
+                    'consume_registration_rate_limit', 'assign_user_role',
+                    'approve_member_submission', 'prevent_profile_privilege_escalation')
 ORDER BY p.proname, arguments;
 
 -- 7) Inspect EXECUTE grants for the new rate-limit function.
