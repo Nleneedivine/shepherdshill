@@ -12,7 +12,7 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $
+AS $$
 DECLARE
   v_actor_branch uuid;
 BEGIN
@@ -60,7 +60,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$;
+$$;
 
 -- The original permissive policies remain effective unless explicitly removed:
 -- permissive RLS policies are OR-ed together.
