@@ -51,6 +51,21 @@ WHERE table_schema = 'public'
   AND privilege_type = 'INSERT'
 ORDER BY grantee;
 
+-- 5) Check whether member photos are configured as a public bucket. If public=true,
+-- object URLs bypass storage RLS; changing this requires migrating URL consumers to
+-- authorized signed URLs, so do not change the bucket flag blindly.
+SELECT id, name, public
+FROM storage.buckets
+WHERE id = 'member-photos';
+
+-- Inspect all member-photo storage policies; no broad anon SELECT policy should remain.
+SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+FROM pg_policies
+WHERE schemaname = 'storage'
+  AND tablename = 'objects'
+  AND (qual ILIKE '%member-photos%' OR with_check ILIKE '%member-photos%')
+ORDER BY policyname;
+
 -- 5) Check anon table privileges for form drafts. The result should contain no
 -- SELECT/INSERT/UPDATE/DELETE grants to anon after the migration.
 SELECT grantee, privilege_type
