@@ -167,6 +167,33 @@ function getVoiceProvider(provider: string): VoiceProvider {
 
 // ---- Follow-Up call initiation ----
 
+async function readJsonLimited(req: Request, maxBytes: number): Promise<Record<string, unknown>> {
+  const reader = req.body?.getReader();
+  if (!reader) return {};
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new Error("request_too_large");
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+  return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
+    ? parsed as Record<string, unknown>
+    : {};
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -189,7 +216,7 @@ Deno.serve(async (req) => {
   const { data: superAdmin } = await userClient.rpc("has_role", { _user_id: userId, _role: "super_admin" });
   if (!allowed && !admin && !superAdmin) return json({ error: "Not authorized" }, 403);
 
-  const body = await req.json().catch(() => ({}));
+  const body = await readJsonLimited(req, 16 * 1024).catch(() => ({}));
   const memberId = typeof body.member_id === "string" ? body.member_id : "";
   const operatorPhone = typeof body.operator_phone === "string" ? body.operator_phone.trim() : "";
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
