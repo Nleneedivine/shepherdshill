@@ -62,6 +62,14 @@ BEGIN
 END;
 $$;
 
+-- Prevent unauthenticated/anonymous audit-log spoofing. Existing client-side
+-- logging can remain, but each row must be attributed to the authenticated caller.
+DROP POLICY IF EXISTS "Authenticated insert logs" ON public.system_logs;
+DROP POLICY IF EXISTS "Authenticated insert own logs" ON public.system_logs;
+CREATE POLICY "Authenticated insert own logs"
+  ON public.system_logs FOR INSERT TO authenticated
+  WITH CHECK (performed_by = auth.uid());
+
 -- The original permissive policies remain effective unless explicitly removed:
 -- permissive RLS policies are OR-ed together.
 DROP POLICY IF EXISTS "Auth users read members" ON public.members;
