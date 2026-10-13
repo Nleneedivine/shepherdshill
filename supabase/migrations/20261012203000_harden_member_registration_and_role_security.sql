@@ -688,4 +688,53 @@ $function$;
 REVOKE ALL ON FUNCTION public.approve_member_submission(uuid, jsonb, uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.approve_member_submission(uuid, jsonb, uuid) TO authenticated;
 
+-- Call sessions contain phone numbers, transcripts, costs, and recording paths.
+-- Client callers may read only branch-authorized sessions; all writes go through
+-- the authenticated Edge Functions/service role so clients cannot forge outcomes
+-- or point a session at another recording.
+DROP POLICY IF EXISTS "follow_up_call_sessions_staff_select" ON public.follow_up_call_sessions;
+CREATE POLICY "follow_up_call_sessions_staff_select"
+  ON public.follow_up_call_sessions FOR SELECT TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR initiated_by = auth.uid()
+    OR (
+      (public.is_admin(auth.uid()) OR public.is_in_followup_department(auth.uid()))
+      AND EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = follow_up_call_sessions.member_id
+          AND m.branch_id = public.current_user_branch()
+      )
+    )
+  );
+
+DROP POLICY IF EXISTS "follow_up_call_sessions_staff_insert" ON public.follow_up_call_sessions;
+DROP POLICY IF EXISTS "follow_up_call_sessions_staff_update" ON public.follow_up_call_sessions;
+REVOKE INSERT, UPDATE ON public.follow_up_call_sessions FROM authenticated;
+GRANT SELECT ON public.follow_up_call_sessions TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.get_follow_up_call_sessions(p_member_id uuid)
+RETURNS SETOF public.follow_up_call_sessions
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+  SELECT s.*
+  FROM public.follow_up_call_sessions s
+  JOIN public.members m ON m.id = s.member_id
+  WHERE s.member_id = p_member_id
+    AND (
+      public.has_role(auth.uid(), 'super_admin')
+      OR s.initiated_by = auth.uid()
+      OR (
+        (public.is_admin(auth.uid()) OR public.is_in_followup_department(auth.uid()))
+        AND m.branch_id = public.current_user_branch()
+      )
+    )
+  ORDER BY s.created_at DESC;
+$function$;
+
+REVOKE ALL ON FUNCTION public.get_follow_up_call_sessions(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_follow_up_call_sessions(uuid) TO authenticated;
+
 COMMIT;
