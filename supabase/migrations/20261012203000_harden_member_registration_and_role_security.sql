@@ -142,6 +142,63 @@ CREATE POLICY "Admins can manage members"
   );
 
 
+-- Scope branch-owned configuration writes. Global hierarchy records have no
+-- branch_id and are therefore managed only by super admins; branch-owned
+-- departments, cell groups and parishes can be changed only inside the caller's branch.
+DROP POLICY IF EXISTS "Admins manage departments" ON public.departments;
+CREATE POLICY "Admins manage departments"
+  ON public.departments FOR ALL TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND branch_id = public.current_user_branch())
+  )
+  WITH CHECK (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND branch_id = public.current_user_branch())
+  );
+
+DROP POLICY IF EXISTS "Admins manage cell groups" ON public.cell_groups;
+CREATE POLICY "Admins manage cell groups"
+  ON public.cell_groups FOR ALL TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND branch_id = public.current_user_branch())
+  )
+  WITH CHECK (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND branch_id = public.current_user_branch())
+  );
+
+DROP POLICY IF EXISTS "Admins manage parishes" ON public.parishes;
+CREATE POLICY "Admins manage parishes"
+  ON public.parishes FOR ALL TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND branch_id = public.current_user_branch())
+  )
+  WITH CHECK (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND branch_id = public.current_user_branch())
+  );
+
+DROP POLICY IF EXISTS "Admins manage provinces" ON public.provinces;
+CREATE POLICY "Super admins manage provinces"
+  ON public.provinces FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'super_admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'super_admin'));
+
+DROP POLICY IF EXISTS "Admins manage zones" ON public.zones;
+CREATE POLICY "Super admins manage zones"
+  ON public.zones FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'super_admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'super_admin'));
+
+DROP POLICY IF EXISTS "Admins manage areas" ON public.areas;
+CREATE POLICY "Super admins manage areas"
+  ON public.areas FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'super_admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'super_admin'));
+
 -- Remove the legacy storage read policy that allowed anon/authenticated
 -- clients to read every object in the member-photos bucket. The later staff
 -- policies are the intended access boundary; permissive policies are OR-ed.
