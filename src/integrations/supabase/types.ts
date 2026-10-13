@@ -1639,7 +1639,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_cell_group_options: {
+        Row: {
+          branch_id: string | null
+          id: string
+          is_active: boolean
+          leader_name: string | null
+          meeting_day: string | null
+          meeting_time: string | null
+          name: string
+          parish_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_first_timer: {
