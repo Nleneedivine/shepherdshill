@@ -1765,4 +1765,12 @@ $function$;
 REVOKE ALL ON FUNCTION public.update_follow_up_stage(uuid, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.update_follow_up_stage(uuid, text) TO authenticated;
 
+-- Communication provider settings affect all branches and can incur paid usage;
+-- only super admins may change global provider/calling/messaging controls.
+DROP POLICY IF EXISTS "follow_up_comm_settings_admin_update" ON public.follow_up_communication_settings;
+CREATE POLICY "follow_up_comm_settings_admin_update"
+  ON public.follow_up_communication_settings FOR UPDATE TO authenticated
+  USING (public.has_role(auth.uid(), 'super_admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'super_admin'));
+
 COMMIT;
