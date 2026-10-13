@@ -79,6 +79,11 @@ DROP POLICY IF EXISTS "Admins manage members" ON public.members;
 -- Keep the newer "Members read own or admins read all" and
 -- "Admins can manage members" policies as the intended access boundaries.
 
+-- Remove the legacy storage read policy that allowed anon/authenticated
+-- clients to read every object in the member-photos bucket. The later staff
+-- policies are the intended access boundary; permissive policies are OR-ed.
+DROP POLICY IF EXISTS "member-photos read authenticated" ON storage.objects;
+
 -- Anonymous form_drafts policies allowed any anon client to select/update/delete
 -- every draft with a non-null session_id. The app now creates a real anonymous
 -- Supabase auth user and keys drafts by auth.uid(), so anon-key-only table access
