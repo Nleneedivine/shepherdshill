@@ -1719,7 +1719,9 @@ export type Database = {
         }
         Returns: undefined
       }
+      can_access_member: { Args: { p_member_id: string }; Returns: boolean }
       can_manage_sermons: { Args: { _user_id: string }; Returns: boolean }
+      current_user_branch: { Args: never; Returns: string | null }
       complete_follow_up_assignment: {
         Args: { p_assignment_id: string }
         Returns: boolean
