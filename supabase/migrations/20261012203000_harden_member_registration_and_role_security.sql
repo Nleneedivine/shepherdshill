@@ -403,9 +403,7 @@ BEGIN
       'member','first_timer','visitor','volunteer','worker','pastoral_team',
       'senior_pastor','provincial_pastor','zonal_pastor','area_supervisor',
       'parish_pastor','counselling_pastor','finance_director','department_head',
-      'cell_leader','prayer_coordinator','finance_team','media_team',
-      'communications_team','facilities_team','it_team','protocol_team','usher',
-      'admin','super_admin'
+      'cell_leader','prayer_coordinator','admin','super_admin'
     );
 
   INSERT INTO public.user_roles (user_id, role, branch_id, assigned_by, assigned_at)
