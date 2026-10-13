@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
   const { data: superAdmin } = await userClient.rpc("has_role", { _user_id: userId, _role: "super_admin" });
   if (!allowed && !admin && !superAdmin) return reply({ error: "Not authorized" }, 403);
 
-  const body = await readJsonLimited(req, 16 * 1024).catch(() => ({}));
+  const body: Record<string, unknown> = await readJsonLimited(req, 16 * 1024).catch((): Record<string, unknown> => ({}));
   const memberId = typeof body.member_id === "string" ? body.member_id : "";
   const channel = typeof body.channel === "string" ? body.channel : "";
   const messageBody = typeof body.body === "string" ? body.body.trim() : "";
