@@ -39,19 +39,21 @@ export function CallTranscriptionPanel({ memberId }: { memberId: string }) {
       const result = await transcriber(url, { chunk_length_s: 30, stride_length_s: 5 });
       const text = typeof result === "string" ? result : ((Array.isArray(result) ? result[0]?.text : (result as { text?: string })?.text) ?? "");
       if (!text.trim()) throw new Error("No speech was detected");
-      const { error: saveError } = await supabase.from("follow_up_call_sessions" as any).update({
-        transcript: text.trim(),
-        transcription_status: "completed",
-        transcript_language: "en",
-        updated_at: new Date().toISOString(),
-      }).eq("id", call.id);
+      const { error: saveError } = await supabase.rpc("save_follow_up_call_transcript", {
+        p_call_id: call.id,
+        p_transcript: text.trim(),
+        p_language: "en",
+        p_status: "completed",
+      });
       if (saveError) throw saveError;
       await load();
     } catch (error) {
-      await supabase.from("follow_up_call_sessions" as any).update({
-        transcription_status: "failed",
-        updated_at: new Date().toISOString(),
-      }).eq("id", call.id);
+      await supabase.rpc("save_follow_up_call_transcript", {
+        p_call_id: call.id,
+        p_transcript: null,
+        p_language: null,
+        p_status: "failed",
+      });
       setCalls((current) => current.map((item) => item.id === call.id ? { ...item, transcription_status: "failed" } : item));
       console.error(error);
     } finally {
