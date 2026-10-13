@@ -233,8 +233,13 @@ BEGIN
   -- function definition if a listed enum label does not exist.
   DELETE FROM public.user_roles
   WHERE user_id = p_target_user_id
-    AND role IN (
-      'member','first_timer','worker','pastoral_team','senior_pastor','admin','super_admin'
+    AND role::text IN (
+      'member','first_timer','visitor','volunteer','worker','pastoral_team',
+      'senior_pastor','provincial_pastor','zonal_pastor','area_supervisor',
+      'parish_pastor','counselling_pastor','finance_director','department_head',
+      'cell_leader','prayer_coordinator','finance_team','media_team',
+      'communications_team','facilities_team','it_team','protocol_team','usher',
+      'admin','super_admin'
     );
 
   INSERT INTO public.user_roles (user_id, role, branch_id, assigned_by, assigned_at)
