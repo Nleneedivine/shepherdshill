@@ -506,7 +506,8 @@ BEGIN
   v_cell_group_id := COALESCE(p_confirmed_cell_group_id, s.cell_group_id);
   IF v_cell_group_id IS NOT NULL AND NOT EXISTS (
     SELECT 1 FROM public.cell_groups cg
-    WHERE cg.id = v_cell_group_id AND cg.branch_id = v_branch.id
+    WHERE cg.id = v_cell_group_id
+      AND (cg.branch_id = v_branch.id OR cg.branch_id IS NULL)
   ) THEN
     RAISE EXCEPTION 'cell group does not belong to the selected branch';
   END IF;
@@ -530,7 +531,7 @@ BEGIN
     COALESCE(s.last_name, s.personal->>'lastName'),
     s.personal->>'middleName',
     s.personal->>'preferredName',
-    NULLIF(s.personal->>'dob','')::date,
+    NULLIF(COALESCE(s.personal->>'dateOfBirth', s.personal->>'dob'),'')::date,
     s.personal->>'gender',
     COALESCE(s.phone_primary, s.contact->>'phonePrimary'),
     s.contact->>'phoneSecondary',
@@ -565,6 +566,13 @@ BEGIN
   END IF;
 
   FOR v_dept IN SELECT (jsonb_array_elements_text(COALESCE(s.church_life->'departmentIds','[]'::jsonb)))::uuid LOOP
+    IF NOT EXISTS (
+      SELECT 1 FROM public.departments d
+      WHERE d.id = v_dept AND (d.branch_id = v_branch.id OR d.branch_id IS NULL)
+    ) THEN
+      RAISE EXCEPTION 'department does not belong to the selected branch';
+    END IF;
+
     INSERT INTO public.department_members (member_id, department_id, role_title)
     VALUES (v_member_id, v_dept, s.church_life->>'roleTitle')
     ON CONFLICT DO NOTHING;
