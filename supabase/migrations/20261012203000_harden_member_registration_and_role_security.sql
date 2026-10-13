@@ -712,6 +712,7 @@ DROP POLICY IF EXISTS "follow_up_call_sessions_staff_insert" ON public.follow_up
 DROP POLICY IF EXISTS "follow_up_call_sessions_staff_update" ON public.follow_up_call_sessions;
 REVOKE INSERT, UPDATE ON public.follow_up_call_sessions FROM authenticated;
 GRANT SELECT ON public.follow_up_call_sessions TO authenticated;
+GRANT ALL ON public.follow_up_call_sessions TO service_role;
 
 CREATE OR REPLACE FUNCTION public.get_follow_up_call_sessions(p_member_id uuid)
 RETURNS SETOF public.follow_up_call_sessions
