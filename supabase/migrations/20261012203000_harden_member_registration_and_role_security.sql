@@ -24,8 +24,8 @@ BEGIN
     IF NEW.is_super_admin IS DISTINCT FROM EXISTS (
       SELECT 1 FROM public.user_roles ur
       WHERE ur.user_id = NEW.id AND ur.role = 'super_admin'
-    ) AND NOT public.has_role(auth.uid(), 'super_admin') THEN
-      RAISE EXCEPTION 'forbidden: cannot modify super-admin status';
+    ) AND auth.uid() IS NOT NULL THEN
+      RAISE EXCEPTION 'forbidden: super-admin status is derived from user_roles';
     END IF;
   END IF;
 
@@ -54,8 +54,7 @@ BEGIN
     END IF;
   END IF;
 
-  IF NEW.email IS DISTINCT FROM OLD.email
-     AND NOT public.has_role(auth.uid(), 'super_admin') THEN
+  IF NEW.email IS DISTINCT FROM OLD.email AND auth.uid() IS NOT NULL THEN
     RAISE EXCEPTION 'forbidden: change account email through authentication settings';
   END IF;
 
