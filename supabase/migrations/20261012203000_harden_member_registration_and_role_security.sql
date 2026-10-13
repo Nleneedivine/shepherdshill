@@ -120,16 +120,13 @@ BEGIN
     RAISE EXCEPTION 'target user is required';
   END IF;
 
-  -- Remove the known primary-role set while preserving secondary team roles.
-  -- Include newer pastoral hierarchy roles so a demotion cannot leave a higher
-  -- primary role active behind the newly assigned role.
+  -- Use only labels present in the repository's declared public.app_role enum.
+  -- Do not reference speculative hierarchy labels: PostgreSQL would reject the
+  -- function definition if a listed enum label does not exist.
   DELETE FROM public.user_roles
   WHERE user_id = p_target_user_id
     AND role IN (
-      'member','first_timer','visitor','volunteer','worker','pastoral_team',
-      'senior_pastor','provincial_pastor','zonal_pastor','area_supervisor',
-      'parish_pastor','counselling_pastor','finance_director','department_head','cell_leader',
-      'prayer_coordinator','admin','super_admin'
+      'member','first_timer','worker','pastoral_team','senior_pastor','admin','super_admin'
     );
 
   INSERT INTO public.user_roles (user_id, role, branch_id, assigned_by, assigned_at)
