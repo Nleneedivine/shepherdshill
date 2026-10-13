@@ -239,12 +239,16 @@ Deno.serve(async (req) => {
 
   const { data: member, error: memberError } = await userClient
     .from("members")
-    .select("id,phone_primary,membership_status")
+    .select("id,phone_primary,membership_status,branch_id")
     .eq("id", memberId)
     .maybeSingle();
-  if (memberError) return json({ error: memberError.message }, 500);
+  if (memberError) return json({ error: "Unable to load member" }, 500);
   if (!member?.phone_primary) return json({ error: "This member has no phone number" }, 400);
   if (member.membership_status !== "active") return json({ error: "This member is not active" }, 400);
+  const { data: callerBranch } = await userClient.rpc("current_user_branch");
+  if (!superAdmin && (!callerBranch || member.branch_id !== callerBranch)) {
+    return json({ error: "Member not found" }, 404);
+  }
 
   const serviceClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
