@@ -146,6 +146,33 @@ async function deliver(channel: Channel, phone: string, message: string) {
   return { ok: false, skipped, whatsapp: w, sms: s };
 }
 
+async function readJsonLimited(req: Request, maxBytes: number): Promise<Record<string, unknown>> {
+  const reader = req.body?.getReader();
+  if (!reader) return {};
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new Error("request_too_large");
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+  return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
+    ? parsed as Record<string, unknown>
+    : {};
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ ok: false, error: "Method not allowed" }), {
@@ -172,7 +199,7 @@ Deno.serve(async (req) => {
     }
     // --- end auth gate ---
 
-    const body = await req.json().catch(() => ({}));
+    const body = await readJsonLimited(req, 16 * 1024).catch(() => ({}));
 
     // Direct-message mode
     if (body?.payload) {
