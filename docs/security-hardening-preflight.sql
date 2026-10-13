@@ -16,6 +16,7 @@ WHERE table_schema = 'public'
       'ai_completeness_score', 'submitted_at'
     ))
     OR (table_name = 'registration_attempts' AND column_name IN ('ip_address', 'created_at'))
+    OR (table_name = 'form_drafts' AND column_name IN ('id', 'user_id', 'session_id', 'form_key', 'form_data', 'expires_at'))
     OR (table_name = 'user_roles' AND column_name IN (
       'user_id', 'role', 'branch_id', 'assigned_by', 'assigned_at'
     ))
@@ -39,7 +40,7 @@ ORDER BY e.enumsortorder;
 SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
 FROM pg_policies
 WHERE schemaname = 'public'
-  AND tablename IN ('members', 'member_registrations', 'registration_attempts', 'user_roles')
+  AND tablename IN ('members', 'member_registrations', 'registration_attempts', 'user_roles', 'form_drafts')
 ORDER BY tablename, policyname;
 
 -- 4) Inspect table privileges for the registration intake table.
@@ -50,7 +51,16 @@ WHERE table_schema = 'public'
   AND privilege_type = 'INSERT'
 ORDER BY grantee;
 
--- 5) Inspect relevant function signatures and security properties.
+-- 5) Check anon table privileges for form drafts. The result should contain no
+-- SELECT/INSERT/UPDATE/DELETE grants to anon after the migration.
+SELECT grantee, privilege_type
+FROM information_schema.role_table_grants
+WHERE table_schema = 'public'
+  AND table_name = 'form_drafts'
+  AND grantee = 'anon'
+ORDER BY privilege_type;
+
+-- 6) Inspect relevant function signatures and security properties.
 SELECT n.nspname AS schema_name, p.proname AS function_name,
        pg_get_function_identity_arguments(p.oid) AS arguments,
        p.prosecdef AS security_definer,
@@ -62,7 +72,7 @@ WHERE n.nspname = 'public'
                     'consume_registration_rate_limit', 'assign_user_role')
 ORDER BY p.proname, arguments;
 
--- 6) Inspect EXECUTE grants for the new rate-limit function.
+-- 7) Inspect EXECUTE grants for the new rate-limit function.
 SELECT grantee, privilege_type
 FROM information_schema.routine_privileges
 WHERE specific_schema = 'public'
@@ -74,3 +84,4 @@ ORDER BY grantee, privilege_type;
 -- * Every role name in the migration's DELETE list is present in app_role.
 -- * The current effective member SELECT policy set has no unexpected broad policy.
 -- * The current registration insert policy/grants are understood.
+-- * No anon policy grants access to form_drafts; the app uses auth.uid()-scoped drafts.
