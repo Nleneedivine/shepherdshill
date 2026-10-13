@@ -11,6 +11,16 @@ DROP POLICY IF EXISTS "Admins manage members" ON public.members;
 -- Keep the newer "Members read own or admins read all" and
 -- "Admins can manage members" policies as the intended access boundaries.
 
+-- Anonymous form_drafts policies allowed any anon client to select/update/delete
+-- every draft with a non-null session_id. The app now creates a real anonymous
+-- Supabase auth user and keys drafts by auth.uid(), so anon-key-only table access
+-- is unnecessary and must be removed to prevent cross-user draft disclosure.
+DROP POLICY IF EXISTS "Anon inserts own session draft" ON public.form_drafts;
+DROP POLICY IF EXISTS "Anon updates own session draft" ON public.form_drafts;
+DROP POLICY IF EXISTS "Anon selects own session draft" ON public.form_drafts;
+DROP POLICY IF EXISTS "Anon deletes own session draft" ON public.form_drafts;
+REVOKE ALL ON public.form_drafts FROM anon;
+
 -- Registration submissions must go through submit-registration, which verifies
 -- authentication, Turnstile, validates fields, and applies server-side rate limits.
 -- The application and profile-linking trigger already rely on this association;
