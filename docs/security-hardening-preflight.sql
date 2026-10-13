@@ -18,6 +18,12 @@ WHERE table_schema = 'public'
     OR (table_name = 'registration_attempts' AND column_name IN ('ip_address', 'created_at'))
     OR (table_name = 'form_drafts' AND column_name IN ('id', 'user_id', 'session_id', 'form_key', 'form_data', 'expires_at'))
     OR (table_name = 'cell_groups' AND column_name IN ('id', 'branch_id', 'leader_name', 'leader_phone', 'address'))
+    OR (table_name = 'follow_up_call_sessions' AND column_name IN ('id', 'member_id', 'initiated_by', 'recording_path', 'recording_url', 'transcript', 'created_at'))
+    OR (table_name = 'follow_up_assignments' AND column_name IN ('id', 'member_id', 'assigned_to', 'assigned_by', 'status'))
+    OR (table_name = 'follow_up_messages' AND column_name IN ('id', 'member_id', 'created_by', 'body', 'created_at'))
+    OR (table_name = 'follow_up_calls' AND column_name IN ('id', 'member_id', 'called_by', 'outcome', 'call_date'))
+    OR (table_name = 'member_stage_history' AND column_name IN ('id', 'member_id', 'old_stage', 'new_stage', 'changed_at'))
+    OR (table_name = 'follow_up_communication_settings' AND column_name IN ('id', 'provider', 'messaging_enabled', 'calling_enabled', 'updated_by'))
     OR (table_name = 'user_roles' AND column_name IN (
       'user_id', 'role', 'branch_id', 'assigned_by', 'assigned_at'
     ))
@@ -41,7 +47,7 @@ ORDER BY e.enumsortorder;
 SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
 FROM pg_policies
 WHERE schemaname = 'public'
-  AND tablename IN ('members', 'member_registrations', 'registration_attempts', 'user_roles', 'form_drafts', 'system_logs', 'profiles', 'cell_groups')
+  AND tablename IN ('members', 'member_registrations', 'registration_attempts', 'user_roles', 'form_drafts', 'system_logs', 'profiles', 'cell_groups', 'follow_up_call_sessions', 'follow_up_assignments', 'follow_up_messages', 'follow_up_calls', 'member_stage_history', 'follow_up_communication_settings')
 ORDER BY tablename, policyname;
 
 -- 4) Inspect table privileges for the registration intake table.
@@ -72,7 +78,7 @@ ORDER BY policyname;
 SELECT grantee, privilege_type
 FROM information_schema.role_table_grants
 WHERE table_schema = 'public'
-  AND table_name IN ('form_drafts', 'cell_groups')
+  AND table_name IN ('form_drafts', 'cell_groups', 'follow_up_call_sessions', 'follow_up_assignments', 'follow_up_messages', 'follow_up_calls', 'member_stage_history', 'follow_up_communication_settings')
   AND grantee = 'anon'
 ORDER BY table_name, privilege_type;
 
