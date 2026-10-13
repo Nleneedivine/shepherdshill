@@ -473,7 +473,10 @@ BEGIN
     IF v_actor_branch IS NULL THEN
       RAISE EXCEPTION 'forbidden: your admin account is not assigned to a branch';
     END IF;
-    IF s.branch_id IS NOT NULL AND s.branch_id <> v_actor_branch THEN
+    IF s.branch_id IS NULL THEN
+      RAISE EXCEPTION 'forbidden: assign a branch before a branch admin approves this registration';
+    END IF;
+    IF s.branch_id <> v_actor_branch THEN
       RAISE EXCEPTION 'forbidden: admins may approve registrations only in their own branch';
     END IF;
     IF s.created_member_id IS NOT NULL THEN
