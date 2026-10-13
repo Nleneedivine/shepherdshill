@@ -36,7 +36,7 @@ The callback accepts `x-voice-callback-secret` where the provider supports custo
 10. Verify voice callback requests fail with 503 when the secret is absent, 401 for a wrong secret, and 400 for a missing call identifier.
 11. Verify a recording URL on an unapproved host is never fetched, redirects are rejected, oversized recordings are rejected, and valid provider recordings are stored in the private bucket.
 12. Exercise registration, approval, member search, follow-up assignment, call status updates, and recording playback end-to-end.
-13. Confirm build, lint, TypeScript checks, and CI pass before merge.
+13. Confirm build, lint, TypeScript checks for every Edge Function, and CI pass before merge.
 
 ## Operational caveats
 
