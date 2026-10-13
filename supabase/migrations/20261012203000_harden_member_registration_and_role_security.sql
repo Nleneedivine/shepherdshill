@@ -93,6 +93,8 @@ DECLARE
   v_is_super boolean;
   v_is_admin boolean;
   v_target_was_super boolean;
+  v_actor_branch uuid;
+  v_target_branch uuid;
 BEGIN
   IF v_uid IS NULL THEN
     RAISE EXCEPTION 'unauthorized';
@@ -125,6 +127,30 @@ BEGIN
     RAISE EXCEPTION 'target user is required';
   END IF;
 
+  -- A regular admin is branch-scoped. Do not let an admin grant roles to
+  -- another branch or create an unscoped role assignment.
+  IF NOT v_is_super THEN
+    SELECT branch_id INTO v_actor_branch
+    FROM public.profiles
+    WHERE id = v_uid;
+
+    SELECT branch_id INTO v_target_branch
+    FROM public.profiles
+    WHERE id = p_target_user_id;
+
+    IF v_actor_branch IS NULL THEN
+      RAISE EXCEPTION 'forbidden: your admin account is not assigned to a branch';
+    END IF;
+    IF v_target_branch IS NOT NULL AND v_target_branch <> v_actor_branch THEN
+      RAISE EXCEPTION 'forbidden: admins may manage users only in their own branch';
+    END IF;
+    IF p_branch_id IS NOT NULL AND p_branch_id <> v_actor_branch THEN
+      RAISE EXCEPTION 'forbidden: admins may assign roles only within their own branch';
+    END IF;
+
+    p_branch_id := v_actor_branch;
+  END IF;
+
   -- Use only labels present in the repository's declared public.app_role enum.
   -- Do not reference speculative hierarchy labels: PostgreSQL would reject the
   -- function definition if a listed enum label does not exist.
@@ -139,6 +165,10 @@ BEGIN
 
   UPDATE public.profiles
   SET is_super_admin = (p_new_role = 'super_admin'),
+      branch_id = CASE
+        WHEN NOT v_is_super THEN COALESCE(branch_id, v_actor_branch)
+        ELSE branch_id
+      END,
       updated_at = now()
   WHERE id = p_target_user_id;
 
