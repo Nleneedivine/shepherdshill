@@ -3,6 +3,66 @@
 
 BEGIN;
 
+-- Protect profile authorization/identity fields from self-service mutation.
+-- Keep the derived super-admin cache in sync with user_roles, allow a branch admin
+-- to place an unassigned target into their own branch through assign_user_role,
+-- and only allow member_id linkage to a member created from that user's registration.
+CREATE OR REPLACE FUNCTION public.prevent_profile_privilege_escalation()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $
+DECLARE
+  v_actor_branch uuid;
+BEGIN
+  IF NEW.id IS DISTINCT FROM OLD.id THEN
+    RAISE EXCEPTION 'forbidden: cannot change profile id';
+  END IF;
+
+  IF NEW.is_super_admin IS DISTINCT FROM OLD.is_super_admin THEN
+    IF NEW.is_super_admin IS DISTINCT FROM EXISTS (
+      SELECT 1 FROM public.user_roles ur
+      WHERE ur.user_id = NEW.id AND ur.role = 'super_admin'
+    ) AND NOT public.has_role(auth.uid(), 'super_admin') THEN
+      RAISE EXCEPTION 'forbidden: cannot modify super-admin status';
+    END IF;
+  END IF;
+
+  IF NEW.branch_id IS DISTINCT FROM OLD.branch_id
+     AND NOT public.has_role(auth.uid(), 'super_admin') THEN
+    SELECT p.branch_id INTO v_actor_branch
+    FROM public.profiles p
+    WHERE p.id = auth.uid();
+
+    IF NOT public.has_role(auth.uid(), 'admin')
+       OR v_actor_branch IS NULL
+       OR NEW.branch_id IS DISTINCT FROM v_actor_branch THEN
+      RAISE EXCEPTION 'forbidden: cannot modify profile branch';
+    END IF;
+  END IF;
+
+  IF NEW.member_id IS DISTINCT FROM OLD.member_id THEN
+    IF NEW.member_id IS NULL OR NOT EXISTS (
+      SELECT 1
+      FROM public.members m
+      JOIN public.member_registrations r ON r.id = m.registration_id
+      WHERE m.id = NEW.member_id
+        AND r.user_id = NEW.id
+    ) THEN
+      RAISE EXCEPTION 'forbidden: member link must match the profile owner registration';
+    END IF;
+  END IF;
+
+  IF NEW.email IS DISTINCT FROM OLD.email
+     AND NOT public.has_role(auth.uid(), 'super_admin') THEN
+    RAISE EXCEPTION 'forbidden: change account email through authentication settings';
+  END IF;
+
+  RETURN NEW;
+END;
+$;
+
 -- The original permissive policies remain effective unless explicitly removed:
 -- permissive RLS policies are OR-ed together.
 DROP POLICY IF EXISTS "Auth users read members" ON public.members;
