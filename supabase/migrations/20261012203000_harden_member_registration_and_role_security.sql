@@ -210,6 +210,13 @@ BEGIN
     RAISE EXCEPTION 'target user is required';
   END IF;
 
+  -- Do not assign privileged roles to anonymous auth sessions, which intentionally
+  -- have no profile row. Every role-managed account must have a real profile.
+  PERFORM 1 FROM public.profiles WHERE id = p_target_user_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'target profile not found';
+  END IF;
+
   -- A regular admin is branch-scoped. Do not let an admin grant roles to
   -- another branch or create an unscoped role assignment.
   IF NOT v_is_super THEN
