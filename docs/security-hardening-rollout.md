@@ -41,3 +41,7 @@ The callback accepts `x-voice-callback-secret` where the provider supports custo
 - The current registration form expects a signed-in user. If anonymous registration is a product requirement, do not simply remove the JWT check: design a separate public intake path with robust CAPTCHA, schema validation, atomic rate limiting, and no client-controlled identity or privileged fields.
 - The recording host allowlist must be based on the actual provider documentation and observed callback payloads; do not guess hostnames.
 - Re-check the deployed database's effective policies after migration. RLS policies are permissive by default and are OR-ed together, so every legacy overlapping policy must be accounted for.
+
+## Read-only database preflight
+
+Before applying the migration to staging, run `docs/security-hardening-preflight.sql` in the Supabase SQL Editor against the staging project. It only reads catalog metadata and current grants/policies; it does not alter data or schema. Resolve any missing columns, enum labels, or unexpected overlapping policies before proceeding.
