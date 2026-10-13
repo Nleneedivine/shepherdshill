@@ -40,7 +40,7 @@ ORDER BY e.enumsortorder;
 SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
 FROM pg_policies
 WHERE schemaname = 'public'
-  AND tablename IN ('members', 'member_registrations', 'registration_attempts', 'user_roles', 'form_drafts', 'system_logs')
+  AND tablename IN ('members', 'member_registrations', 'registration_attempts', 'user_roles', 'form_drafts', 'system_logs', 'profiles')
 ORDER BY tablename, policyname;
 
 -- 4) Inspect table privileges for the registration intake table.
@@ -85,7 +85,8 @@ JOIN pg_namespace n ON n.oid = p.pronamespace
 WHERE n.nspname = 'public'
   AND p.proname IN ('has_role', 'is_admin', 'is_pastoral',
                     'consume_registration_rate_limit', 'assign_user_role',
-                    'approve_member_submission', 'prevent_profile_privilege_escalation')
+                    'approve_member_submission', 'prevent_profile_privilege_escalation',
+                    'current_user_branch', 'can_access_member')
 ORDER BY p.proname, arguments;
 
 -- 7) Inspect EXECUTE grants for the new rate-limit function.
