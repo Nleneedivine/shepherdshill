@@ -11,6 +11,10 @@ const reply = (body: unknown, status = 200) =>
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return reply({ error: "Method not allowed" }, 405);
+  const declaredLength = Number(req.headers.get("content-length") ?? 0);
+  if (Number.isFinite(declaredLength) && declaredLength > 16 * 1024) {
+    return reply({ error: "Request too large" }, 413);
+  }
 
   const userClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -27,13 +31,15 @@ Deno.serve(async (req) => {
   if (!allowed && !admin && !superAdmin) return reply({ error: "Not authorized" }, 403);
 
   const body = await req.json().catch(() => ({}));
-  const memberId = String(body.member_id ?? "");
-  const channel = String(body.channel ?? "");
-  const messageBody = String(body.body ?? "").trim();
-  const messageType = String(body.message_type ?? "manual");
+  const memberId = typeof body.member_id === "string" ? body.member_id : "";
+  const channel = typeof body.channel === "string" ? body.channel : "";
+  const messageBody = typeof body.body === "string" ? body.body.trim() : "";
+  const messageType = typeof body.message_type === "string" ? body.message_type.trim() : "manual";
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-  if (!memberId || !["sms", "whatsapp"].includes(channel) || !messageBody) {
-    return reply({ error: "member_id, channel and message body are required" }, 400);
+  if (!uuidPattern.test(memberId) || !["sms", "whatsapp"].includes(channel) ||
+      !messageBody || messageBody.length > 2000 || messageType.length > 40) {
+    return reply({ error: "Invalid message request" }, 400);
   }
 
   const { data: settings, error: settingsError } = await userClient
@@ -105,7 +111,7 @@ Deno.serve(async (req) => {
         status: "failed",
         error_message: provider?.message ?? providerText.slice(0, 500),
       }).eq("id", row.id);
-      return reply({ error: "Messaging provider rejected the message", details: provider, message_id: row.id }, 502);
+      return reply({ error: "Messaging provider rejected the message", message_id: row.id }, 502);
     }
 
     await serviceClient.from("follow_up_messages").update({
@@ -120,6 +126,6 @@ Deno.serve(async (req) => {
       status: "failed",
       error_message: error instanceof Error ? error.message : "Provider request failed",
     }).eq("id", row.id);
-    return reply({ error: error instanceof Error ? error.message : "Provider request failed", message_id: row.id }, 502);
+    return reply({ error: "Messaging provider request failed", message_id: row.id }, 502);
   }
 });
