@@ -166,6 +166,92 @@ REVOKE ALL ON public.form_drafts FROM anon;
 ALTER TABLE public.member_registrations
   ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL;
 
+-- Scope registration and account metadata to the user's branch. Branchless
+-- registrations remain visible to super admins only until a branch is assigned.
+DROP POLICY IF EXISTS "Admins can view registrations" ON public.member_registrations;
+CREATE POLICY "Admins can view registrations"
+  ON public.member_registrations FOR SELECT TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_pastoral(auth.uid()) AND branch_id = public.current_user_branch())
+  );
+
+DROP POLICY IF EXISTS "Admins can update registrations" ON public.member_registrations;
+CREATE POLICY "Admins can update registrations"
+  ON public.member_registrations FOR UPDATE TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND branch_id = public.current_user_branch())
+  )
+  WITH CHECK (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND branch_id = public.current_user_branch())
+  );
+
+DROP POLICY IF EXISTS "Admins can delete registrations" ON public.member_registrations;
+CREATE POLICY "Admins can delete registrations"
+  ON public.member_registrations FOR DELETE TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND branch_id = public.current_user_branch())
+  );
+
+DROP POLICY IF EXISTS "Admins read all profiles" ON public.profiles;
+CREATE POLICY "Admins read all profiles"
+  ON public.profiles FOR SELECT TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND (
+      branch_id = public.current_user_branch()
+      OR branch_id IS NULL
+      OR id = auth.uid()
+    ))
+  );
+
+DROP POLICY IF EXISTS "Admins read all roles" ON public.user_roles;
+CREATE POLICY "Admins read all roles"
+  ON public.user_roles FOR SELECT TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = public.user_roles.user_id
+        AND (
+          COALESCE(p.branch_id, public.user_roles.branch_id) = public.current_user_branch()
+          OR (p.branch_id IS NULL AND public.user_roles.branch_id IS NULL)
+        )
+    ))
+  );
+
+DROP POLICY IF EXISTS "Admins view all form drafts" ON public.form_drafts;
+CREATE POLICY "Admins view all form drafts"
+  ON public.form_drafts FOR SELECT TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = public.form_drafts.user_id
+        AND p.branch_id = public.current_user_branch()
+    ))
+  );
+
+DROP POLICY IF EXISTS "Admins delete abandoned drafts" ON public.form_drafts;
+CREATE POLICY "Admins delete abandoned drafts"
+  ON public.form_drafts FOR DELETE TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'super_admin')
+    OR (public.is_admin(auth.uid()) AND EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = public.form_drafts.user_id
+        AND p.branch_id = public.current_user_branch()
+    ))
+  );
+
+DROP POLICY IF EXISTS "Super admins view logs" ON public.system_logs;
+CREATE POLICY "Super admins view logs"
+  ON public.system_logs FOR SELECT TO authenticated
+  USING (public.has_role(auth.uid(), 'super_admin') OR performed_by = auth.uid());
+
 DROP POLICY IF EXISTS "Anyone can submit registration" ON public.member_registrations;
 DROP POLICY IF EXISTS "Anyone can submit a registration" ON public.member_registrations;
 REVOKE INSERT ON public.member_registrations FROM anon, authenticated;
