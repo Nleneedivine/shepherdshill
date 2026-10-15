@@ -1639,7 +1639,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_cell_group_options: {
+        Row: {
+          branch_id: string | null
+          id: string
+          is_active: boolean
+          leader_name: string | null
+          meeting_day: string | null
+          meeting_time: string | null
+          name: string
+          parish_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_first_timer: {
@@ -1707,7 +1719,9 @@ export type Database = {
         }
         Returns: undefined
       }
+      can_access_member: { Args: { p_member_id: string }; Returns: boolean }
       can_manage_sermons: { Args: { _user_id: string }; Returns: boolean }
+      current_user_branch: { Args: never; Returns: string | null }
       complete_follow_up_assignment: {
         Args: { p_assignment_id: string }
         Returns: boolean
@@ -1747,6 +1761,15 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      save_follow_up_call_transcript: {
+        Args: {
+          p_call_id: string
+          p_language?: string | null
+          p_status?: string
+          p_transcript?: string | null
+        }
+        Returns: undefined
       }
       get_follow_up_communications: {
         Args: { p_member_id: string }

@@ -18,8 +18,7 @@
 //   APP_URL                       (public app URL used in message body)
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 type Channel = "whatsapp" | "sms" | "imessage" | "auto";
 
@@ -146,7 +145,48 @@ async function deliver(channel: Channel, phone: string, message: string) {
   return { ok: false, skipped, whatsapp: w, sms: s };
 }
 
+async function readJsonLimited(req: Request, maxBytes: number): Promise<Record<string, unknown>> {
+  const reader = req.body?.getReader();
+  if (!reader) return {};
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new Error("request_too_large");
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+  return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
+    ? parsed as Record<string, unknown>
+    : {};
+}
+
 Deno.serve(async (req) => {
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ ok: false, error: "Method not allowed" }), {
+      status: 405,
+      headers: { "content-type": "application/json", "cache-control": "no-store" },
+    });
+  }
+  const declaredLength = Number(req.headers.get("content-length") ?? 0);
+  if (Number.isFinite(declaredLength) && declaredLength > 16 * 1024) {
+    return new Response(JSON.stringify({ ok: false, error: "Request too large" }), {
+      status: 413,
+      headers: { "content-type": "application/json", "cache-control": "no-store" },
+    });
+  }
+
   try {
     // --- AUTH GATE: block every request that isn't from a signed-in admin/pastoral user ---
     const callerId = await authorizeCaller(req);
@@ -158,14 +198,47 @@ Deno.serve(async (req) => {
     }
     // --- end auth gate ---
 
-    const body = await req.json().catch(() => ({}));
+    const body = await readJsonLimited(req, 16 * 1024).catch(() => ({}));
 
     // Direct-message mode
     if (body?.payload) {
-      const p = body.payload as DirectPayload;
-      const result = await deliver(p.channel ?? "auto", p.recipientPhone, p.message);
-      await logAudit("notification_sent", { mode: "direct", recipient: p.recipientPhone, result, sentBy: callerId });
-      return new Response(JSON.stringify(result), { headers: { "content-type": "application/json" } });
+      // Arbitrary-recipient sends can incur provider charges and enable spam.
+      // Pastoral staff can send member welcome messages, but direct sends require
+      // an admin/super-admin role.
+      const roleClient = createClient(supabaseUrl, serviceRoleKey);
+      const [{ data: isAdmin }, { data: isSuperAdmin }] = await Promise.all([
+        roleClient.rpc("has_role", { _user_id: callerId, _role: "admin" }),
+        roleClient.rpc("has_role", { _user_id: callerId, _role: "super_admin" }),
+      ]);
+      if (isAdmin !== true && isSuperAdmin !== true) {
+        return new Response(JSON.stringify({ ok: false, error: "Not authorized for direct notifications" }), {
+          status: 403, headers: { "content-type": "application/json", "cache-control": "no-store" },
+        });
+      }
+
+      const p = body.payload as Partial<DirectPayload>;
+      const phone = typeof p.recipientPhone === "string" ? p.recipientPhone.trim() : "";
+      const message = typeof p.message === "string" ? p.message.trim() : "";
+      const channel = p.channel ?? "auto";
+      const recipientName = typeof p.recipientName === "string" ? p.recipientName.trim() : "";
+
+      // Bound inputs before making paid provider requests or writing audit data.
+      if (!/^\+?[1-9]\d{7,14}$/.test(phone)) {
+        return new Response(JSON.stringify({ ok: false, error: "A valid international recipient phone is required" }), {
+          status: 400, headers: { "content-type": "application/json", "cache-control": "no-store" },
+        });
+      }
+      if (!message || message.length > 1600 || recipientName.length > 120 ||
+          !["whatsapp", "sms", "imessage", "auto"].includes(channel)) {
+        return new Response(JSON.stringify({ ok: false, error: "Invalid notification payload" }), {
+          status: 400, headers: { "content-type": "application/json", "cache-control": "no-store" },
+        });
+      }
+      const result = await deliver(channel, phone, message);
+      await logAudit("notification_sent", { mode: "direct", recipient: phone, channel, result, sentBy: callerId });
+      return new Response(JSON.stringify(result), {
+        headers: { "content-type": "application/json", "cache-control": "no-store" },
+      });
     }
 
     // Member welcome mode

@@ -8,9 +8,40 @@ const cors = {
 const reply = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
+async function readJsonLimited(req: Request, maxBytes: number): Promise<Record<string, unknown>> {
+  const reader = req.body?.getReader();
+  if (!reader) return {};
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new Error("request_too_large");
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+  return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
+    ? parsed as Record<string, unknown>
+    : {};
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return reply({ error: "Method not allowed" }, 405);
+  const declaredLength = Number(req.headers.get("content-length") ?? 0);
+  if (Number.isFinite(declaredLength) && declaredLength > 16 * 1024) {
+    return reply({ error: "Request too large" }, 413);
+  }
 
   const userClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -26,14 +57,16 @@ Deno.serve(async (req) => {
   const { data: superAdmin } = await userClient.rpc("has_role", { _user_id: userId, _role: "super_admin" });
   if (!allowed && !admin && !superAdmin) return reply({ error: "Not authorized" }, 403);
 
-  const body = await req.json().catch(() => ({}));
-  const memberId = String(body.member_id ?? "");
-  const channel = String(body.channel ?? "");
-  const messageBody = String(body.body ?? "").trim();
-  const messageType = String(body.message_type ?? "manual");
+  const body: Record<string, unknown> = await readJsonLimited(req, 16 * 1024).catch((): Record<string, unknown> => ({}));
+  const memberId = typeof body.member_id === "string" ? body.member_id : "";
+  const channel = typeof body.channel === "string" ? body.channel : "";
+  const messageBody = typeof body.body === "string" ? body.body.trim() : "";
+  const messageType = typeof body.message_type === "string" ? body.message_type.trim() : "manual";
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-  if (!memberId || !["sms", "whatsapp"].includes(channel) || !messageBody) {
-    return reply({ error: "member_id, channel and message body are required" }, 400);
+  if (!uuidPattern.test(memberId) || !["sms", "whatsapp"].includes(channel) ||
+      !messageBody || messageBody.length > 2000 || messageType.length > 40) {
+    return reply({ error: "Invalid message request" }, 400);
   }
 
   const { data: settings, error: settingsError } = await userClient
@@ -48,11 +81,15 @@ Deno.serve(async (req) => {
 
   const { data: member, error: memberError } = await userClient
     .from("members")
-    .select("id,phone_primary,membership_status,notification_opt_out")
+    .select("id,phone_primary,membership_status,notification_opt_out,branch_id")
     .eq("id", memberId)
     .maybeSingle();
-  if (memberError) return reply({ error: memberError.message }, 500);
+  if (memberError) return reply({ error: "Unable to load member" }, 500);
   if (!member?.phone_primary || member.membership_status !== "active") return reply({ error: "Member is inactive or has no phone number" }, 400);
+  const { data: callerBranch } = await userClient.rpc("current_user_branch");
+  if (superAdmin !== true && (!callerBranch || member.branch_id !== callerBranch)) {
+    return reply({ error: "Member not found" }, 404);
+  }
   if (member.notification_opt_out) return reply({ error: "This member has opted out of notifications" }, 400);
 
   const serviceClient = createClient(
@@ -105,7 +142,7 @@ Deno.serve(async (req) => {
         status: "failed",
         error_message: provider?.message ?? providerText.slice(0, 500),
       }).eq("id", row.id);
-      return reply({ error: "Messaging provider rejected the message", details: provider, message_id: row.id }, 502);
+      return reply({ error: "Messaging provider rejected the message", message_id: row.id }, 502);
     }
 
     await serviceClient.from("follow_up_messages").update({
@@ -120,6 +157,6 @@ Deno.serve(async (req) => {
       status: "failed",
       error_message: error instanceof Error ? error.message : "Provider request failed",
     }).eq("id", row.id);
-    return reply({ error: error instanceof Error ? error.message : "Provider request failed", message_id: row.id }, 502);
+    return reply({ error: "Messaging provider request failed", message_id: row.id }, 502);
   }
 });
