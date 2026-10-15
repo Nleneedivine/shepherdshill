@@ -39,11 +39,12 @@ export function FollowUpCallPanel({ memberId, phone }: { memberId: string; phone
     if (!callId) return;
     let cancelled = false;
     const poll = async () => {
-      const { data } = await supabase.from("follow_up_call_sessions" as any)
+      const { data, error } = await supabase.from("follow_up_call_sessions" as any)
         .select("id,status,duration_seconds,created_at,started_at,ended_at,error_message")
         .eq("id", callId)
         .maybeSingle();
       if (!cancelled && data) setSession(data as unknown as CallSession);
+      if (!cancelled && error) setMessage("Could not load call diagnostics: " + error.message);
     };
     void poll();
     const interval = window.setInterval(() => { void poll(); }, 3000);
@@ -63,19 +64,23 @@ export function FollowUpCallPanel({ memberId, phone }: { memberId: string; phone
     return Math.max(0, (now - new Date(session.started_at).getTime()) / 1000);
   }, [now, session]);
 
+  const isStale = Boolean(session && ["queued", "dialing"].includes(session.status) && now - new Date(session.created_at).getTime() > 90000);
+
   const startCall = async () => {
     if (!phone) return setMessage("This member has no phone number.");
     if (!/^\+\d{8,15}$/.test(operatorPhone.trim())) return setMessage("Enter your phone in international format, e.g. +2348012345678.");
     setCalling(true);
     setMessage("");
+    setSession(null);
     localStorage.setItem("follow-up-operator-phone", operatorPhone.trim());
     try {
       const { data, error } = await supabase.functions.invoke("initiate-follow-up-call", {
         body: { member_id: memberId, operator_phone: operatorPhone.trim() },
       });
       if (error) throw new Error(error.message + (error.context ? ": " + await error.context.text().catch(() => "") : ""));
+      if (data?.error) throw new Error(String(data.error));
       setCallId(data?.call_id ?? null);
-      setMessage("Your phone will ring first. Answer it and the system will connect you to the member.");
+      setMessage("Call request accepted by Shepherd's Hill. Your phone should ring first; answer it to connect to the member.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not start the call.");
     } finally {
@@ -98,12 +103,18 @@ export function FollowUpCallPanel({ memberId, phone }: { memberId: string; phone
             <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-xs uppercase tracking-wider text-slate-500">Call status</div>
-                <div className="text-xs font-semibold text-emerald-300">{session.status.replaceAll("_", " ")}</div>
+                <div className={`text-xs font-semibold ${session.status === "failed" ? "text-red-300" : session.status === "completed" ? "text-emerald-300" : "text-amber-200"}`}>{session.status.replaceAll("_", " ")}</div>
               </div>
               <div className="text-2xl font-mono text-white mt-1">{formatClock(liveSeconds)}</div>
               {session.status === "completed" && <div className="text-xs text-slate-500 mt-1">Recording is being secured for transcription.</div>}
-              {session.error_message && <div className="mt-2 rounded-lg border border-red-400/20 bg-red-500/10 p-2 text-xs text-red-200">Call error: {session.error_message}</div>}
-              {["queued", "dialing"].includes(session.status) && Date.now() - new Date(session.created_at).getTime() > 90000 && <div className="mt-2 text-xs text-amber-200">This call has not updated for over 90 seconds. Check the Infobip Click-to-Call logs; do not start repeated calls until the status is clear.</div>}
+              {session.error_message && <div role="alert" className="mt-2 rounded-lg border border-red-400/30 bg-red-500/10 p-3 text-xs text-red-100"><div className="font-semibold mb-1">Call error</div>{session.error_message}</div>}
+              {isStale && !session.error_message && (
+                <div role="alert" className="mt-2 rounded-lg border border-amber-400/30 bg-amber-500/10 p-3 text-xs text-amber-100">
+                  <div className="font-semibold mb-1">Call status has stalled</div>
+                  <p>No error message has been returned to the app yet. Infobip accepted the call request, but Shepherd's Hill has not received a final call-status update.</p>
+                  <p className="mt-1">Check Infobip Portal → Analyze → Logs for this attempt. Do not start another call until you check the log.</p>
+                </div>
+              )}
             </div>
           )}
           <div className="mt-3">
@@ -119,7 +130,7 @@ export function FollowUpCallPanel({ memberId, phone }: { memberId: string; phone
               {enabled ? "Calling enabled" : "Ask an admin to enable calling"}
             </div>
           </div>
-          {message && <div className="mt-3 rounded-xl bg-black/20 p-3 text-xs text-slate-300">{message}</div>}
+          {message && <div className="mt-3 rounded-xl bg-black/20 p-3 text-xs text-slate-300 whitespace-pre-wrap">{message}</div>}
         </div>
       </div>
     </div>
