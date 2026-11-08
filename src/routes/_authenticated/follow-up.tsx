@@ -927,7 +927,10 @@ function CallLogModal({
         <div className="mt-5 space-y-4">
           <div>
             <label className="text-xs font-medium text-slate-400">Outcome</label>
-            <Select value={outcome} onValueChange={setOutcome}>
+            <Select value={outcome} onValueChange={(value) => {
+              setOutcome(value);
+              setStatus(value === "reached" ? "staying" : "ringing_no_answer");
+            }}>
               <SelectTrigger className={selectTriggerClassName}>
                 <SelectValue />
               </SelectTrigger>
