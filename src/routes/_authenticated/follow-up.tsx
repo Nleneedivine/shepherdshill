@@ -704,22 +704,9 @@ function MemberProfileModal({
                     <p className="text-xs text-slate-400 mt-2">{currentAssignment.notes}</p>
                   )}
                 </div>
-                <Button
-                  variant="secondary"
-                  onClick={async () => {
-                    const { error } = await supabase.rpc("complete_follow_up_assignment", {
-                      p_assignment_id: currentAssignment.id,
-                    });
-                    if (error) {
-                      showToast(error.message, "error");
-                      return;
-                    }
-                    await refetchAssignment();
-                    showToast("Follow-up marked complete", "success");
-                  }}
-                >
-                  <CheckCircle2 size={15} className="mr-2" /> Complete
-                </Button>
+                <div className="max-w-[150px] text-right text-xs leading-5 text-amber-200/80">
+                  This task stays open until a conversation is recorded.
+                </div>
               </div>
             </div>
           ) : (
@@ -862,13 +849,27 @@ function CallLogModal({
   onSaved: () => void;
 }) {
   const { showToast } = useToastContext();
-  const [outcome, setOutcome] = useState("reached");
-  const [status, setStatus] = useState("staying");
+  const [outcome, setOutcome] = useState("no_answer");
+  const [status, setStatus] = useState("ringing_no_answer");
   const [notes, setNotes] = useState("");
   const [nextFollowUp, setNextFollowUp] = useState("");
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
+    const hasConversation = outcome === "reached";
+    if (hasConversation && !notes.trim()) {
+      showToast("Please record the person's response before completing this task", "error");
+      return;
+    }
+    if (!hasConversation && !nextFollowUp) {
+      showToast("Please set a date for the next call attempt", "error");
+      return;
+    }
+    if (hasConversation && status === "needs_another_call" && !nextFollowUp) {
+      showToast("Please schedule the next call requested during the conversation", "error");
+      return;
+    }
+
     setSaving(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
@@ -879,21 +880,25 @@ function CallLogModal({
         called_by: calledBy,
         outcome,
         status,
-        notes: notes || null,
+        notes: notes.trim() || null,
         next_follow_up_date: nextFollowUp || null,
       });
       if (error) throw error;
 
-      // Completing an assignment here closes the current action while preserving
-      // the call itself as the durable history record.
-      const { data: assignment } = await supabase.rpc("get_follow_up_current_assignment" as never, {
-        p_member_id: member.member_id,
-      } as never);
-      const openAssignment = ((assignment ?? []) as unknown as FollowUpAssignment[])[0];
-      if (openAssignment) {
-        await supabase.rpc("complete_follow_up_assignment", {
-          p_assignment_id: openAssignment.id,
-        });
+      // An unsuccessful attempt is history, not completion. Only a recorded
+      // conversation closes the current assignment.
+      if (hasConversation) {
+        const { data: assignment, error: assignmentError } = await supabase.rpc("get_follow_up_current_assignment" as never, {
+          p_member_id: member.member_id,
+        } as never);
+        if (assignmentError) throw assignmentError;
+        const openAssignment = ((assignment ?? []) as unknown as FollowUpAssignment[])[0];
+        if (openAssignment) {
+          const { error: completionError } = await supabase.rpc("complete_follow_up_assignment", {
+            p_assignment_id: openAssignment.id,
+          });
+          if (completionError) throw completionError;
+        }
       }
 
       onSaved();
@@ -912,7 +917,9 @@ function CallLogModal({
             <h2 className="text-lg font-bold text-white">
               Log call — {member.first_name} {member.last_name}
             </h2>
-            <p className="text-xs text-slate-500 mt-1">{stageLabel(member.membership_stage)}</p>
+            <p className="text-xs text-slate-500 mt-1">
+              {stageLabel(member.membership_stage)} · {outcome === "reached" ? "A response is required to complete the task" : "This attempt will remain open until contact is made"}
+            </p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
         </div>
@@ -925,10 +932,8 @@ function CallLogModal({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="border-white/15 bg-[#0D1117] text-white shadow-xl">
-                <SelectItem value="reached" className="text-white focus:bg-white/10 focus:text-white">Reached</SelectItem>
-                <SelectItem value="no_answer" className="text-white focus:bg-white/10 focus:text-white">No answer</SelectItem>
-                <SelectItem value="voicemail" className="text-white focus:bg-white/10 focus:text-white">Left voicemail</SelectItem>
-                <SelectItem value="wrong_number" className="text-white focus:bg-white/10 focus:text-white">Wrong number</SelectItem>
+                <SelectItem value="reached" className="text-white focus:bg-white/10 focus:text-white">Reached — conversation held</SelectItem>
+                <SelectItem value="no_answer" className="text-white focus:bg-white/10 focus:text-white">No response / unsuccessful attempt</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -940,28 +945,44 @@ function CallLogModal({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="border-white/15 bg-[#0D1117] text-white shadow-xl">
-                <SelectItem value="staying" className="text-white focus:bg-white/10 focus:text-white">Staying</SelectItem>
-                <SelectItem value="needs_another_call" className="text-white focus:bg-white/10 focus:text-white">Needs another call</SelectItem>
-                <SelectItem value="not_interested" className="text-white focus:bg-white/10 focus:text-white">Not interested</SelectItem>
-                <SelectItem value="moved_away" className="text-white focus:bg-white/10 focus:text-white">Moved away</SelectItem>
-                <SelectItem value="prayer_request_raised" className="text-white focus:bg-white/10 focus:text-white">Prayer request raised</SelectItem>
+                {outcome === "reached" ? (
+                  <>
+                    <SelectItem value="staying" className="text-white focus:bg-white/10 focus:text-white">Staying / interested</SelectItem>
+                    <SelectItem value="needs_another_call" className="text-white focus:bg-white/10 focus:text-white">Requested another call</SelectItem>
+                    <SelectItem value="not_interested" className="text-white focus:bg-white/10 focus:text-white">Not interested</SelectItem>
+                    <SelectItem value="moved_away" className="text-white focus:bg-white/10 focus:text-white">Moved away</SelectItem>
+                    <SelectItem value="prayer_request_raised" className="text-white focus:bg-white/10 focus:text-white">Prayer request raised</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="unreachable" className="text-white focus:bg-white/10 focus:text-white">Unreachable</SelectItem>
+                    <SelectItem value="not_connecting" className="text-white focus:bg-white/10 focus:text-white">Number not connecting</SelectItem>
+                    <SelectItem value="ringing_no_answer" className="text-white focus:bg-white/10 focus:text-white">Ringing, no answer</SelectItem>
+                    <SelectItem value="busy" className="text-white focus:bg-white/10 focus:text-white">Busy</SelectItem>
+                    <SelectItem value="rejected" className="text-white focus:bg-white/10 focus:text-white">Call rejected</SelectItem>
+                    <SelectItem value="voicemail" className="text-white focus:bg-white/10 focus:text-white">Voicemail</SelectItem>
+                    <SelectItem value="wrong_number" className="text-white focus:bg-white/10 focus:text-white">Wrong number</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-400">Notes</label>
+            <label className="text-xs font-medium text-slate-400">
+              {outcome === "reached" ? "Person's response *" : "Attempt notes (optional)"}
+            </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               className="w-full mt-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white resize-none"
-              placeholder="Anything worth remembering for next time..."
+              placeholder={outcome === "reached" ? "Record what the person said. This is required to complete the task..." : "Optional notes about this call attempt..."}
             />
           </div>
 
           <Input
-            label="Next follow-up date (optional)"
+            label={outcome === "reached" && status !== "needs_another_call" ? "Next follow-up date (optional)" : "Next call attempt date *"}
             type="date"
             value={nextFollowUp}
             onChange={(e) => setNextFollowUp(e.target.value)}
