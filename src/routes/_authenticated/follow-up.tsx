@@ -59,6 +59,7 @@ interface HistoryEvent {
 
 interface FollowUpAssignment {
   id: string;
+  assigned_to: string;
   worker_name: string | null;
   worker_email: string | null;
   due_date: string | null;
@@ -885,19 +886,37 @@ function CallLogModal({
       });
       if (error) throw error;
 
-      // An unsuccessful attempt is history, not completion. Only a recorded
-      // conversation closes the current assignment.
-      if (hasConversation) {
-        const { data: assignment, error: assignmentError } = await supabase.rpc("get_follow_up_current_assignment" as never, {
+      // Keep unsuccessful attempts assigned and move the due date forward.
+      // A recorded conversation completes this attempt; if another call was
+      // requested, create a fresh assignment for the same worker.
+      const { data: assignment, error: assignmentError } = await supabase.rpc("get_follow_up_current_assignment" as never, {
+        p_member_id: member.member_id,
+      } as never);
+      if (assignmentError) throw assignmentError;
+      const openAssignment = ((assignment ?? []) as unknown as FollowUpAssignment[])[0];
+
+      if (openAssignment && !hasConversation) {
+        const { error: rescheduleError } = await supabase.rpc("assign_follow_up", {
           p_member_id: member.member_id,
-        } as never);
-        if (assignmentError) throw assignmentError;
-        const openAssignment = ((assignment ?? []) as unknown as FollowUpAssignment[])[0];
-        if (openAssignment) {
-          const { error: completionError } = await supabase.rpc("complete_follow_up_assignment", {
-            p_assignment_id: openAssignment.id,
+          p_assigned_to: openAssignment.assigned_to,
+          p_due_date: nextFollowUp,
+          p_notes: `Retry required: ${status.replaceAll("_", " ")}`,
+        });
+        if (rescheduleError) throw rescheduleError;
+      } else if (openAssignment && hasConversation) {
+        const { error: completionError } = await supabase.rpc("complete_follow_up_assignment", {
+          p_assignment_id: openAssignment.id,
+        });
+        if (completionError) throw completionError;
+
+        if (status === "needs_another_call" && nextFollowUp) {
+          const { error: nextAssignmentError } = await supabase.rpc("assign_follow_up", {
+            p_member_id: member.member_id,
+            p_assigned_to: openAssignment.assigned_to,
+            p_due_date: nextFollowUp,
+            p_notes: "Another call was requested during the conversation",
           });
-          if (completionError) throw completionError;
+          if (nextAssignmentError) throw nextAssignmentError;
         }
       }
 
