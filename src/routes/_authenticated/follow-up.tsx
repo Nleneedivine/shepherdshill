@@ -872,11 +872,14 @@ function CallLogModal({
     }
 
     setSaving(true);
+    let saveStep = "saving the call log";
     try {
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
       const calledBy = userData.user?.id;
       if (!calledBy) throw new Error("You must be signed in to log a call");
-      const { error } = await supabase.from("follow_up_calls").insert({
+
+      const { error: callError } = await supabase.from("follow_up_calls").insert({
         member_id: member.member_id,
         called_by: calledBy,
         outcome,
@@ -884,11 +887,12 @@ function CallLogModal({
         notes: notes.trim() || null,
         next_follow_up_date: nextFollowUp || null,
       });
-      if (error) throw error;
+      if (callError) throw callError;
 
       // Keep unsuccessful attempts assigned and move the due date forward.
       // A recorded conversation completes this attempt; if another call was
       // requested, create a fresh assignment for the same worker.
+      saveStep = "updating the follow-up assignment";
       const { data: assignment, error: assignmentError } = await supabase.rpc("get_follow_up_current_assignment" as never, {
         p_member_id: member.member_id,
       } as never);
@@ -896,6 +900,7 @@ function CallLogModal({
       const openAssignment = ((assignment ?? []) as unknown as FollowUpAssignment[])[0];
 
       if (openAssignment && !hasConversation) {
+        saveStep = "scheduling the next call attempt";
         const { error: rescheduleError } = await supabase.rpc("assign_follow_up", {
           p_member_id: member.member_id,
           p_assigned_to: openAssignment.assigned_to,
@@ -904,12 +909,14 @@ function CallLogModal({
         });
         if (rescheduleError) throw rescheduleError;
       } else if (openAssignment && hasConversation) {
+        saveStep = "completing the current follow-up assignment";
         const { error: completionError } = await supabase.rpc("complete_follow_up_assignment", {
           p_assignment_id: openAssignment.id,
         });
         if (completionError) throw completionError;
 
         if (status === "needs_another_call" && nextFollowUp) {
+          saveStep = "creating the requested next-call assignment";
           const { error: nextAssignmentError } = await supabase.rpc("assign_follow_up", {
             p_member_id: member.member_id,
             p_assigned_to: openAssignment.assigned_to,
@@ -922,7 +929,14 @@ function CallLogModal({
 
       onSaved();
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Could not save call log", "error");
+      const dbError = err as { message?: string; details?: string; hint?: string; code?: string };
+      const message = [
+        dbError?.message || (err instanceof Error ? err.message : "Unknown error"),
+        dbError?.details,
+        dbError?.hint,
+        dbError?.code ? `Code: ${dbError.code}` : null,
+      ].filter(Boolean).join(" · ");
+      showToast(`Failed while ${saveStep}: ${message}`, "error");
     } finally {
       setSaving(false);
     }
