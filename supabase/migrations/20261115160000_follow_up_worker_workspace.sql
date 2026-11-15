@@ -55,7 +55,7 @@ BEGIN
     ls.changed_at,
     lc.outcome,
     lc.status,
-    a.due_date,
+    lc.next_follow_up_date,
     (a.due_date IS NOT NULL AND a.due_date < CURRENT_DATE),
     a.due_date,
     a.notes,
@@ -63,7 +63,7 @@ BEGIN
   FROM public.follow_up_assignments a
   JOIN public.members m ON m.id = a.member_id
   LEFT JOIN LATERAL (
-    SELECT fc.call_date, fc.outcome, fc.status
+    SELECT fc.call_date, fc.outcome, fc.status, fc.next_follow_up_date
     FROM public.follow_up_calls fc
     WHERE fc.member_id = m.id
     ORDER BY fc.call_date DESC, fc.created_at DESC
