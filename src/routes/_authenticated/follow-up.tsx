@@ -66,6 +66,21 @@ interface FollowUpAssignment {
   notes: string | null;
 }
 
+interface WorkerAssignment {
+  assignment_id: string; member_id: string; first_name: string; last_name: string;
+  phone_primary: string | null; address: string | null; membership_stage: string | null;
+  cell_group_id: string | null; member_created_at: string; last_call_date: string | null;
+  no_answer_count: number; last_stage_change: string | null; last_call_outcome: string | null;
+  last_call_status: string | null; next_follow_up_date: string | null; is_overdue: boolean;
+  assignment_due_date: string | null; assignment_notes: string | null; assigned_at: string;
+}
+interface WorkerCallHistory {
+  call_id: string; member_id: string; first_name: string; last_name: string;
+  phone_primary: string | null; membership_stage: string | null; member_created_at: string;
+  call_date: string; outcome: string; status: string; notes: string | null;
+  next_follow_up_date: string | null;
+}
+
 async function fetchQueuePage(
   stage: string,
   search: string,
@@ -101,11 +116,20 @@ async function fetchStageCounts() {
 }
 
 async function fetchMemberHistory(memberId: string): Promise<HistoryEvent[]> {
-  const { data, error } = await supabase.rpc("get_follow_up_member_history", {
-    p_member_id: memberId,
-  });
+  const { data, error } = await supabase.rpc("get_follow_up_member_history", { p_member_id: memberId });
   if (error) throw error;
   return (data ?? []) as HistoryEvent[];
+}
+
+async function fetchMyAssignments(): Promise<WorkerAssignment[]> {
+  const { data, error } = await supabase.rpc("get_my_follow_up_assignments" as never);
+  if (error) throw error;
+  return (data ?? []) as unknown as WorkerAssignment[];
+}
+async function fetchMyCallHistory(): Promise<WorkerCallHistory[]> {
+  const { data, error } = await supabase.rpc("get_my_follow_up_call_history" as never, { p_limit: 100 } as never);
+  if (error) throw error;
+  return (data ?? []) as unknown as WorkerCallHistory[];
 }
 
 function daysAgo(dateStr: string | null): number | null {
@@ -165,6 +189,8 @@ function FollowUpHub() {
   const [historyMember, setHistoryMember] = useState<QueueRow | null>(null);
   const [stageMember, setStageMember] = useState<QueueRow | null>(null);
   const [showAddFirstTimer, setShowAddFirstTimer] = useState(false);
+  const [workspaceView, setWorkspaceView] = useState<"my_tasks" | "team_queue">("my_tasks");
+  const [workerTab, setWorkerTab] = useState<"active" | "history">("active");
 
   const { data: queuePage, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["follow-up-queue", stageFilter, search, contactFilter, page],
@@ -174,6 +200,12 @@ function FollowUpHub() {
   const { data: stageCounts } = useQuery({
     queryKey: ["follow-up-stage-counts"],
     queryFn: fetchStageCounts,
+  });
+  const { data: myAssignments, isLoading: myAssignmentsLoading, isFetching: myAssignmentsFetching, refetch: refetchMyAssignments } = useQuery({
+    queryKey: ["my-follow-up-assignments"], queryFn: fetchMyAssignments,
+  });
+  const { data: myCallHistory, isLoading: myCallHistoryLoading } = useQuery({
+    queryKey: ["my-follow-up-call-history"], queryFn: fetchMyCallHistory,
   });
 
   const queue = queuePage?.rows ?? [];
@@ -215,6 +247,16 @@ function FollowUpHub() {
   ] as const;
   const stageCountsVisible = stageCountEntries.filter(([, count]) => count > 0);
   const queueLabel = stageFilter === "first_timer" ? "First Timers" : "All Follow-Up";
+  const workerRows: QueueRow[] = (myAssignments ?? []).map((a) => ({
+    member_id:a.member_id, first_name:a.first_name, last_name:a.last_name, phone_primary:a.phone_primary,
+    address:a.address, membership_stage:a.membership_stage, cell_group_id:a.cell_group_id,
+    member_created_at:a.member_created_at, last_call_date:a.last_call_date, no_answer_count:a.no_answer_count,
+    last_stage_change:a.last_stage_change, last_call_outcome:a.last_call_outcome, last_call_status:a.last_call_status,
+    next_follow_up_date:a.assignment_due_date, is_overdue:a.is_overdue,
+  }));
+  const workerDueToday = (myAssignments ?? []).filter(a => a.assignment_due_date === new Date().toISOString().slice(0,10)).length;
+  const workerOverdue = (myAssignments ?? []).filter(a => a.is_overdue).length;
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#080c16" }}>
@@ -266,6 +308,53 @@ function FollowUpHub() {
             </Button>
           </div>
         </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-1.5">
+          <button onClick={() => setWorkspaceView("my_tasks")} className={`rounded-xl px-3 py-2.5 text-sm font-semibold ${workspaceView === "my_tasks" ? "bg-white/10 text-white" : "text-slate-400"}`}>My Follow-Ups</button>
+          <button onClick={() => setWorkspaceView("team_queue")} className={`rounded-xl px-3 py-2.5 text-sm font-semibold ${workspaceView === "team_queue" ? "bg-white/10 text-white" : "text-slate-400"}`}>Team Queue</button>
+        </div>
+        {workspaceView === "my_tasks" ? (
+          <section className="mt-5">
+            <div className="flex items-center justify-between gap-3">
+              <div><h2 className="text-lg font-semibold text-white">Your assigned members</h2><p className="mt-1 text-xs text-slate-400">Open a member to call and report in one place.</p></div>
+              <Button variant="secondary" onClick={() => void refetchMyAssignments()} disabled={myAssignmentsFetching} aria-label="Refresh my follow-ups"><RefreshCw size={15} className={myAssignmentsFetching ? "animate-spin" : ""}/></Button>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <SummaryCard icon={<UserPlus size={15}/>} label="Assigned" value={myAssignments?.length ?? 0}/>
+              <SummaryCard icon={<Clock size={15}/>} label="Due today" value={workerDueToday}/>
+              <SummaryCard icon={<AlertCircle size={15}/>} label="Overdue" value={workerOverdue}/>
+            </div>
+            <div className="mt-4 flex gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-1">
+              <button onClick={() => setWorkerTab("active")} className={`flex-1 rounded-lg px-3 py-2 text-sm ${workerTab === "active" ? "bg-white/10 text-white" : "text-slate-400"}`}>Active Follow-Ups <span className="ml-1 text-xs">{myAssignments?.length ?? 0}</span></button>
+              <button onClick={() => setWorkerTab("history")} className={`flex-1 rounded-lg px-3 py-2 text-sm ${workerTab === "history" ? "bg-white/10 text-white" : "text-slate-400"}`}>Call History</button>
+            </div>
+            {workerTab === "active" ? (
+              myAssignmentsLoading ? <p className="py-12 text-center text-sm text-slate-400">Loading your assignments...</p> :
+              workerRows.length === 0 ? <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] py-12 text-center"><CheckCircle2 className="mx-auto text-emerald-400" size={24}/><p className="mt-3 font-medium text-white">No active assignments</p><p className="mt-1 text-xs text-slate-500">New assignments will appear here.</p></div> :
+              <div className="mt-4 space-y-2.5">{workerRows.map(member => {
+                const assignment = myAssignments?.find(a => a.member_id === member.member_id);
+                return <div key={assignment?.assignment_id ?? member.member_id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-3.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <button onClick={() => setActiveMember(member)} className="min-w-0 flex-1 text-left"><div className="truncate font-semibold text-white">{member.first_name} {member.last_name}</div><div className="mt-0.5 text-xs text-violet-300">{stageLabel(member.membership_stage)}</div></button>
+                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] ${member.is_overdue ? "bg-rose-500/15 text-rose-300" : member.next_follow_up_date === new Date().toISOString().slice(0,10) ? "bg-amber-500/15 text-amber-200" : "bg-white/5 text-slate-300"}`}>{member.is_overdue ? "Overdue" : member.next_follow_up_date ? `Due ${formatDate(member.next_follow_up_date)}` : "No due date"}</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <div className="min-w-0 text-xs text-slate-400">{member.phone_primary ?? "No phone number"}<span className="block mt-1 text-slate-500">{member.last_call_status ? `Last attempt: ${stageLabel(member.last_call_status)}` : "No call report yet"}</span></div>
+                    <div className="flex shrink-0 items-center gap-2">{member.phone_primary && <a href={`tel:${member.phone_primary}`} aria-label={`Call ${member.first_name} ${member.last_name}`} className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-400/20 bg-emerald-500/10 text-emerald-300"><Phone size={17}/></a>}<Button onClick={() => setActiveMember(member)}>Open report</Button></div>
+                  </div>
+                  {assignment?.assignment_notes && <p className="mt-2 border-t border-white/5 pt-2 text-xs text-slate-400">{assignment.assignment_notes}</p>}
+                </div>;
+              })}</div>
+            ) : (
+              myCallHistoryLoading ? <p className="py-12 text-center text-sm text-slate-400">Loading call history...</p> :
+              !myCallHistory?.length ? <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] py-12 text-center"><History className="mx-auto text-slate-500" size={24}/><p className="mt-3 font-medium text-white">No submitted call reports yet</p></div> :
+              <div className="mt-4 space-y-2.5">{myCallHistory.map(call => <div key={call.call_id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-3.5">
+                <div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="truncate font-semibold text-white">{call.first_name} {call.last_name}</div><div className="mt-0.5 text-xs text-slate-400">{formatDateTime(call.call_date)} · {stageLabel(call.membership_stage)}</div></div><span className={`shrink-0 rounded-full px-2 py-1 text-[11px] ${call.outcome === "reached" ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-200"}`}>{call.outcome === "reached" ? "Conversation" : "Attempt"}</span></div>
+                <div className="mt-2 text-xs text-slate-300">{stageLabel(call.status)}</div>{call.notes && <p className="mt-2 whitespace-pre-wrap text-sm leading-5 text-slate-400">{call.notes}</p>}{call.next_follow_up_date && <p className="mt-2 text-xs text-slate-500">Next attempt: {formatDate(call.next_follow_up_date)}</p>}
+              </div>)}</div>
+            )}
+          </section>
+        ) : (
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mt-5">
           <SummaryCard icon={<UserPlus size={16} />} label="First timers" value={firstTimerCount} />
@@ -518,6 +607,7 @@ function FollowUpHub() {
             );
           })}
         </div>
+        )}
       </div>
 
       {showAddFirstTimer && (
@@ -562,7 +652,9 @@ function FollowUpHub() {
           onSaved={() => {
             setActiveMember(null);
             void queryClient.invalidateQueries({ queryKey: ["follow-up-queue"] });
-            showToast("Call logged", "success");
+            void queryClient.invalidateQueries({ queryKey: ["my-follow-up-assignments"] });
+            void queryClient.invalidateQueries({ queryKey: ["my-follow-up-call-history"] });
+            showToast("Call report submitted", "success");
           }}
         />
       )}
@@ -957,6 +1049,11 @@ function CallLogModal({
           <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
         </div>
 
+        <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+          <div className="flex items-center justify-between gap-3"><div className="min-w-0"><div className="text-sm font-medium text-white">{member.first_name} {member.last_name}</div><div className="mt-0.5 text-xs text-slate-400">{member.phone_primary || "No phone number"} · {stageLabel(member.membership_stage)}</div></div>{member.phone_primary && <a href={`tel:${member.phone_primary}`} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-emerald-500/15 px-3 text-sm font-medium text-emerald-300"><Phone size={15}/> Call</a>}</div>
+          {member.address && <div className="mt-2 text-xs text-slate-500">{member.address}</div>}
+          {member.last_call_status && <div className="mt-2 text-xs text-slate-400">Previous attempt: {stageLabel(member.last_call_status)}</div>}
+        </div>
         <div className="mt-5 space-y-4">
           <div>
             <label className="text-xs font-medium text-slate-400">Outcome</label>
