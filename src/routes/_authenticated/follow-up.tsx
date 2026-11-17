@@ -74,6 +74,14 @@ interface WorkerAssignment {
   last_call_status: string | null; next_follow_up_date: string | null; is_overdue: boolean;
   assignment_due_date: string | null; assignment_notes: string | null; assigned_at: string;
 }
+interface WorkerCompletedAssignment {
+  assignment_id: string;
+  member_id: string;
+  first_name: string;
+  last_name: string;
+  membership_stage: string | null;
+  completed_at: string;
+}
 interface WorkerCallHistory {
   call_id: string; member_id: string; first_name: string; last_name: string;
   phone_primary: string | null; membership_stage: string | null; member_created_at: string;
@@ -125,6 +133,14 @@ async function fetchMyAssignments(): Promise<WorkerAssignment[]> {
   const { data, error } = await supabase.rpc("get_my_follow_up_assignments" as never);
   if (error) throw error;
   return (data ?? []) as unknown as WorkerAssignment[];
+}
+async function fetchMyRecentlyCompletedAssignments(): Promise<WorkerCompletedAssignment[]> {
+  const { data, error } = await supabase.rpc(
+    "get_my_recent_completed_follow_up_assignments" as never,
+    { p_days: 30, p_limit: 20 } as never,
+  );
+  if (error) throw error;
+  return (data ?? []) as unknown as WorkerCompletedAssignment[];
 }
 async function fetchMyCallHistory(): Promise<WorkerCallHistory[]> {
   const { data, error } = await supabase.rpc("get_my_follow_up_call_history" as never, { p_limit: 100 } as never);
@@ -206,6 +222,9 @@ function FollowUpHub() {
   });
   const { data: myCallHistory, isLoading: myCallHistoryLoading } = useQuery({
     queryKey: ["my-follow-up-call-history"], queryFn: fetchMyCallHistory,
+  });
+  const { data: recentlyCompleted, isLoading: recentlyCompletedLoading, refetch: refetchRecentlyCompleted } = useQuery({
+    queryKey: ["my-recently-completed-follow-up-assignments"], queryFn: fetchMyRecentlyCompletedAssignments,
   });
 
   const queue = queuePage?.rows ?? [];
@@ -329,22 +348,62 @@ function FollowUpHub() {
               <button onClick={() => setWorkerTab("history")} className={`flex-1 rounded-lg px-3 py-2 text-sm ${workerTab === "history" ? "bg-white/10 text-white" : "text-slate-400"}`}>Call History</button>
             </div>
             {workerTab === "active" ? (
-              myAssignmentsLoading ? <p className="py-12 text-center text-sm text-slate-400">Loading your assignments...</p> :
-              workerRows.length === 0 ? <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] py-12 text-center"><CheckCircle2 className="mx-auto text-emerald-400" size={24}/><p className="mt-3 font-medium text-white">No active assignments</p><p className="mt-1 text-xs text-slate-500">New assignments will appear here.</p></div> :
-              <div className="mt-4 space-y-2.5">{workerRows.map(member => {
-                const assignment = myAssignments?.find(a => a.member_id === member.member_id);
-                return <div key={assignment?.assignment_id ?? member.member_id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-3.5">
-                  <div className="flex items-start justify-between gap-3">
-                    <button onClick={() => setActiveMember(member)} className="min-w-0 flex-1 text-left"><div className="truncate font-semibold text-white">{member.first_name} {member.last_name}</div><div className="mt-0.5 text-xs text-violet-300">{stageLabel(member.membership_stage)}</div></button>
-                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] ${member.is_overdue ? "bg-rose-500/15 text-rose-300" : member.next_follow_up_date === new Date().toISOString().slice(0,10) ? "bg-amber-500/15 text-amber-200" : "bg-white/5 text-slate-300"}`}>{member.is_overdue ? "Overdue" : member.next_follow_up_date ? `Due ${formatDate(member.next_follow_up_date)}` : "No due date"}</span>
+              myAssignmentsLoading || recentlyCompletedLoading ? <p className="py-12 text-center text-sm text-slate-400">Loading your assignments...</p> : (
+                <div className="mt-4 space-y-6">
+                  {workerRows.length === 0 ? (
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] py-10 text-center">
+                      <CheckCircle2 className="mx-auto text-emerald-400" size={24}/>
+                      <p className="mt-3 font-medium text-white">No active assignments</p>
+                      <p className="mt-1 text-xs text-slate-500">New assignments will appear here.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">{workerRows.map(member => {
+                      const assignment = myAssignments?.find(a => a.member_id === member.member_id);
+                      const needsAnotherCall = ["needs_another_call", "call_back_requested"].includes(member.last_call_status ?? "");
+                      const statusLabel = member.is_overdue ? "Overdue" : needsAnotherCall ? "Call again" : "Pending";
+                      const statusClass = member.is_overdue ? "bg-rose-500/15 text-rose-300" : needsAnotherCall ? "bg-amber-500/15 text-amber-200" : "bg-sky-500/15 text-sky-200";
+                      return <div key={assignment?.assignment_id ?? member.member_id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-3.5">
+                        <div className="flex items-start justify-between gap-3">
+                          <button onClick={() => setActiveMember(member)} className="min-w-0 flex-1 text-left">
+                            <div className="truncate font-semibold text-white">{member.first_name} {member.last_name}</div>
+                            <div className="mt-0.5 text-xs text-violet-300">{stageLabel(member.membership_stage)}</div>
+                          </button>
+                          <span className={"shrink-0 rounded-full px-2.5 py-1 text-[11px] " + statusClass}>{statusLabel}</span>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between gap-3">
+                          <div className="min-w-0 text-xs text-slate-400">
+                            {member.phone_primary ?? "No phone number"}
+                            <span className="block mt-1 text-slate-500">{member.last_call_status ? `Last attempt: ${stageLabel(member.last_call_status)}` : "No call report yet"}</span>
+                            {member.next_follow_up_date && <span className="block mt-1 text-slate-500">Due: {formatDate(member.next_follow_up_date)}</span>}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            {member.phone_primary && <a href={"tel:" + member.phone_primary} aria-label={"Call " + member.first_name + " " + member.last_name} className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-400/20 bg-emerald-500/10 text-emerald-300"><Phone size={17}/></a>}
+                            <Button onClick={() => setActiveMember(member)}>Open report</Button>
+                          </div>
+                        </div>
+                        {assignment?.assignment_notes && <p className="mt-2 border-t border-white/5 pt-2 text-xs text-slate-400">{assignment.assignment_notes}</p>}
+                      </div>;
+                    })}</div>
+                  )}
+                  <div className="border-t border-white/10 pt-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div><h3 className="text-sm font-semibold text-white">Recently completed</h3><p className="mt-1 text-xs text-slate-500">Your assignments completed in the last 30 days.</p></div>
+                      <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-300">{recentlyCompleted?.length ?? 0}</span>
+                    </div>
+                    {!recentlyCompleted?.length ? (
+                      <p className="mt-3 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-4 text-xs text-slate-500">No recently completed assignments.</p>
+                    ) : (
+                      <div className="mt-3 space-y-2">{recentlyCompleted.map(item => (
+                        <div key={item.assignment_id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-3">
+                          <div className="min-w-0"><div className="truncate text-sm font-medium text-slate-200">{item.first_name} {item.last_name}</div><div className="mt-0.5 text-xs text-slate-500">{stageLabel(item.membership_stage)} · Completed {formatDateTime(item.completed_at)}</div></div>
+                          <span className="shrink-0 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] text-emerald-300">Completed</span>
+                        </div>
+                      ))}</div>
+                    )}
+                    <button onClick={() => void refetchRecentlyCompleted()} className="mt-2 text-xs text-slate-500 hover:text-slate-300">Refresh completed list</button>
                   </div>
-                  <div className="mt-2 flex items-center justify-between gap-3">
-                    <div className="min-w-0 text-xs text-slate-400">{member.phone_primary ?? "No phone number"}<span className="block mt-1 text-slate-500">{member.last_call_status ? `Last attempt: ${stageLabel(member.last_call_status)}` : "No call report yet"}</span></div>
-                    <div className="flex shrink-0 items-center gap-2">{member.phone_primary && <a href={`tel:${member.phone_primary}`} aria-label={`Call ${member.first_name} ${member.last_name}`} className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-400/20 bg-emerald-500/10 text-emerald-300"><Phone size={17}/></a>}<Button onClick={() => setActiveMember(member)}>Open report</Button></div>
-                  </div>
-                  {assignment?.assignment_notes && <p className="mt-2 border-t border-white/5 pt-2 text-xs text-slate-400">{assignment.assignment_notes}</p>}
-                </div>;
-              })}</div>
+                </div>
+              )
             ) : (
               myCallHistoryLoading ? <p className="py-12 text-center text-sm text-slate-400">Loading call history...</p> :
               !myCallHistory?.length ? <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] py-12 text-center"><History className="mx-auto text-slate-500" size={24}/><p className="mt-3 font-medium text-white">No submitted call reports yet</p></div> :
