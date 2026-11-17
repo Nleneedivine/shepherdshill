@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.18"
   }
   public: {
     Tables: {
@@ -446,6 +446,7 @@ export type Database = {
           created_at: string
           duration_seconds: number | null
           ended_at: string | null
+          error_message: string | null
           id: string
           initiated_by: string | null
           member_id: string
@@ -469,6 +470,7 @@ export type Database = {
           created_at?: string
           duration_seconds?: number | null
           ended_at?: string | null
+          error_message?: string | null
           id?: string
           initiated_by?: string | null
           member_id: string
@@ -492,6 +494,7 @@ export type Database = {
           created_at?: string
           duration_seconds?: number | null
           ended_at?: string | null
+          error_message?: string | null
           id?: string
           initiated_by?: string | null
           member_id?: string
@@ -1724,6 +1727,7 @@ export type Database = {
           created_at: string
           duration_seconds: number | null
           ended_at: string | null
+          error_message: string | null
           id: string
           initiated_by: string | null
           member_id: string
@@ -1858,6 +1862,47 @@ export type Database = {
           email: string
           full_name: string
           user_id: string
+        }[]
+      }
+      get_my_follow_up_assignments: {
+        Args: never
+        Returns: {
+          address: string
+          assigned_at: string
+          assignment_due_date: string
+          assignment_id: string
+          assignment_notes: string
+          cell_group_id: string
+          first_name: string
+          is_overdue: boolean
+          last_call_date: string
+          last_call_outcome: string
+          last_call_status: string
+          last_name: string
+          last_stage_change: string
+          member_created_at: string
+          member_id: string
+          membership_stage: string
+          next_follow_up_date: string
+          no_answer_count: number
+          phone_primary: string
+        }[]
+      }
+      get_my_follow_up_call_history: {
+        Args: { p_limit?: number }
+        Returns: {
+          call_date: string
+          call_id: string
+          first_name: string
+          last_name: string
+          member_created_at: string
+          member_id: string
+          membership_stage: string
+          next_follow_up_date: string
+          notes: string
+          outcome: string
+          phone_primary: string
+          status: string
         }[]
       }
       grant_super_admin_by_email: { Args: { p_email: string }; Returns: string }
