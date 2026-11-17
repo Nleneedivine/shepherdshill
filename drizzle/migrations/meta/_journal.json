@@ -8,6 +8,13 @@
       "when": 1794912926576,
       "tag": "0000_expand_follow_up_call_status_check",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794912950767,
+      "tag": "0001_follow_up_worker_workspace",
+      "breakpoints": true
     }
   ]
 }
