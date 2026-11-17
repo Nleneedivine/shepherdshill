@@ -35,7 +35,6 @@ BEGIN
     AND a.status = 'completed'
     AND a.completed_at IS NOT NULL
     AND a.completed_at >= now() - make_interval(days => v_days)
-    AND m.membership_status = 'active'
   ORDER BY a.completed_at DESC
   LIMIT v_limit;
 END;
