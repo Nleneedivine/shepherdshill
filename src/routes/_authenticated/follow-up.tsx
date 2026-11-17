@@ -354,7 +354,7 @@ function FollowUpHub() {
               </div>)}</div>
             )}
           </section>
-        ) : (
+        ) : (<>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mt-5">
           <SummaryCard icon={<UserPlus size={16} />} label="First timers" value={firstTimerCount} />
