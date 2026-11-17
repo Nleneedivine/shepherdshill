@@ -607,7 +607,7 @@ function FollowUpHub() {
             );
           })}
         </div>
-        )}
+        </>)}
       </div>
 
       {showAddFirstTimer && (
